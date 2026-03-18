@@ -494,7 +494,6 @@ def _build_landing_html() -> str:
         '    inp.disabled = false;\n'
         '  });\n'
         '}\n'
-        '});\n'
         '\n'
         'inp.focus();\n'
         '</script>\n'
