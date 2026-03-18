@@ -538,6 +538,60 @@ def _render_results_page(analysis_id: str, data: dict[str, Any]) -> HTMLResponse
         </div>
         """
 
+        # Tech Level Ratings detail
+        if score.tech_ratings:
+            ratings_html = ""
+            for rating in score.tech_ratings:
+                level_bars = ""
+                for lvl in rating.criteria:
+                    is_current = lvl.level == rating.level
+                    bg = "bg-accent" if is_current else "bg-slate-800"
+                    text_color = "text-white font-bold" if is_current else "text-slate-600"
+                    border = "border border-accent" if is_current else "border border-slate-700/50"
+                    indicator = " &larr;" if is_current else ""
+                    level_bars += f"""
+                    <div class="{bg} {border} rounded-lg px-3 py-2 text-xs {text_color}">
+                      <span class="font-mono">Lv.{lvl.level}</span> {lvl.label.split(' — ')[-1] if ' — ' in lvl.label else ''}
+                      <span class="block text-[10px] opacity-70 mt-0.5">{lvl.description}</span>
+                      {f'<span class="text-accent">{indicator}</span>' if is_current else ''}
+                    </div>
+                    """
+
+                dim_name_ja = rating.dimension_ja or rating.dimension
+                ratings_html += f"""
+                <div class="bg-surface rounded-xl p-5 border border-slate-800 mb-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 class="font-semibold text-white">{rating.dimension}</h3>
+                      <span class="text-slate-500 text-xs">{dim_name_ja}</span>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-2xl font-bold text-accent">Lv.{rating.level}</span>
+                      <span class="text-slate-500 text-xs block">/10</span>
+                    </div>
+                  </div>
+                  <div class="bg-slate-900 rounded-lg p-3 mb-3">
+                    <p class="text-sm text-slate-300">{rating.label}</p>
+                    <p class="text-xs text-slate-500 mt-1">{rating.description}</p>
+                  </div>
+                  <details class="group">
+                    <summary class="text-xs text-slate-500 cursor-pointer hover:text-accent transition-colors">
+                      Show all 10 levels &darr;
+                    </summary>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mt-3">
+                      {level_bars}
+                    </div>
+                  </details>
+                </div>
+                """
+
+            score_html += f"""
+            <div class="mb-6">
+              <h2 class="text-lg font-semibold text-accent mb-4">Technology Level Details</h2>
+              {ratings_html}
+            </div>
+            """
+
         # Red flags
         if score.red_flags:
             severity_styles = {
