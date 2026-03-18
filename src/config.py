@@ -55,34 +55,58 @@ class PricingTier:
     features: list[str] = field(default_factory=list)
 
 
+# ============================================================
+# Two monetization models:
+#
+# 1. BYOK (Bring Your Own Key) — FREE
+#    User provides their own ANTHROPIC_API_KEY.
+#    They pay Anthropic directly. DDE is free to use.
+#    Best for: technical VCs, engineers who can set up API keys.
+#
+# 2. SaaS (Managed API) — 2x markup on API cost
+#    User doesn't need an API key. We handle everything.
+#    We charge 2x the actual API cost via Stripe.
+#    Best for: non-technical VCs who want "just paste URL".
+# ============================================================
+
 PRICING_TIERS: dict[str, PricingTier] = {
+    "byok": PricingTier(
+        name="BYOK (自社APIキー)",
+        cost_multiplier=0.0,  # Free — user pays Anthropic directly
+        max_repos_per_month=999,
+        max_file_size_mb=500,
+        features=[
+            "basic_report", "score", "slides", "pdf",
+            "git_forensics", "tech_level_rating", "purge_certificate",
+        ],
+    ),
     "starter": PricingTier(
-        name="Starter",
+        name="Starter SaaS",
         cost_multiplier=2.0,
         max_repos_per_month=5,
         max_file_size_mb=50,
-        features=["basic_report", "score"],
+        features=["basic_report", "score", "tech_level_rating"],
     ),
     "professional": PricingTier(
-        name="Professional",
+        name="Professional SaaS",
         cost_multiplier=2.0,
         max_repos_per_month=25,
         max_file_size_mb=200,
-        features=["basic_report", "score", "slides", "pdf", "git_forensics"],
+        features=[
+            "basic_report", "score", "slides", "pdf",
+            "git_forensics", "tech_level_rating",
+        ],
     ),
     "enterprise": PricingTier(
-        name="Enterprise",
+        name="Enterprise SaaS",
         cost_multiplier=2.0,
         max_repos_per_month=999,
         max_file_size_mb=500,
         features=[
-            "basic_report",
-            "score",
-            "slides",
-            "pdf",
-            "git_forensics",
-            "purge_certificate",
-            "priority_support",
+            "basic_report", "score", "slides", "pdf",
+            "git_forensics", "tech_level_rating",
+            "purge_certificate", "priority_support",
+            "custom_evaluation_framework",
         ],
     ),
 }

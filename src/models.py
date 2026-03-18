@@ -57,6 +57,7 @@ class Score(BaseModel):
 
     dimensions: list[ScoreDimension]
     red_flags: list[RedFlag] = Field(default_factory=list)
+    tech_ratings: list["TechLevelRating"] = Field(default_factory=list)
     overall_score: float = 0.0
     grade: str = ""
     recommendation: str = ""
@@ -165,6 +166,30 @@ class AnalysisResult(BaseModel):
     score: Score | None = None
     model_usage: dict[str, dict[str, int]] = Field(default_factory=dict)
     total_cost_usd: float = 0.0
+
+
+class TechLevel(BaseModel):
+    """A single level in the 10-level technology rating scale."""
+
+    level: int = Field(ge=1, le=10)
+    label: str
+    description: str
+
+
+class TechLevelRating(BaseModel):
+    """Technology level rating for a single dimension."""
+
+    dimension: str
+    dimension_ja: str = ""
+    level: int = Field(ge=1, le=10)
+    label: str
+    description: str
+    criteria: list[TechLevel] = Field(default_factory=list)
+
+    @property
+    def score_100(self) -> float:
+        """Convert 10-level to 100-point scale."""
+        return self.level * 10.0
 
 
 class PurgeCertificate(BaseModel):

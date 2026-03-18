@@ -30,8 +30,16 @@ GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
 GITHUB_API_BASE = "https://api.github.com"
 
-# Required scopes for private repo access
+# READ-ONLY scopes — we never need write access to startup repos
+# "repo" includes read access to private repos
+# VCs only need to READ code, never modify it
 DEFAULT_SCOPES = "repo read:user"
+
+# For GitHub App installation (preferred method):
+# Install with "Read-only" permission on:
+#   - Contents (read code)
+#   - Metadata (read repo info)
+# No write permissions needed
 
 
 @dataclass

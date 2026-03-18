@@ -1,82 +1,76 @@
-# Due Diligence Evaluation Framework
+# Due Diligence Evaluation Framework v2.0
 
 ## Overview
 
-This framework evaluates AI startups across 6 dimensions on a 100-point scale.
-Each dimension has a weight reflecting its importance to investment decisions.
+This framework evaluates **technology only** (no team assessment) across 6 dimensions.
+Each dimension uses a **10-level rating scale** with clear criteria, converted to a 100-point weighted score.
 
 ---
 
-## Dimension 1: Code Originality (Weight: 25%)
+## Dimension 1: Technical Originality (Weight: 25%)
 
 **What it measures:** Is this genuine intellectual property or a thin wrapper around third-party APIs?
 
-### Scoring Rubric
+### 10-Level Rating Scale
 
-| Score Range | Description |
-|-------------|-------------|
-| 90-100 | Novel algorithms, custom models, significant original implementation |
-| 70-89  | Substantial custom logic built on top of standard frameworks |
-| 50-69  | Mix of original code and API integrations with meaningful processing |
-| 30-49  | Primarily API calls with some custom business logic |
-| 0-29   | Pure API wrapper with minimal custom code |
-
-### Key Indicators
-- API wrapper ratio (% of files containing only API calls)
-- Presence of custom algorithms, data structures, or models
-- Ratio of business logic to boilerplate/glue code
-- Evidence of domain-specific innovation
+| Level | Label | Description |
+|-------|-------|-------------|
+| Lv.1 | Copy | Existing OSS/API をそのまま利用。独自コードなし |
+| Lv.2 | Wrapper | API薄いラッパー。設定変更程度のカスタマイズ |
+| Lv.3 | Glue | 複数APIの組み合わせ。独自ロジックはルーティングのみ |
+| Lv.4 | Customized | 既存技術のカスタマイズ。一部独自処理あり |
+| Lv.5 | Extended | 既存フレームワークの大幅拡張。独自アルゴリズム一部あり |
+| Lv.6 | Hybrid | 既存+独自技術のハイブリッド。明確なIP領域あり |
+| Lv.7 | Original | コア技術が独自実装。特許申請可能レベル |
+| Lv.8 | Advanced | 業界先端の独自実装。学会発表レベル |
+| Lv.9 | Breakthrough | 新しい技術パラダイムの提案。論文引用されるレベル |
+| Lv.10 | Frontier | 世界最先端。既存技術を根本的に置き換える可能性 |
 
 ### Red Flag Triggers
 - **CRITICAL**: API wrapper ratio > 70% with claims of proprietary technology
 - **HIGH**: No custom algorithms despite "AI-powered" marketing claims
-- **MEDIUM**: Heavy reliance on a single third-party API
 
 ---
 
-## Dimension 2: Technical Depth (Weight: 20%)
+## Dimension 2: Technology Advancement (Weight: 20%)
 
-**What it measures:** Is the implementation sophisticated and production-ready?
+**What it measures:** How cutting-edge is the technology stack and approach?
 
-### Scoring Rubric
+### 10-Level Rating Scale
 
-| Score Range | Description |
-|-------------|-------------|
-| 90-100 | Enterprise-grade architecture, sophisticated algorithms, performance optimization |
-| 70-89  | Well-structured codebase with good separation of concerns |
-| 50-69  | Functional implementation with some architectural patterns |
-| 30-49  | Basic implementation, minimal architecture |
-| 0-29   | Prototype-quality code, no architecture |
-
-### Key Indicators
-- Codebase size and complexity metrics
-- Language diversity appropriate to the problem domain
-- Dependency management maturity
-- Error handling and edge case coverage
-- Performance-critical code paths
+| Level | Label | Description |
+|-------|-------|-------------|
+| Lv.1 | Legacy | 10年以上前の技術。メンテナンスモード |
+| Lv.2 | Outdated | 5-10年前の技術。後継技術が存在 |
+| Lv.3 | Established | 広く普及した安定技術。新規性なし |
+| Lv.4 | Current | 現在の業界標準レベル |
+| Lv.5 | Modern | 最新のベストプラクティスを採用 |
+| Lv.6 | Progressive | 次世代技術の早期採用者 |
+| Lv.7 | Innovative | 業界内で先進的。競合が追随中 |
+| Lv.8 | Leading | 業界をリードする技術選択 |
+| Lv.9 | Pioneering | 新カテゴリを定義する技術 |
+| Lv.10 | Visionary | 5年先の技術を今実装。市場が追いつく段階 |
 
 ---
 
-## Dimension 3: Engineering Maturity (Weight: 15%)
+## Dimension 3: Implementation Depth (Weight: 20%)
 
-**What it measures:** Does the team follow professional engineering practices?
+**What it measures:** Is the implementation production-grade or just a prototype?
 
-### Scoring Rubric
+### 10-Level Rating Scale
 
-| Score Range | Description |
-|-------------|-------------|
-| 90-100 | Comprehensive test suite, CI/CD, documentation, monitoring |
-| 70-89  | Good test coverage, automated deployment, README and docs |
-| 50-69  | Some tests, basic CI, minimal documentation |
-| 30-49  | Few tests, no CI/CD, sparse documentation |
-| 0-29   | No tests, no automation, no documentation |
-
-### Key Indicators
-- Test suite existence and estimated coverage
-- CI/CD pipeline configuration
-- Documentation quality and completeness
-- Code review process evidence (PR templates, review comments)
-- Linting and formatting configuration
+| Level | Label | Description |
+|-------|-------|-------------|
+| Lv.1 | Mockup | UIモックのみ。バックエンド未実装 |
+| Lv.2 | PoC | 概念実証レベル。ハードコード多数 |
+| Lv.3 | Prototype | 動くプロトタイプ。エラー処理なし |
+| Lv.4 | Alpha | 基本機能動作。テストなし |
+| Lv.5 | Beta | 主要機能実装済み。基本テストあり |
+| Lv.6 | RC | 本番想定の実装。CI/CDあり |
+| Lv.7 | Production | 本番運用中。監視・ログあり |
+| Lv.8 | Mature | 長期運用実績。パフォーマンス最適化済み |
+| Lv.9 | Enterprise | 大規模運用対応。SLA保証レベル |
+| Lv.10 | Mission-Critical | ミッションクリティカル対応。冗長性・DR完備 |
 
 ### Red Flag Triggers
 - **HIGH**: No tests in a production-deployed application
@@ -84,60 +78,49 @@ Each dimension has a weight reflecting its importance to investment decisions.
 
 ---
 
-## Dimension 4: Claim Consistency (Weight: 15%)
+## Dimension 4: Architecture Quality (Weight: 15%)
+
+**What it measures:** Is the architecture scalable and well-designed?
+
+### 10-Level Rating Scale
+
+| Level | Label | Description |
+|-------|-------|-------------|
+| Lv.1 | Spaghetti | 構造なし。単一ファイルに全コード |
+| Lv.2 | Monolith | 最小限の分離。全結合 |
+| Lv.3 | Layered | 基本的なレイヤー分離あり |
+| Lv.4 | Modular | モジュール分割。一部密結合 |
+| Lv.5 | Clean | 関心の分離が明確。テスト容易 |
+| Lv.6 | Scalable | 水平スケーリング対応設計 |
+| Lv.7 | Microservice | 適切なサービス分割。API契約明確 |
+| Lv.8 | Event-Driven | イベント駆動。非同期処理最適化 |
+| Lv.9 | Cloud-Native | クラウドネイティブ設計。自動スケール |
+| Lv.10 | Distributed | 分散システム。CAP定理を意識した設計 |
+
+---
+
+## Dimension 5: Claim Consistency (Weight: 10%)
 
 **What it measures:** Do documentation and pitch claims match the actual code?
 
-### Scoring Rubric
+### 10-Level Rating Scale
 
-| Score Range | Description |
-|-------------|-------------|
-| 90-100 | All claims verified, conservative and accurate documentation |
-| 70-89  | Most claims verified, minor discrepancies |
-| 50-69  | Some claims verified, several unverifiable |
-| 30-49  | Multiple contradictions between claims and code |
-| 0-29   | Systematic misrepresentation of capabilities |
-
-### Key Indicators
-- Verified vs. unverified claims ratio
-- Number of direct contradictions
-- Presence of buzzwords without substance
-- Performance claims with/without benchmarks
+| Level | Label | Description |
+|-------|-------|-------------|
+| Lv.1 | Fabricated | 主張と実装が完全に乖離。意図的虚偽の疑い |
+| Lv.2 | Misleading | 重要な点で誤解を招く主張 |
+| Lv.3 | Exaggerated | 大幅な誇張。実装は主張の30%以下 |
+| Lv.4 | Overstated | 一部誇張あり。コア機能は存在 |
+| Lv.5 | Partial | 主張の半分程度が検証可能 |
+| Lv.6 | Mostly True | 大部分が事実。軽微な不一致あり |
+| Lv.7 | Accurate | 主張が実装と一致。ベンチマーク一部あり |
+| Lv.8 | Verified | 主張がコードで完全に検証可能 |
+| Lv.9 | Conservative | 実装が主張以上。控えめな表現 |
+| Lv.10 | Transparent | 全主張に証拠付き。第三者検証済み |
 
 ### Red Flag Triggers
 - **CRITICAL**: Claims proprietary technology but code is an API wrapper
 - **HIGH**: Performance claims with no benchmarks or evidence
-- **MEDIUM**: Excessive buzzword usage without technical substance
-
----
-
-## Dimension 5: Team & Process (Weight: 15%)
-
-**What it measures:** What does the development history reveal about the team?
-
-### Scoring Rubric
-
-| Score Range | Description |
-|-------------|-------------|
-| 90-100 | Large team, consistent development over months/years, healthy patterns |
-| 70-89  | Multiple contributors, steady commit history |
-| 50-69  | Small team, some gaps in development, but genuine history |
-| 30-49  | Single author, irregular patterns, short history |
-| 0-29   | Suspicious patterns, potential fake history, last-minute cramming |
-
-### Key Indicators
-- Commit count and frequency
-- Number of unique contributors
-- Development timeline length
-- Commit message quality
-- Rush commit detection
-- Bus factor risk
-
-### Red Flag Triggers
-- **CRITICAL**: Suspiciously uniform commit intervals (bot-generated)
-- **HIGH**: Rush commit clusters (20+ commits in 24 hours)
-- **HIGH**: Date tampering between author and commit dates
-- **MEDIUM**: Single-author repository with 50+ commits
 
 ---
 
@@ -145,27 +128,24 @@ Each dimension has a weight reflecting its importance to investment decisions.
 
 **What it measures:** Are security practices appropriate for the domain?
 
-### Scoring Rubric
+### 10-Level Rating Scale
 
-| Score Range | Description |
-|-------------|-------------|
-| 90-100 | Security-first design, encryption, audit logging, vulnerability scanning |
-| 70-89  | Good security practices, dependency updates, input validation |
-| 50-69  | Basic security measures, some gaps |
-| 30-49  | Minimal security consideration |
-| 0-29   | Known vulnerabilities, hardcoded secrets, no input validation |
-
-### Key Indicators
-- Dependency count and update frequency
-- Presence of security scanning in CI
-- Input validation patterns
-- Secret management practices
-- Encryption usage where appropriate
+| Level | Label | Description |
+|-------|-------|-------------|
+| Lv.1 | Negligent | ハードコードされた秘密鍵。SQLi脆弱性 |
+| Lv.2 | Minimal | 基本的な問題あり。入力検証なし |
+| Lv.3 | Basic | 最低限の対策。OWASP Top10未対応 |
+| Lv.4 | Standard | 基本的なセキュリティ対策済み |
+| Lv.5 | Compliant | 業界標準準拠。定期的な依存関係更新 |
+| Lv.6 | Hardened | セキュリティスキャン自動化。脆弱性管理あり |
+| Lv.7 | Defense-in-Depth | 多層防御。ペネトレーションテスト実施 |
+| Lv.8 | Zero-Trust | ゼロトラスト設計。暗号化完備 |
+| Lv.9 | Certified | SOC2/ISO27001等の認証取得レベル |
+| Lv.10 | Military-Grade | 国防レベル。形式検証・監査完備 |
 
 ### Red Flag Triggers
 - **CRITICAL**: Hardcoded API keys or secrets in repository
 - **HIGH**: Known vulnerable dependencies
-- **MEDIUM**: No input validation on user-facing endpoints
 
 ---
 
@@ -184,3 +164,14 @@ Each dimension has a weight reflecting its importance to investment decisions.
 - Any **CRITICAL** red flag caps the overall score at 40 (Grade D maximum)
 - 3+ **HIGH** red flags cap the score at 60 (Grade C maximum)
 - Red flags from the **Claim Consistency** dimension carry extra weight as they indicate potential misrepresentation
+
+---
+
+## Pricing Model
+
+| Plan | API Key | Cost | Best For |
+|------|---------|------|----------|
+| **BYOK** | Your own Anthropic key | FREE | Technical VCs with engineering staff |
+| **Starter SaaS** | Managed by DDE | 2x API cost | Individual investors |
+| **Professional SaaS** | Managed by DDE | 2x API cost | VC firms (5-25 analyses/month) |
+| **Enterprise SaaS** | Managed by DDE | 2x API cost | Large firms (unlimited) |

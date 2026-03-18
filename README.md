@@ -88,7 +88,8 @@ VCs click **"Run workflow"** on the startup's repo → instant DD report.
 | **Git Forensics** | Analyze commit history for suspicious patterns (rush commits before DD) |
 | **Doc-Code Consistency** | Cross-reference technical documents against actual implementation |
 | **Architecture Visualization** | Auto-generate Mermaid diagrams of real system architecture |
-| **100-Point Scoring** | Weighted scoring across 6 dimensions with RED FLAG detection |
+| **10-Level Tech Rating** | Each dimension rated Lv.1-10 with clear criteria (technology-focused, no team eval) |
+| **100-Point Scoring** | Weighted scoring across 6 tech dimensions with RED FLAG detection |
 | **PDF Export** | Professional investment committee-ready PDF reports |
 | **Disconnect & Purge** | One-click GitHub disconnect + cryptographic data erasure + purge certificate |
 | **Web Dashboard** | Browser-based UI for non-technical VCs |
@@ -97,26 +98,35 @@ VCs click **"Run workflow"** on the startup's repo → instant DD report.
 
 ## Scoring Framework
 
-```
-┌─────────────────────────────────────────────┐
-│            SCORING DIMENSIONS               │
-├─────────────────────────────────────────────┤
-│  Technical Reality    ████████░░  /25        │
-│  Originality          ████████░░  /20        │
-│  Scalability          ████████░░  /15        │
-│  Team Engineering     ████████░░  /15        │
-│  Security Posture     ████████░░  /10        │
-│  Business Alignment   ████████░░  /15        │
-├─────────────────────────────────────────────┤
-│  TOTAL                            /100       │
-│                                             │
-│  90-100  ✅ STRONG    — Exceptional          │
-│  80-89   ✅ SOLID     — Investment-ready     │
-│  60-79   ⚠️ CAUTION  — Gaps identified      │
-│  40-59   🔴 CONCERN  — Significant issues    │
-│  0-39    🔴 CRITICAL — Major red flags       │
-└─────────────────────────────────────────────┘
-```
+Technology-focused evaluation only. No team/process assessment.
+
+### 6 Dimensions with 10-Level Rating
+
+| Dimension | Weight | What It Detects |
+|-----------|--------|----------------|
+| Technical Originality | 25% | API wrapper vs. genuine IP (Lv.1 Copy ... Lv.10 Frontier) |
+| Technology Advancement | 20% | Stack modernity (Lv.1 Legacy ... Lv.10 Visionary) |
+| Implementation Depth | 20% | PoC vs. production (Lv.1 Mockup ... Lv.10 Mission-Critical) |
+| Architecture Quality | 15% | Structure quality (Lv.1 Spaghetti ... Lv.10 Distributed) |
+| Claim Consistency | 10% | Pitch vs. reality (Lv.1 Fabricated ... Lv.10 Transparent) |
+| Security Posture | 10% | Security maturity (Lv.1 Negligent ... Lv.10 Military-Grade) |
+
+### Grading
+
+| Score | Grade | Recommendation |
+|-------|-------|---------------|
+| 90-100 | A | Strong investment candidate |
+| 75-89 | B | Viable with conditions |
+| 60-74 | C | Significant concerns |
+| 40-59 | D | High risk |
+| 0-39 | F | Do not invest |
+
+### Pricing
+
+| Plan | API Key | Cost | For |
+|------|---------|------|-----|
+| **BYOK** | Your own | **FREE** | Technical VCs |
+| **SaaS** | Managed | **2x API cost** | Non-technical VCs |
 
 ---
 

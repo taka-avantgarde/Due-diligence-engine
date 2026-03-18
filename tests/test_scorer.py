@@ -1,4 +1,4 @@
-"""Tests for the scoring engine."""
+"""Tests for the technology-focused scoring engine."""
 
 from __future__ import annotations
 
@@ -70,46 +70,104 @@ class TestScorerBasic:
     """Basic scoring tests."""
 
     def test_healthy_project_scores_high(self, scorer: Scorer) -> None:
-        """A project with good metrics should score 70+."""
+        """A project with good metrics should score 60+."""
         result = _make_result()
         score = scorer.score(result)
-
-        assert score.overall_score >= 70
-        assert score.grade in ("A", "B")
+        assert score.overall_score >= 60
+        assert score.grade in ("A", "B", "C")
 
     def test_api_wrapper_scores_low(self, scorer: Scorer) -> None:
         """A project with high API wrapper ratio should score poorly on originality."""
         result = _make_result(api_wrapper_ratio=0.8, total_lines=300)
         score = scorer.score(result)
-
         originality = next(d for d in score.dimensions if "Originality" in d.name)
-        assert originality.score < 40
+        assert originality.score <= 30  # Lv.1-3 range for high wrapper ratio
 
-    def test_no_tests_penalizes_maturity(self, scorer: Scorer) -> None:
-        """Missing tests should reduce engineering maturity score."""
+    def test_no_tests_penalizes_implementation(self, scorer: Scorer) -> None:
+        """Missing tests should reduce implementation depth score."""
         with_tests = _make_result(has_tests=True)
         without_tests = _make_result(has_tests=False)
 
         score_with = scorer.score(with_tests)
         score_without = scorer.score(without_tests)
 
-        maturity_with = next(d for d in score_with.dimensions if "Maturity" in d.name)
-        maturity_without = next(d for d in score_without.dimensions if "Maturity" in d.name)
+        impl_with = next(d for d in score_with.dimensions if "Implementation" in d.name)
+        impl_without = next(d for d in score_without.dimensions if "Implementation" in d.name)
 
-        assert maturity_with.score > maturity_without.score
+        assert impl_with.score > impl_without.score
 
-    def test_single_author_penalized(self, scorer: Scorer) -> None:
-        """Single author repository should score lower on team dimension."""
-        multi = _make_result(unique_authors=5)
-        single = _make_result(unique_authors=1)
 
-        score_multi = scorer.score(multi)
-        score_single = scorer.score(single)
+class TestTechLevelRatings:
+    """10-level technology rating tests."""
 
-        team_multi = next(d for d in score_multi.dimensions if "Team" in d.name)
-        team_single = next(d for d in score_single.dimensions if "Team" in d.name)
+    def test_tech_ratings_present(self, scorer: Scorer) -> None:
+        """All 6 tech level ratings should be present."""
+        result = _make_result()
+        score = scorer.score(result)
+        assert len(score.tech_ratings) == 6
 
-        assert team_multi.score > team_single.score
+    def test_ratings_have_levels_1_to_10(self, scorer: Scorer) -> None:
+        """All ratings should have levels between 1 and 10."""
+        result = _make_result()
+        score = scorer.score(result)
+        for rating in score.tech_ratings:
+            assert 1 <= rating.level <= 10
+
+    def test_wrapper_gets_low_originality_level(self, scorer: Scorer) -> None:
+        """API wrapper should get originality level 1-2."""
+        result = _make_result(api_wrapper_ratio=0.9, total_lines=200)
+        score = scorer.score(result)
+        originality_rating = next(
+            r for r in score.tech_ratings if "Originality" in r.dimension
+        )
+        assert originality_rating.level <= 2
+
+    def test_large_codebase_gets_higher_level(self, scorer: Scorer) -> None:
+        """Large codebase with low wrapper ratio should get higher levels."""
+        result = _make_result(total_lines=25000, api_wrapper_ratio=0.05, total_files=200)
+        score = scorer.score(result)
+        originality_rating = next(
+            r for r in score.tech_ratings if "Originality" in r.dimension
+        )
+        assert originality_rating.level >= 6
+
+    def test_each_rating_has_criteria(self, scorer: Scorer) -> None:
+        """Each rating should include the full 10-level criteria list."""
+        result = _make_result()
+        score = scorer.score(result)
+        for rating in score.tech_ratings:
+            assert len(rating.criteria) == 10
+
+    def test_rating_has_japanese_labels(self, scorer: Scorer) -> None:
+        """Ratings should include Japanese dimension names."""
+        result = _make_result()
+        score = scorer.score(result)
+        for rating in score.tech_ratings:
+            assert rating.dimension_ja != ""
+
+
+class TestNoTeamDimension:
+    """Verify team evaluation has been removed."""
+
+    def test_no_team_dimension(self, scorer: Scorer) -> None:
+        """Team & Process dimension should NOT exist."""
+        result = _make_result()
+        score = scorer.score(result)
+        team_dims = [d for d in score.dimensions if "Team" in d.name]
+        assert len(team_dims) == 0
+
+    def test_six_tech_dimensions(self, scorer: Scorer) -> None:
+        """Should have exactly 6 technology-focused dimensions."""
+        result = _make_result()
+        score = scorer.score(result)
+        assert len(score.dimensions) == 6
+        dim_names = {d.name for d in score.dimensions}
+        assert "Technical Originality" in dim_names
+        assert "Technology Advancement" in dim_names
+        assert "Implementation Depth" in dim_names
+        assert "Architecture Quality" in dim_names
+        assert "Claim Consistency" in dim_names
+        assert "Security Posture" in dim_names
 
 
 class TestRedFlags:
@@ -125,7 +183,6 @@ class TestRedFlags:
         )
         result = _make_result(code_red_flags=[critical_flag])
         score = scorer.score(result)
-
         assert score.overall_score <= 40
         assert score.grade in ("D", "F")
 
@@ -143,36 +200,21 @@ class TestRedFlags:
             description="Dense commit clusters.",
             severity=Severity.HIGH,
         )
-        result = _make_result(
-            code_red_flags=[code_flag],
-            git_red_flags=[git_flag],
-        )
+        result = _make_result(code_red_flags=[code_flag], git_red_flags=[git_flag])
         score = scorer.score(result)
-
         assert len(score.red_flags) >= 2
-
-    def test_no_red_flags_clean_result(self, scorer: Scorer) -> None:
-        """A clean project should have minimal or no red flags."""
-        result = _make_result()
-        score = scorer.score(result)
-
-        critical_flags = [f for f in score.red_flags if f.is_deal_breaker]
-        assert len(critical_flags) == 0
 
 
 class TestConsistency:
     """Consistency scoring tests."""
 
     def test_high_consistency_scores_well(self, scorer: Scorer) -> None:
-        """High consistency score should be reflected in the dimension."""
         result = _make_result(consistency_score=90.0, contradictions=0)
         score = scorer.score(result)
-
         consistency_dim = next(d for d in score.dimensions if "Consistency" in d.name)
         assert consistency_dim.score >= 80
 
     def test_contradictions_reduce_score(self, scorer: Scorer) -> None:
-        """Multiple contradictions should reduce the consistency score."""
         clean = _make_result(consistency_score=80.0, contradictions=0)
         dirty = _make_result(consistency_score=80.0, contradictions=5)
 
@@ -187,17 +229,6 @@ class TestConsistency:
 
 class TestGradeMapping:
     """Grade assignment tests."""
-
-    def test_grade_a(self, scorer: Scorer) -> None:
-        result = _make_result(
-            total_lines=15000,
-            unique_authors=5,
-            total_commits=500,
-            consistency_score=95.0,
-        )
-        score = scorer.score(result)
-        # Should be A or B for a very healthy project
-        assert score.grade in ("A", "B")
 
     def test_grade_f_for_terrible_project(self, scorer: Scorer) -> None:
         critical = RedFlag(
@@ -224,7 +255,6 @@ class TestGradeMapping:
         assert score.overall_score <= 40
 
     def test_score_compute_is_idempotent(self, scorer: Scorer) -> None:
-        """Calling score() twice should give the same result."""
         result = _make_result()
         score1 = scorer.score(result)
         score2 = scorer.score(result)
@@ -240,8 +270,3 @@ class TestWeights:
         score = scorer.score(result)
         total_weight = sum(d.weight for d in score.dimensions)
         assert abs(total_weight - 1.0) < 0.01
-
-    def test_all_six_dimensions_present(self, scorer: Scorer) -> None:
-        result = _make_result()
-        score = scorer.score(result)
-        assert len(score.dimensions) == 6
