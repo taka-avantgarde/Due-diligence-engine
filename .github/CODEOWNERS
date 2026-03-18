@@ -1,0 +1,23 @@
+# Due Diligence Engine - CODEOWNERS
+# All changes require review from @taka-avantgarde
+
+# Default: all files
+* @taka-avantgarde
+
+# Critical: scoring logic (evaluation criteria)
+src/score/ @taka-avantgarde
+templates/evaluation.md @taka-avantgarde
+
+# Critical: billing and pricing
+src/saas/billing.py @taka-avantgarde
+src/config.py @taka-avantgarde
+
+# Critical: security and data handling
+src/purge/ @taka-avantgarde
+src/saas/github_oauth.py @taka-avantgarde
+src/saas/auth.py @taka-avantgarde
+
+# Critical: deployment
+Dockerfile @taka-avantgarde
+firebase.json @taka-avantgarde
+.firebaserc @taka-avantgarde
