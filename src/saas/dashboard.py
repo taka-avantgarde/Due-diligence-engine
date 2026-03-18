@@ -100,52 +100,245 @@ def _render_page(title: str, content: str, scripts: str = "") -> HTMLResponse:
 
 @router.get("/", response_class=HTMLResponse)
 async def landing_page() -> HTMLResponse:
-    """Landing page with GitHub connect button."""
+    """Landing page with URL search bar — paste a GitHub URL and analyze."""
     content = """
-    <div class="flex flex-col items-center justify-center min-h-[60vh]">
-      <div class="text-center max-w-xl">
-        <h1 class="text-4xl font-bold text-white mb-4">Technical Due Diligence</h1>
-        <p class="text-slate-400 text-lg mb-8">
-          AI-powered code analysis for venture capital investment decisions.
-          Connect your GitHub to analyze any repository &mdash; public or private.
+    <div class="flex flex-col items-center justify-center min-h-[70vh]">
+
+      <!-- Hero: Search Bar -->
+      <div class="text-center max-w-2xl w-full">
+        <h1 class="text-5xl font-bold text-white mb-3 tracking-tight">
+          Due Diligence Engine
+        </h1>
+        <p class="text-slate-400 text-lg mb-10">
+          Paste a GitHub URL. Get a technology score in minutes.
         </p>
 
-        <a href="/api/github/connect?user_id=demo_user"
-           class="inline-flex items-center gap-3 bg-slate-800 hover:bg-slate-700
-                  text-white font-semibold px-8 py-4 rounded-xl
-                  border border-slate-600 hover:border-accent
-                  transition-all duration-200 text-lg">
-          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
-          </svg>
-          Connect with GitHub
-        </a>
-
-        <p class="text-slate-600 text-sm mt-6">
-          Your code is encrypted at rest and can be purged at any time.
-        </p>
+        <!-- Search Bar -->
+        <form id="analyze-form" class="relative w-full">
+          <div class="flex items-center bg-slate-900 border-2 border-slate-700
+                      focus-within:border-accent rounded-2xl overflow-hidden
+                      transition-all duration-300 shadow-xl shadow-black/30">
+            <div class="pl-5 text-slate-500">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            <input id="repo-url" type="text"
+                   placeholder="https://github.com/owner/repo"
+                   class="flex-1 bg-transparent text-white text-lg px-4 py-5
+                          outline-none placeholder-slate-600"
+                   autocomplete="off" spellcheck="false" />
+            <button type="submit" id="analyze-btn"
+                    class="bg-accent hover:bg-cyan-400 text-slate-950 font-bold
+                           text-lg px-8 py-5 transition-all duration-200
+                           disabled:opacity-50 disabled:cursor-not-allowed">
+              Analyze
+            </button>
+          </div>
+          <p id="url-hint" class="text-slate-600 text-sm mt-3 text-left pl-2">
+            Public repos: paste URL. Private repos:
+            <a href="/api/github/connect?user_id=demo_user"
+               class="text-accent hover:underline">connect GitHub first</a>.
+          </p>
+        </form>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 w-full max-w-3xl">
-        <div class="bg-surface rounded-xl p-6 border border-slate-800">
-          <div class="text-accent text-2xl mb-3">01</div>
-          <h3 class="font-semibold text-white mb-2">Connect</h3>
-          <p class="text-slate-400 text-sm">Link your GitHub account to grant access to repositories.</p>
+      <!-- Status area (hidden by default) -->
+      <div id="status-area" class="hidden w-full max-w-2xl mt-8">
+        <div class="bg-surface rounded-2xl border border-slate-800 p-8">
+          <div class="flex items-center gap-4 mb-6">
+            <div id="spinner" class="w-8 h-8 border-3 border-accent border-t-transparent
+                        rounded-full animate-spin"></div>
+            <div>
+              <div id="status-text" class="text-white font-semibold">Analyzing...</div>
+              <div id="status-sub" class="text-slate-500 text-sm">This may take a few minutes</div>
+            </div>
+          </div>
+
+          <div class="space-y-3 text-sm">
+            <div id="step-1" class="flex items-center gap-3 text-slate-600">
+              <span class="w-5 text-center">&#9675;</span>
+              <span>Cloning repository</span>
+            </div>
+            <div id="step-2" class="flex items-center gap-3 text-slate-600">
+              <span class="w-5 text-center">&#9675;</span>
+              <span>Code structure analysis (AST, dependencies)</span>
+            </div>
+            <div id="step-3" class="flex items-center gap-3 text-slate-600">
+              <span class="w-5 text-center">&#9675;</span>
+              <span>Git forensics</span>
+            </div>
+            <div id="step-4" class="flex items-center gap-3 text-slate-600">
+              <span class="w-5 text-center">&#9675;</span>
+              <span>AI analysis (Haiku &rarr; Sonnet &rarr; Opus)</span>
+            </div>
+            <div id="step-5" class="flex items-center gap-3 text-slate-600">
+              <span class="w-5 text-center">&#9675;</span>
+              <span>Scoring &amp; report generation</span>
+            </div>
+          </div>
         </div>
-        <div class="bg-surface rounded-xl p-6 border border-slate-800">
-          <div class="text-accent text-2xl mb-3">02</div>
-          <h3 class="font-semibold text-white mb-2">Analyze</h3>
-          <p class="text-slate-400 text-sm">AI scans code quality, git history, claims, and security.</p>
+      </div>
+
+      <!-- 10-Level Tech Rating Preview -->
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-16 w-full max-w-3xl">
+        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
+          <div class="text-accent text-xs font-bold tracking-wider mb-2">ORIGINALITY</div>
+          <div class="text-white font-semibold text-sm mb-1">Lv.1 Copy &mdash; Lv.10 Frontier</div>
+          <p class="text-slate-500 text-xs">API wrapper or genuine IP?</p>
         </div>
-        <div class="bg-surface rounded-xl p-6 border border-slate-800">
-          <div class="text-accent text-2xl mb-3">03</div>
-          <h3 class="font-semibold text-white mb-2">Report</h3>
-          <p class="text-slate-400 text-sm">Get scored results with red flags. Export PDF, then purge.</p>
+        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
+          <div class="text-accent text-xs font-bold tracking-wider mb-2">ADVANCEMENT</div>
+          <div class="text-white font-semibold text-sm mb-1">Lv.1 Legacy &mdash; Lv.10 Visionary</div>
+          <p class="text-slate-500 text-xs">How cutting-edge is the tech?</p>
+        </div>
+        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
+          <div class="text-accent text-xs font-bold tracking-wider mb-2">IMPLEMENTATION</div>
+          <div class="text-white font-semibold text-sm mb-1">Lv.1 Mockup &mdash; Lv.10 Mission-Critical</div>
+          <p class="text-slate-500 text-xs">PoC or production-grade?</p>
+        </div>
+        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
+          <div class="text-accent text-xs font-bold tracking-wider mb-2">ARCHITECTURE</div>
+          <div class="text-white font-semibold text-sm mb-1">Lv.1 Spaghetti &mdash; Lv.10 Distributed</div>
+          <p class="text-slate-500 text-xs">Scalable design?</p>
+        </div>
+        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
+          <div class="text-accent text-xs font-bold tracking-wider mb-2">CONSISTENCY</div>
+          <div class="text-white font-semibold text-sm mb-1">Lv.1 Fabricated &mdash; Lv.10 Transparent</div>
+          <p class="text-slate-500 text-xs">Claims match reality?</p>
+        </div>
+        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
+          <div class="text-accent text-xs font-bold tracking-wider mb-2">SECURITY</div>
+          <div class="text-white font-semibold text-sm mb-1">Lv.1 Negligent &mdash; Lv.10 Military-Grade</div>
+          <p class="text-slate-500 text-xs">Security maturity level?</p>
+        </div>
+      </div>
+
+      <!-- Pricing pills -->
+      <div class="flex flex-col sm:flex-row gap-4 mt-12">
+        <div class="bg-surface rounded-xl px-6 py-4 border border-green-900/50 text-center">
+          <div class="text-green-400 font-bold text-sm">BYOK</div>
+          <div class="text-white text-xl font-bold">FREE</div>
+          <div class="text-slate-500 text-xs">Your own API key</div>
+        </div>
+        <div class="bg-surface rounded-xl px-6 py-4 border border-accent/30 text-center">
+          <div class="text-accent font-bold text-sm">SaaS</div>
+          <div class="text-white text-xl font-bold">2x API Cost</div>
+          <div class="text-slate-500 text-xs">We handle everything</div>
         </div>
       </div>
     </div>
     """
-    return _render_page("Welcome", content)
+
+    scripts = """
+    <script>
+    const form = document.getElementById('analyze-form');
+    const input = document.getElementById('repo-url');
+    const btn = document.getElementById('analyze-btn');
+    const statusArea = document.getElementById('status-area');
+    const statusText = document.getElementById('status-text');
+    const statusSub = document.getElementById('status-sub');
+
+    // Parse GitHub URL to owner/repo
+    function parseGitHubUrl(url) {
+      url = url.trim();
+      // Handle: https://github.com/owner/repo or owner/repo
+      const match = url.match(/(?:https?:\\/\\/)?(?:www\\.)?github\\.com\\/([^/]+)\\/([^/\\s#?.]+)/);
+      if (match) return match[1] + '/' + match[2].replace(/\\.git$/, '');
+      // Already owner/repo format
+      if (/^[a-zA-Z0-9_.-]+\\/[a-zA-Z0-9_.-]+$/.test(url)) return url;
+      return null;
+    }
+
+    function setStep(n, status) {
+      const el = document.getElementById('step-' + n);
+      if (!el) return;
+      const icon = el.querySelector('span');
+      el.className = el.className.replace(/text-\\S+/g, '');
+      if (status === 'done') {
+        el.classList.add('text-green-400');
+        icon.innerHTML = '&#10003;';
+      } else if (status === 'active') {
+        el.classList.add('text-accent');
+        icon.innerHTML = '&#9679;';
+        el.classList.add('animate-pulse');
+      } else {
+        el.classList.add('text-slate-600');
+        icon.innerHTML = '&#9675;';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const repo = parseGitHubUrl(input.value);
+      if (!repo) {
+        input.classList.add('border-red-500');
+        document.getElementById('url-hint').textContent = 'Please enter a valid GitHub URL (e.g., https://github.com/owner/repo)';
+        document.getElementById('url-hint').classList.add('text-red-400');
+        return;
+      }
+
+      // Show status area
+      btn.disabled = true;
+      btn.textContent = 'Analyzing...';
+      input.disabled = true;
+      statusArea.classList.remove('hidden');
+
+      // Simulate progress steps
+      const steps = [
+        { n: 1, label: 'Cloning repository...', delay: 0 },
+        { n: 2, label: 'Analyzing code structure...', delay: 2000 },
+        { n: 3, label: 'Running git forensics...', delay: 4000 },
+        { n: 4, label: 'AI analysis in progress...', delay: 6000 },
+        { n: 5, label: 'Generating report...', delay: 10000 },
+      ];
+
+      for (const step of steps) {
+        setTimeout(() => {
+          if (step.n > 1) setStep(step.n - 1, 'done');
+          setStep(step.n, 'active');
+          statusText.textContent = step.label;
+        }, step.delay);
+      }
+
+      // POST to analyze endpoint
+      try {
+        const resp = await fetch('/api/v1/analyze/url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ repo_url: repo }),
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          window.location.href = '/dashboard/analysis/' + data.analysis_id;
+        } else if (resp.status === 422 || resp.status === 400) {
+          const err = await resp.json();
+          statusText.textContent = 'Error: ' + (err.detail || 'Analysis failed');
+          statusSub.textContent = 'Please check the URL and try again.';
+          document.getElementById('spinner').classList.add('hidden');
+          btn.disabled = false;
+          btn.textContent = 'Analyze';
+          input.disabled = false;
+        } else {
+          throw new Error('HTTP ' + resp.status);
+        }
+      } catch (err) {
+        statusText.textContent = 'Error: ' + err.message;
+        statusSub.textContent = 'Please try again.';
+        document.getElementById('spinner').classList.add('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Analyze';
+        input.disabled = false;
+      }
+    });
+
+    // Focus the input on page load
+    input.focus();
+    </script>
+    """
+    return _render_page("Due Diligence Engine", content, scripts)
 
 
 # ---------------------------------------------------------------------------

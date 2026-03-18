@@ -528,6 +528,91 @@ async def analyze_github_repo(
         raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
 
 
+class AnalyzeUrlRequest(BaseModel):
+    repo_url: str
+
+
+@app.post("/api/v1/analyze/url")
+async def analyze_url(
+    request: AnalyzeUrlRequest,
+    config: Config = Depends(get_app_config),
+) -> dict:
+    """Analyze a public GitHub repository by URL.
+
+    Just paste a GitHub URL — no API key required for public repos.
+    This is the endpoint the web search bar uses.
+    """
+    import re
+    import uuid
+
+    repo_url = request.repo_url.strip()
+
+    # Parse owner/repo from URL or direct format
+    match = re.match(
+        r"(?:https?://)?(?:www\.)?github\.com/([^/]+)/([^/\s#?.]+)",
+        repo_url,
+    )
+    if match:
+        owner_repo = f"{match.group(1)}/{match.group(2).rstrip('.git')}"
+    elif re.match(r"^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$", repo_url):
+        owner_repo = repo_url
+    else:
+        raise HTTPException(status_code=400, detail="Invalid GitHub URL")
+
+    analysis_id = uuid.uuid4().hex[:16]
+
+    # Store as running
+    store_analysis(analysis_id, {
+        "status": "running",
+        "connection_id": "",
+        "result": None,
+        "purge_cert": None,
+    })
+
+    # Clone and analyze
+    loader = SecureLoader(config)
+    try:
+        clone_url = f"https://github.com/{owner_repo}.git"
+        loader.load_from_url(clone_url)
+
+        engine = AnalysisEngine(config, loader)
+        repo_path = loader.cloned_repo_path
+        result = engine.run(
+            project_name=owner_repo,
+            repo_path=repo_path,
+        )
+        result.analysis_id = analysis_id
+
+        # Generate reports
+        report_gen = ReportGenerator()
+        report_gen.save_report(result, config.output_dir)
+
+        # Store completed
+        store_analysis(analysis_id, {
+            "status": "completed",
+            "connection_id": "",
+            "result": result,
+            "purge_cert": None,
+        })
+
+        return {"analysis_id": analysis_id, "status": "completed"}
+
+    except Exception as e:
+        logger.error(f"URL analysis failed for {owner_repo}: {e}")
+
+        # Still run local-only analysis if clone fails
+        store_analysis(analysis_id, {
+            "status": "error",
+            "connection_id": "",
+            "result": None,
+            "purge_cert": None,
+            "error": str(e),
+        })
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
+    finally:
+        loader.destroy()
+
+
 @app.get("/api/report/{analysis_id}/pdf")
 async def download_pdf_report(analysis_id: str) -> Response:
     """Generate and download a PDF report for a completed analysis.
