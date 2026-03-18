@@ -74,7 +74,10 @@ tailwind.config = {{
   <nav class="border-b border-slate-800 px-6 py-4">
     <div class="max-w-5xl mx-auto flex items-center justify-between">
       <a href="/dashboard/" class="text-accent font-bold text-lg tracking-wide">DUE DILIGENCE ENGINE</a>
-      <div class="text-sm text-slate-500">Technical DD for VCs</div>
+      <div class="flex items-center gap-4">
+        <button id="lang-toggle" onclick="toggleLang()" class="text-xs border border-slate-700 rounded-lg px-3 py-1 text-slate-400 hover:text-white hover:border-accent transition-all">EN / JA</button>
+        <div class="text-sm text-slate-500" data-en="Technical DD for VCs" data-ja="VC&#21521;&#12369;&#25216;&#34899;DD">Technical DD for VCs</div>
+      </div>
     </div>
   </nav>
   <main class="max-w-5xl mx-auto px-6 py-8">
@@ -100,249 +103,194 @@ def _render_page(title: str, content: str, scripts: str = "") -> HTMLResponse:
 
 @router.get("/", response_class=HTMLResponse)
 async def landing_page() -> HTMLResponse:
-    """Landing page with URL search bar — paste a GitHub URL and analyze."""
-    content = """
-    <div class="flex flex-col items-center justify-center min-h-[70vh]">
+    """Landing page with URL search bar and language toggle."""
+    # Using a completely separate HTML to avoid Python string escaping issues with JS regex
+    html = _build_landing_html()
+    return HTMLResponse(content=html)
 
-      <!-- Hero: Search Bar -->
-      <div class="text-center max-w-2xl w-full">
-        <h1 class="text-5xl font-bold text-white mb-3 tracking-tight">
-          Due Diligence Engine
-        </h1>
-        <p class="text-slate-400 text-lg mb-10">
-          Paste a GitHub URL. Get a technology score in minutes.
-        </p>
 
-        <!-- Search Bar -->
-        <form id="analyze-form" class="relative w-full">
-          <div class="flex items-center bg-slate-900 border-2 border-slate-700
-                      focus-within:border-accent rounded-2xl overflow-hidden
-                      transition-all duration-300 shadow-xl shadow-black/30">
-            <div class="pl-5 text-slate-500">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-              </svg>
-            </div>
-            <input id="repo-url" type="text"
-                   placeholder="https://github.com/owner/repo"
-                   class="flex-1 bg-transparent text-white text-lg px-4 py-5
-                          outline-none placeholder-slate-600"
-                   autocomplete="off" spellcheck="false" />
-            <button type="submit" id="analyze-btn"
-                    class="bg-accent hover:bg-cyan-400 text-slate-950 font-bold
-                           text-lg px-8 py-5 transition-all duration-200
-                           disabled:opacity-50 disabled:cursor-not-allowed">
-              Analyze
-            </button>
-          </div>
-          <p id="url-hint" class="text-slate-600 text-sm mt-3 text-left pl-2">
-            Public repos: paste URL. Private repos:
-            <a href="/api/github/connect?user_id=demo_user"
-               class="text-accent hover:underline">connect GitHub first</a>.
-          </p>
-        </form>
-      </div>
-
-      <!-- Status area (hidden by default) -->
-      <div id="status-area" class="hidden w-full max-w-2xl mt-8">
-        <div class="bg-surface rounded-2xl border border-slate-800 p-8">
-          <div class="flex items-center gap-4 mb-6">
-            <div id="spinner" class="w-8 h-8 border-3 border-accent border-t-transparent
-                        rounded-full animate-spin"></div>
-            <div>
-              <div id="status-text" class="text-white font-semibold">Analyzing...</div>
-              <div id="status-sub" class="text-slate-500 text-sm">This may take a few minutes</div>
-            </div>
-          </div>
-
-          <div class="space-y-3 text-sm">
-            <div id="step-1" class="flex items-center gap-3 text-slate-600">
-              <span class="w-5 text-center">&#9675;</span>
-              <span>Cloning repository</span>
-            </div>
-            <div id="step-2" class="flex items-center gap-3 text-slate-600">
-              <span class="w-5 text-center">&#9675;</span>
-              <span>Code structure analysis (AST, dependencies)</span>
-            </div>
-            <div id="step-3" class="flex items-center gap-3 text-slate-600">
-              <span class="w-5 text-center">&#9675;</span>
-              <span>Git forensics</span>
-            </div>
-            <div id="step-4" class="flex items-center gap-3 text-slate-600">
-              <span class="w-5 text-center">&#9675;</span>
-              <span>AI analysis (Haiku &rarr; Sonnet &rarr; Opus)</span>
-            </div>
-            <div id="step-5" class="flex items-center gap-3 text-slate-600">
-              <span class="w-5 text-center">&#9675;</span>
-              <span>Scoring &amp; report generation</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 10-Level Tech Rating Preview -->
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-16 w-full max-w-3xl">
-        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
-          <div class="text-accent text-xs font-bold tracking-wider mb-2">ORIGINALITY</div>
-          <div class="text-white font-semibold text-sm mb-1">Lv.1 Copy &mdash; Lv.10 Frontier</div>
-          <p class="text-slate-500 text-xs">API wrapper or genuine IP?</p>
-        </div>
-        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
-          <div class="text-accent text-xs font-bold tracking-wider mb-2">ADVANCEMENT</div>
-          <div class="text-white font-semibold text-sm mb-1">Lv.1 Legacy &mdash; Lv.10 Visionary</div>
-          <p class="text-slate-500 text-xs">How cutting-edge is the tech?</p>
-        </div>
-        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
-          <div class="text-accent text-xs font-bold tracking-wider mb-2">IMPLEMENTATION</div>
-          <div class="text-white font-semibold text-sm mb-1">Lv.1 Mockup &mdash; Lv.10 Mission-Critical</div>
-          <p class="text-slate-500 text-xs">PoC or production-grade?</p>
-        </div>
-        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
-          <div class="text-accent text-xs font-bold tracking-wider mb-2">ARCHITECTURE</div>
-          <div class="text-white font-semibold text-sm mb-1">Lv.1 Spaghetti &mdash; Lv.10 Distributed</div>
-          <p class="text-slate-500 text-xs">Scalable design?</p>
-        </div>
-        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
-          <div class="text-accent text-xs font-bold tracking-wider mb-2">CONSISTENCY</div>
-          <div class="text-white font-semibold text-sm mb-1">Lv.1 Fabricated &mdash; Lv.10 Transparent</div>
-          <p class="text-slate-500 text-xs">Claims match reality?</p>
-        </div>
-        <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">
-          <div class="text-accent text-xs font-bold tracking-wider mb-2">SECURITY</div>
-          <div class="text-white font-semibold text-sm mb-1">Lv.1 Negligent &mdash; Lv.10 Military-Grade</div>
-          <p class="text-slate-500 text-xs">Security maturity level?</p>
-        </div>
-      </div>
-
-      <!-- Pricing pills -->
-      <div class="flex flex-col sm:flex-row gap-4 mt-12">
-        <div class="bg-surface rounded-xl px-6 py-4 border border-green-900/50 text-center">
-          <div class="text-green-400 font-bold text-sm">BYOK</div>
-          <div class="text-white text-xl font-bold">FREE</div>
-          <div class="text-slate-500 text-xs">Your own API key</div>
-        </div>
-        <div class="bg-surface rounded-xl px-6 py-4 border border-accent/30 text-center">
-          <div class="text-accent font-bold text-sm">SaaS</div>
-          <div class="text-white text-xl font-bold">2x API Cost</div>
-          <div class="text-slate-500 text-xs">We handle everything</div>
-        </div>
-      </div>
-    </div>
-    """
-
-    scripts = """
-    <script>
-    const form = document.getElementById('analyze-form');
-    const input = document.getElementById('repo-url');
-    const btn = document.getElementById('analyze-btn');
-    const statusArea = document.getElementById('status-area');
-    const statusText = document.getElementById('status-text');
-    const statusSub = document.getElementById('status-sub');
-
-    // Parse GitHub URL to owner/repo
-    function parseGitHubUrl(url) {
-      url = url.trim();
-      if (!url) return null;
-      // Remove trailing slashes
-      url = url.replace(/\/+$/, '');
-      // Handle full GitHub URLs
-      var m = url.match(/github[.]com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)/);
-      if (m) return m[1] + '/' + m[2].replace(/[.]git$/, '');
-      // Handle owner/repo format
-      var m2 = url.match(/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/);
-      if (m2) return m2[1] + '/' + m2[2];
-      return null;
-    }
-
-    function setStep(n, status) {
-      const el = document.getElementById('step-' + n);
-      if (!el) return;
-      const icon = el.querySelector('span');
-      el.className = el.className.replace(/text-[a-z]+-[0-9]+/g, '').replace(/text-accent/g, '').replace(/text-slate-600/g, '');
-      if (status === 'done') {
-        el.classList.add('text-green-400');
-        icon.innerHTML = '&#10003;';
-      } else if (status === 'active') {
-        el.classList.add('text-accent');
-        icon.innerHTML = '&#9679;';
-        el.classList.add('animate-pulse');
-      } else {
-        el.classList.add('text-slate-600');
-        icon.innerHTML = '&#9675;';
-      }
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const repo = parseGitHubUrl(input.value);
-      if (!repo) {
-        input.classList.add('border-red-500');
-        document.getElementById('url-hint').textContent = 'Please enter a valid GitHub URL (e.g., https://github.com/owner/repo)';
-        document.getElementById('url-hint').classList.add('text-red-400');
-        return;
-      }
-
-      // Show status area
-      btn.disabled = true;
-      btn.textContent = 'Analyzing...';
-      input.disabled = true;
-      statusArea.classList.remove('hidden');
-
-      // Simulate progress steps
-      const steps = [
-        { n: 1, label: 'Cloning repository...', delay: 0 },
-        { n: 2, label: 'Analyzing code structure...', delay: 2000 },
-        { n: 3, label: 'Running git forensics...', delay: 4000 },
-        { n: 4, label: 'AI analysis in progress...', delay: 6000 },
-        { n: 5, label: 'Generating report...', delay: 10000 },
-      ];
-
-      for (const step of steps) {
-        setTimeout(() => {
-          if (step.n > 1) setStep(step.n - 1, 'done');
-          setStep(step.n, 'active');
-          statusText.textContent = step.label;
-        }, step.delay);
-      }
-
-      // POST to analyze endpoint
-      try {
-        const resp = await fetch('/api/v1/analyze/url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ repo_url: repo }),
-        });
-
-        if (resp.ok) {
-          const data = await resp.json();
-          window.location.href = '/dashboard/analysis/' + data.analysis_id;
-        } else if (resp.status === 422 || resp.status === 400) {
-          const err = await resp.json();
-          statusText.textContent = 'Error: ' + (err.detail || 'Analysis failed');
-          statusSub.textContent = 'Please check the URL and try again.';
-          document.getElementById('spinner').classList.add('hidden');
-          btn.disabled = false;
-          btn.textContent = 'Analyze';
-          input.disabled = false;
-        } else {
-          throw new Error('HTTP ' + resp.status);
-        }
-      } catch (err) {
-        statusText.textContent = 'Error: ' + err.message;
-        statusSub.textContent = 'Please try again.';
-        document.getElementById('spinner').classList.add('hidden');
-        btn.disabled = false;
-        btn.textContent = 'Analyze';
-        input.disabled = false;
-      }
-    });
-
-    // Focus the input on page load
-    input.focus();
-    </script>
-    """
-    return _render_page("Due Diligence Engine", content, scripts)
+def _build_landing_html() -> str:
+    """Build the landing page HTML as a complete document."""
+    return (
+        '<!DOCTYPE html>\n'
+        '<html lang="en">\n'
+        '<head>\n'
+        '<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+        '<title>Due Diligence Engine</title>\n'
+        '<script src="https://cdn.tailwindcss.com"></script>\n'
+        '<script>\n'
+        'tailwind.config = { theme: { extend: { colors: { surface: "#1e293b", accent: "#38bdf8" } } } }\n'
+        '</script>\n'
+        '<style>body { font-family: "Inter", system-ui, -apple-system, sans-serif; }</style>\n'
+        '</head>\n'
+        '<body class="bg-slate-950 text-slate-200 min-h-screen">\n'
+        '<nav class="border-b border-slate-800 px-6 py-4">\n'
+        '  <div class="max-w-5xl mx-auto flex items-center justify-between">\n'
+        '    <a href="/dashboard/" class="text-accent font-bold text-lg tracking-wide">DUE DILIGENCE ENGINE</a>\n'
+        '    <div class="flex items-center gap-4">\n'
+        '      <button id="lang-toggle" class="text-xs border border-slate-700 rounded-lg px-3 py-1.5 text-slate-400 hover:text-white hover:border-accent transition-all cursor-pointer">EN / JA</button>\n'
+        '    </div>\n'
+        '  </div>\n'
+        '</nav>\n'
+        '<main class="max-w-5xl mx-auto px-6 py-8">\n'
+        '  <div class="flex flex-col items-center justify-center min-h-[70vh]">\n'
+        '    <div class="text-center max-w-2xl w-full">\n'
+        '      <h1 class="text-5xl font-bold text-white mb-3 tracking-tight">Due Diligence Engine</h1>\n'
+        '      <p id="hero-sub" class="text-slate-400 text-lg mb-10" data-en="Paste a GitHub URL. Get a technology score in minutes." data-ja="GitHub URL&#12434;&#36028;&#12427;&#12384;&#12369;&#12290;&#25968;&#20998;&#12391;&#25216;&#34899;&#12473;&#12467;&#12450;&#12434;&#21462;&#24471;&#12290;">Paste a GitHub URL. Get a technology score in minutes.</p>\n'
+        '      <form id="analyze-form" class="relative w-full">\n'
+        '        <div class="flex items-center bg-slate-900 border-2 border-slate-700 focus-within:border-accent rounded-2xl overflow-hidden transition-all duration-300 shadow-xl shadow-black/30">\n'
+        '          <div class="pl-5 text-slate-500">\n'
+        '            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>\n'
+        '          </div>\n'
+        '          <input id="repo-url" type="text" placeholder="https://github.com/owner/repo" class="flex-1 bg-transparent text-white text-lg px-4 py-5 outline-none placeholder-slate-600" autocomplete="off" spellcheck="false" />\n'
+        '          <button type="submit" id="analyze-btn" class="bg-accent hover:bg-cyan-400 text-slate-950 font-bold text-lg px-8 py-5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" data-en="Analyze" data-ja="&#20998;&#26512;">Analyze</button>\n'
+        '        </div>\n'
+        '        <p id="url-hint" class="text-slate-600 text-sm mt-3 text-left pl-2" data-en="Public repos: paste URL directly. Private repos: connect GitHub first." data-ja="&#20844;&#38283;&#12522;&#12509;: URL&#12434;&#36028;&#12427;&#12384;&#12369;&#12290;Private&#12522;&#12509;: &#20808;&#12395;GitHub&#36899;&#25658;&#12364;&#24517;&#35201;&#12391;&#12377;&#12290;">Public repos: paste URL directly. Private repos: connect GitHub first.</p>\n'
+        '      </form>\n'
+        '    </div>\n'
+        '    <div id="status-area" class="hidden w-full max-w-2xl mt-8">\n'
+        '      <div class="bg-surface rounded-2xl border border-slate-800 p-8">\n'
+        '        <div class="flex items-center gap-4 mb-6">\n'
+        '          <div id="spinner" class="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>\n'
+        '          <div>\n'
+        '            <div id="status-text" class="text-white font-semibold">Analyzing...</div>\n'
+        '            <div id="status-sub" class="text-slate-500 text-sm">This may take 1-2 minutes</div>\n'
+        '          </div>\n'
+        '        </div>\n'
+        '        <div class="space-y-3 text-sm" id="steps">\n'
+        '          <div class="flex items-center gap-3 text-slate-600"><span class="w-5 text-center">&#9675;</span><span data-en="Cloning repository" data-ja="&#12522;&#12509;&#12472;&#12488;&#12522;&#12434;&#12463;&#12525;&#12540;&#12531;&#20013;">Cloning repository</span></div>\n'
+        '          <div class="flex items-center gap-3 text-slate-600"><span class="w-5 text-center">&#9675;</span><span data-en="Code structure analysis" data-ja="&#12467;&#12540;&#12489;&#27083;&#36896;&#35299;&#26512;">Code structure analysis</span></div>\n'
+        '          <div class="flex items-center gap-3 text-slate-600"><span class="w-5 text-center">&#9675;</span><span data-en="Git forensics" data-ja="Git&#23653;&#27508;&#12501;&#12457;&#12524;&#12531;&#12472;&#12483;&#12463;">Git forensics</span></div>\n'
+        '          <div class="flex items-center gap-3 text-slate-600"><span class="w-5 text-center">&#9675;</span><span data-en="AI analysis (Haiku &#8594; Sonnet &#8594; Opus)" data-ja="AI&#20998;&#26512; (Haiku &#8594; Sonnet &#8594; Opus)">AI analysis (Haiku &#8594; Sonnet &#8594; Opus)</span></div>\n'
+        '          <div class="flex items-center gap-3 text-slate-600"><span class="w-5 text-center">&#9675;</span><span data-en="Scoring &amp; report" data-ja="&#12473;&#12467;&#12450;&#12522;&#12531;&#12464; &amp; &#12524;&#12509;&#12540;&#12488;&#29983;&#25104;">Scoring &amp; report</span></div>\n'
+        '        </div>\n'
+        '      </div>\n'
+        '    </div>\n'
+        '    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-16 w-full max-w-3xl">\n'
+        '      <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">\n'
+        '        <div class="text-accent text-xs font-bold tracking-wider mb-2" data-en="ORIGINALITY" data-ja="&#25216;&#34899;&#29420;&#33258;&#24615;">ORIGINALITY</div>\n'
+        '        <div class="text-white font-semibold text-sm mb-1">Lv.1 Copy &mdash; Lv.10 Frontier</div>\n'
+        '        <p class="text-slate-500 text-xs" data-en="API wrapper or genuine IP?" data-ja="API&#12521;&#12483;&#12497;&#12540;&#12363;&#26412;&#29289;&#12398;IP&#12363;&#65311;">API wrapper or genuine IP?</p>\n'
+        '      </div>\n'
+        '      <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">\n'
+        '        <div class="text-accent text-xs font-bold tracking-wider mb-2" data-en="ADVANCEMENT" data-ja="&#25216;&#34899;&#20808;&#36914;&#24615;">ADVANCEMENT</div>\n'
+        '        <div class="text-white font-semibold text-sm mb-1">Lv.1 Legacy &mdash; Lv.10 Visionary</div>\n'
+        '        <p class="text-slate-500 text-xs" data-en="How cutting-edge is the tech?" data-ja="&#25216;&#34899;&#12399;&#12393;&#12428;&#12411;&#12393;&#20808;&#36914;&#30340;&#12363;&#65311;">How cutting-edge is the tech?</p>\n'
+        '      </div>\n'
+        '      <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">\n'
+        '        <div class="text-accent text-xs font-bold tracking-wider mb-2" data-en="IMPLEMENTATION" data-ja="&#23455;&#35013;&#28145;&#24230;">IMPLEMENTATION</div>\n'
+        '        <div class="text-white font-semibold text-sm mb-1">Lv.1 Mockup &mdash; Lv.10 Mission-Critical</div>\n'
+        '        <p class="text-slate-500 text-xs" data-en="PoC or production-grade?" data-ja="PoC&#12363;&#26412;&#30058;&#21697;&#36074;&#12363;&#65311;">PoC or production-grade?</p>\n'
+        '      </div>\n'
+        '      <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">\n'
+        '        <div class="text-accent text-xs font-bold tracking-wider mb-2" data-en="ARCHITECTURE" data-ja="&#12450;&#12540;&#12461;&#12486;&#12463;&#12481;&#12515;">ARCHITECTURE</div>\n'
+        '        <div class="text-white font-semibold text-sm mb-1">Lv.1 Spaghetti &mdash; Lv.10 Distributed</div>\n'
+        '        <p class="text-slate-500 text-xs" data-en="Scalable design?" data-ja="&#12473;&#12465;&#12540;&#12521;&#12502;&#12523;&#12394;&#35373;&#35336;&#12363;&#65311;">Scalable design?</p>\n'
+        '      </div>\n'
+        '      <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">\n'
+        '        <div class="text-accent text-xs font-bold tracking-wider mb-2" data-en="CONSISTENCY" data-ja="&#20027;&#24373;&#25972;&#21512;&#24615;">CONSISTENCY</div>\n'
+        '        <div class="text-white font-semibold text-sm mb-1">Lv.1 Fabricated &mdash; Lv.10 Transparent</div>\n'
+        '        <p class="text-slate-500 text-xs" data-en="Claims match reality?" data-ja="&#20027;&#24373;&#12392;&#29694;&#23455;&#12399;&#19968;&#33268;&#12375;&#12390;&#12356;&#12427;&#12363;&#65311;">Claims match reality?</p>\n'
+        '      </div>\n'
+        '      <div class="bg-surface rounded-xl p-5 border border-slate-800 hover:border-accent/30 transition-all">\n'
+        '        <div class="text-accent text-xs font-bold tracking-wider mb-2" data-en="SECURITY" data-ja="&#12475;&#12461;&#12517;&#12522;&#12486;&#12451;">SECURITY</div>\n'
+        '        <div class="text-white font-semibold text-sm mb-1">Lv.1 Negligent &mdash; Lv.10 Military-Grade</div>\n'
+        '        <p class="text-slate-500 text-xs" data-en="Security maturity level?" data-ja="&#12475;&#12461;&#12517;&#12522;&#12486;&#12451;&#25104;&#29087;&#24230;&#12399;&#65311;">Security maturity level?</p>\n'
+        '      </div>\n'
+        '    </div>\n'
+        '    <div class="flex flex-col sm:flex-row gap-4 mt-12">\n'
+        '      <div class="bg-surface rounded-xl px-6 py-4 border border-green-900/50 text-center">\n'
+        '        <div class="text-green-400 font-bold text-sm">BYOK</div>\n'
+        '        <div class="text-white text-xl font-bold">FREE</div>\n'
+        '        <div class="text-slate-500 text-xs" data-en="Your own API key" data-ja="&#33258;&#31038;API&#12461;&#12540;">Your own API key</div>\n'
+        '      </div>\n'
+        '      <div class="bg-surface rounded-xl px-6 py-4 border border-accent/30 text-center">\n'
+        '        <div class="text-accent font-bold text-sm">SaaS</div>\n'
+        '        <div class="text-white text-xl font-bold">2x API Cost</div>\n'
+        '        <div class="text-slate-500 text-xs" data-en="We handle everything" data-ja="&#20840;&#12390;&#12362;&#20219;&#12379;">We handle everything</div>\n'
+        '      </div>\n'
+        '    </div>\n'
+        '  </div>\n'
+        '</main>\n'
+        '<footer class="border-t border-slate-800 mt-12 py-6 text-center text-xs text-slate-600">\n'
+        '  CONFIDENTIAL &mdash; Due Diligence Engine v0.1.0\n'
+        '</footer>\n'
+        '<script>\n'
+        'var currentLang = "en";\n'
+        'function toggleLang() {\n'
+        '  currentLang = currentLang === "en" ? "ja" : "en";\n'
+        '  document.querySelectorAll("[data-" + currentLang + "]").forEach(function(el) {\n'
+        '    el.textContent = el.getAttribute("data-" + currentLang);\n'
+        '  });\n'
+        '  document.getElementById("lang-toggle").textContent = currentLang === "en" ? "EN / JA" : "JA / EN";\n'
+        '}\n'
+        'document.getElementById("lang-toggle").addEventListener("click", toggleLang);\n'
+        '\n'
+        'function parseUrl(raw) {\n'
+        '  if (!raw) return null;\n'
+        '  raw = raw.trim();\n'
+        '  var idx = raw.indexOf("github.com/");\n'
+        '  if (idx >= 0) {\n'
+        '    var after = raw.substring(idx + 11);\n'
+        '    var parts = after.split("/");\n'
+        '    if (parts.length >= 2 && parts[0] && parts[1]) {\n'
+        '      var repo = parts[1].replace(".git", "");\n'
+        '      return parts[0] + "/" + repo;\n'
+        '    }\n'
+        '  }\n'
+        '  var slash = raw.indexOf("/");\n'
+        '  if (slash > 0 && slash < raw.length - 1 && raw.indexOf(" ") < 0 && raw.indexOf(":") < 0) {\n'
+        '    return raw;\n'
+        '  }\n'
+        '  return null;\n'
+        '}\n'
+        '\n'
+        'var form = document.getElementById("analyze-form");\n'
+        'var inp = document.getElementById("repo-url");\n'
+        'var btn = document.getElementById("analyze-btn");\n'
+        'var statusArea = document.getElementById("status-area");\n'
+        'var statusText = document.getElementById("status-text");\n'
+        'var statusSub = document.getElementById("status-sub");\n'
+        '\n'
+        'form.addEventListener("submit", function(e) {\n'
+        '  e.preventDefault();\n'
+        '  var repo = parseUrl(inp.value);\n'
+        '  if (!repo) {\n'
+        '    document.getElementById("url-hint").textContent = currentLang === "ja" ? "GitHub URL\\u3092\\u5165\\u529b\\u3057\\u3066\\u304f\\u3060\\u3055\\u3044 (\\u4f8b: https://github.com/owner/repo)" : "Please enter a valid GitHub URL (e.g., https://github.com/owner/repo)";\n'
+        '    document.getElementById("url-hint").style.color = "#f87171";\n'
+        '    return;\n'
+        '  }\n'
+        '  btn.disabled = true;\n'
+        '  btn.textContent = currentLang === "ja" ? "\\u5206\\u6790\\u4e2d..." : "Analyzing...";\n'
+        '  inp.disabled = true;\n'
+        '  statusArea.style.display = "block";\n'
+        '  statusArea.classList.remove("hidden");\n'
+        '  statusText.textContent = currentLang === "ja" ? "\\u30ea\\u30dd\\u30b8\\u30c8\\u30ea\\u3092\\u30af\\u30ed\\u30fc\\u30f3\\u4e2d..." : "Cloning repository...";\n'
+        '\n'
+        '  fetch("/api/v1/analyze/url", {\n'
+        '    method: "POST",\n'
+        '    headers: {"Content-Type": "application/json"},\n'
+        '    body: JSON.stringify({repo_url: repo})\n'
+        '  }).then(function(resp) {\n'
+        '    if (resp.ok) return resp.json();\n'
+        '    return resp.json().then(function(err) { throw new Error(err.detail || "Analysis failed"); });\n'
+        '  }).then(function(data) {\n'
+        '    window.location.href = "/dashboard/analysis/" + data.analysis_id;\n'
+        '  }).catch(function(err) {\n'
+        '    statusText.textContent = "Error: " + err.message;\n'
+        '    statusSub.textContent = currentLang === "ja" ? "\\u3082\\u3046\\u4e00\\u5ea6\\u304a\\u8a66\\u3057\\u304f\\u3060\\u3055\\u3044" : "Please try again.";\n'
+        '    btn.disabled = false;\n'
+        '    btn.textContent = currentLang === "ja" ? "\\u5206\\u6790" : "Analyze";\n'
+        '    inp.disabled = false;\n'
+        '  });\n'
+        '});\n'
+        '\n'
+        'inp.focus();\n'
+        '</script>\n'
+        '</body>\n'
+        '</html>\n'
+    )
 
 
 # ---------------------------------------------------------------------------
