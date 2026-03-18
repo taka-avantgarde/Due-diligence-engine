@@ -599,6 +599,7 @@ class AnalyzeUrlRequest(BaseModel):
     repo_url: str
     pat_token: str | None = None
     api_keys: dict[str, str] | None = None  # {"claude": "sk-...", "gemini": "...", "chatgpt": "sk-..."}
+    pro_analysis: bool = False  # True: 有料プラン（¥5,000/回、サーバー側Claude+Geminiで分析）
 
 
 def _validate_pat(token: str) -> None:
@@ -692,8 +693,22 @@ async def analyze_url(
     try:
         loader.load_from_url(clone_url)
 
-        # BYOKキーのバリデーション・サニタイズ
-        byok_keys = _validate_api_keys(request.api_keys) if request.api_keys else None
+        # APIキーの決定: Pro分析 > BYOK > 環境変数
+        if request.pro_analysis:
+            # 有料プラン: サーバー側のClaude + Geminiキーを使用
+            # TODO: Stripe決済確認をここに挟む（Stripe設定後）
+            pro_keys = config.get_ai_api_keys()
+            # Pro分析はClaude + Geminiの2社に限定
+            pro_keys = {k: v for k, v in pro_keys.items() if k in ("claude", "gemini")}
+            if not pro_keys:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Pro Analysis is not available. Server AI keys are not configured.",
+                )
+            byok_keys = pro_keys
+            logger.info(f"Pro Analysis mode: using server-side keys ({list(pro_keys.keys())})")
+        else:
+            byok_keys = _validate_api_keys(request.api_keys) if request.api_keys else None
 
         engine = AnalysisEngine(config, loader, api_keys=byok_keys)
         repo_path = loader.cloned_repo_path
