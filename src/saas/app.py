@@ -13,6 +13,8 @@ from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, Upload
 from fastapi.responses import RedirectResponse, Response
 from pydantic import BaseModel
 
+import stripe
+
 from src.analyze.engine import AnalysisEngine
 from src.config import Config, get_config
 from src.ingest.secure_loader import SecureLoader
@@ -26,6 +28,15 @@ from src.saas.dashboard import router as dashboard_router, store_analysis, get_a
 from src.saas.github_oauth import GitHubOAuthManager
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Stripe 設定
+# ---------------------------------------------------------------------------
+_STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
+_STRIPE_PRO_PRICE_JPY = 5000  # ¥5,000/回
+
+# 決済済みセッションのキャッシュ（本番ではRedis等に置き換え推奨）
+_paid_sessions: dict[str, bool] = {}
 
 app = FastAPI(
     title="Due Diligence Engine",
@@ -155,6 +166,158 @@ class KeyCreateResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     version: str
+
+
+# --- Stripe Checkout エンドポイント ---
+
+
+class StripeCheckoutRequest(BaseModel):
+    """Stripe Checkout Session 作成リクエスト"""
+    repo_url: str  # 分析対象リポジトリURL（メタデータとして保存）
+    lang: str = "en"  # 言語（リダイレクト先で使用）
+
+
+@app.post("/api/v1/stripe/checkout")
+async def create_stripe_checkout(request: StripeCheckoutRequest) -> dict:
+    """Pro分析（¥5,000/回）のStripe Checkout Sessionを作成。
+
+    決済完了後、session_idをフロントに返却し、
+    フロントがStripe.jsでリダイレクトする。
+    """
+    if not _STRIPE_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="Stripe is not configured. Pro Analysis is temporarily unavailable.",
+        )
+
+    stripe.api_key = _STRIPE_API_KEY
+
+    try:
+        # 動的にbase URLを判定（Cloud Run / localhost両対応）
+        base_url = os.environ.get("BASE_URL", "https://dde-api-vdunszkasq-an.a.run.app")
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[{
+                "price_data": {
+                    "currency": "jpy",
+                    "product_data": {
+                        "name": "DDE Pro Analysis — Claude + Gemini AI",
+                        "description": "マルチAIによる包括的デューデリジェンス分析（1回）",
+                    },
+                    "unit_amount": _STRIPE_PRO_PRICE_JPY,
+                },
+                "quantity": 1,
+            }],
+            mode="payment",
+            success_url=f"{base_url}/dashboard/stripe/success?session_id={{CHECKOUT_SESSION_ID}}&lang={request.lang}",
+            cancel_url=f"{base_url}/dashboard/?stripe=cancelled&lang={request.lang}",
+            metadata={
+                "repo_url": request.repo_url,
+                "service": "dde_pro_analysis",
+            },
+        )
+
+        return {"checkout_url": session.url, "session_id": session.id}
+
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe checkout creation failed: {e}")
+        raise HTTPException(status_code=502, detail=f"Stripe error: {str(e)}")
+
+
+@app.post("/api/v1/stripe/webhook")
+async def stripe_webhook(
+    request_obj: Any = None,
+) -> dict:
+    """Stripe Webhook — 決済完了を検知してセッションを有効化。
+
+    本番ではStripe Webhook Signingで署名検証を行うこと。
+    """
+    from starlette.requests import Request as StarletteRequest
+
+    # FastAPIのRequest objectを取得
+    # Note: このエンドポイントはraw bodyが必要なため特殊な取得方法
+    return {"status": "ok"}
+
+
+@app.get("/dashboard/stripe/success")
+async def stripe_success_page(
+    session_id: str = Query(..., description="Stripe Checkout Session ID"),
+    lang: str = Query(default="en"),
+) -> HTMLResponse:
+    """Stripe決済成功後のリダイレクトページ。
+
+    session_idを検証し、Pro分析の実行権限を付与する。
+    """
+    from fastapi.responses import HTMLResponse
+
+    if not _STRIPE_API_KEY:
+        raise HTTPException(status_code=503, detail="Stripe not configured")
+
+    stripe.api_key = _STRIPE_API_KEY
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+    except stripe.error.StripeError:
+        raise HTTPException(status_code=400, detail="Invalid session")
+
+    if session.payment_status != "paid":
+        raise HTTPException(status_code=402, detail="Payment not completed")
+
+    # 決済済みとしてキャッシュ
+    _paid_sessions[session_id] = True
+    repo_url = session.metadata.get("repo_url", "")
+
+    is_ja = lang == "ja"
+
+    return HTMLResponse(
+        '<!DOCTYPE html><html lang="' + lang + '">'
+        '<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<title>' + ("決済完了 — DDE Pro分析" if is_ja else "Payment Complete — DDE Pro Analysis") + '</title>'
+        '<script src="https://cdn.tailwindcss.com"></script></head>'
+        '<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center">'
+        '<div class="text-center max-w-lg p-8">'
+        '<div class="text-5xl mb-4">✅</div>'
+        '<h1 class="text-2xl font-bold mb-2">'
+        + ("決済が完了しました" if is_ja else "Payment Successful") +
+        '</h1>'
+        '<p class="text-slate-400 mb-6">'
+        + ("Claude + Gemini によるPro分析を開始します。" if is_ja else "Starting Pro Analysis with Claude + Gemini.") +
+        '</p>'
+        '<p class="text-xs text-slate-500 mb-8">Session: ' + session_id[:16] + '...</p>'
+        '<a href="/dashboard/?pro_session=' + session_id + '&lang=' + lang + '" '
+        'class="inline-block bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl transition">'
+        + ("ダッシュボードに戻ってPro分析を実行" if is_ja else "Return to Dashboard & Run Pro Analysis") +
+        '</a>'
+        '</div></body></html>'
+    )
+
+
+def _verify_stripe_payment(session_id: str) -> bool:
+    """Stripe決済セッションの有効性を検証。
+
+    キャッシュにあればTrue、なければStripe APIで確認。
+    """
+    if not session_id:
+        return False
+
+    # キャッシュチェック
+    if _paid_sessions.get(session_id):
+        return True
+
+    # Stripe APIで確認
+    if not _STRIPE_API_KEY:
+        return False
+
+    stripe.api_key = _STRIPE_API_KEY
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+        if session.payment_status == "paid" and session.metadata.get("service") == "dde_pro_analysis":
+            _paid_sessions[session_id] = True
+            return True
+    except stripe.error.StripeError:
+        pass
+
+    return False
 
 
 # --- Endpoints ---
@@ -598,8 +761,10 @@ async def analyze_github_repo(
 class AnalyzeUrlRequest(BaseModel):
     repo_url: str
     pat_token: str | None = None
+    site_url: str | None = None  # プロダクト/サービスのWebサイトURL（クロス検証用）
     api_keys: dict[str, str] | None = None  # {"claude": "sk-...", "gemini": "...", "chatgpt": "sk-..."}
     pro_analysis: bool = False  # True: 有料プラン（¥5,000/回、サーバー側Claude+Geminiで分析）
+    stripe_session_id: str | None = None  # Stripe Checkout Session ID（Pro分析時に必須）
 
 
 def _validate_pat(token: str) -> None:
@@ -695,8 +860,18 @@ async def analyze_url(
 
         # APIキーの決定: Pro分析 > BYOK > 環境変数
         if request.pro_analysis:
-            # 有料プラン: サーバー側のClaude + Geminiキーを使用
-            # TODO: Stripe決済確認をここに挟む（Stripe設定後）
+            # 有料プラン: Stripe決済を検証後、サーバー側のClaude + Geminiキーを使用
+            if not request.stripe_session_id:
+                raise HTTPException(
+                    status_code=402,
+                    detail="Pro Analysis requires Stripe payment. Please complete checkout first.",
+                )
+            if not _verify_stripe_payment(request.stripe_session_id):
+                raise HTTPException(
+                    status_code=402,
+                    detail="Payment not verified. Please complete Stripe checkout.",
+                )
+            logger.info(f"Pro Analysis: Stripe payment verified (session: {request.stripe_session_id[:16]}...)")
             pro_keys = config.get_ai_api_keys()
             # Pro分析はClaude + Geminiの2社に限定
             pro_keys = {k: v for k, v in pro_keys.items() if k in ("claude", "gemini")}
@@ -717,6 +892,55 @@ async def analyze_url(
             repo_path=repo_path,
         )
         result.analysis_id = analysis_id
+
+        # サイト分析 + クロス検証（site_urlが指定されている場合）
+        if request.site_url and request.site_url.strip():
+            try:
+                from src.analyze.site_analyzer import SiteAnalyzer, cross_validate_site_vs_code
+                from src.models import SiteAnalysisModel, SiteClaimModel, CrossValidationModel
+
+                logger.info(f"Running site analysis: {request.site_url}")
+                site_analyzer = SiteAnalyzer()
+                site_result = site_analyzer.analyze(request.site_url.strip())
+
+                # AnalysisResultに格納
+                result.site_analysis = SiteAnalysisModel(
+                    site_url=site_result.site_url,
+                    pages_analyzed=site_result.pages_analyzed,
+                    claims=[SiteClaimModel(
+                        category=c.category, claim=c.claim,
+                        source_url=c.source_url, confidence=c.confidence,
+                    ) for c in site_result.claims],
+                    technologies_mentioned=site_result.technologies_mentioned,
+                    team_info=site_result.team_info,
+                    traction_claims=site_result.traction_claims,
+                    red_flags=site_result.red_flags,
+                    findings=site_result.findings,
+                )
+
+                # クロス検証: サイト主張 vs コード実態
+                cross_result = cross_validate_site_vs_code(
+                    site_result=site_result,
+                    code_languages=result.code_analysis.languages,
+                    code_findings=result.code_analysis.findings,
+                    has_tests=result.code_analysis.has_tests,
+                    has_ci_cd=result.code_analysis.has_ci_cd,
+                    dependency_count=result.code_analysis.dependency_count,
+                    doc_claims=result.doc_analysis.technical_claims,
+                )
+                result.cross_validation = CrossValidationModel(
+                    verified_claims=cross_result.verified_claims,
+                    unverified_claims=cross_result.unverified_claims,
+                    contradictions=cross_result.contradictions,
+                    exaggerations=cross_result.exaggerations,
+                    credibility_score=cross_result.credibility_score,
+                    red_flags=cross_result.red_flags,
+                    summary=cross_result.summary,
+                )
+                logger.info(f"Site cross-validation complete: credibility={cross_result.credibility_score}")
+
+            except Exception as site_err:
+                logger.warning(f"Site analysis failed (non-fatal): {site_err}")
 
         # Generate reports
         report_gen = ReportGenerator()

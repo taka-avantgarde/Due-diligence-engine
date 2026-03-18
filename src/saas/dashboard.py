@@ -163,6 +163,17 @@ def _build_landing_html() -> str:
         '        <p id="url-hint" class="text-slate-600 text-sm mt-3 text-left pl-2" data-en="Public repos: paste URL directly." data-ja="&#20844;&#38283;&#12522;&#12509;: URL&#12434;&#36028;&#12427;&#12384;&#12369;&#12290;">Public repos: paste URL directly.</p>\n'
         '      </form>\n'
         '      <div class="mt-4 w-full">\n'
+        '        <div class="bg-surface rounded-xl border border-slate-800 p-4 mb-4">\n'
+        '          <div class="flex items-center gap-2 mb-2">\n'
+        '            <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>\n'
+        '            <span class="text-white text-sm font-semibold" data-en="Product/Service Website (optional)" data-ja="&#12503;&#12525;&#12480;&#12463;&#12488;/&#12469;&#12540;&#12499;&#12473;&#12398;Web&#12469;&#12452;&#12488; (&#20219;&#24847;)">Product/Service Website (optional)</span>\n'
+        '            <span class="bg-orange-900/40 text-orange-400 text-xs px-2 py-0.5 rounded-full font-bold">NEW</span>\n'
+        '          </div>\n'
+        '          <input id="site-url" type="text" placeholder="https://example.com" class="w-full bg-slate-900 border border-slate-700 focus:border-accent rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-colors" autocomplete="off" />\n'
+        '          <p class="text-xs text-slate-500 mt-2" data-en="Cross-validate site claims against actual source code. Detects exaggerations &amp; contradictions." data-ja="&#12469;&#12452;&#12488;&#12398;&#20027;&#24373;&#12434;&#12477;&#12540;&#12473;&#12467;&#12540;&#12489;&#12392;&#29031;&#21512;&#12290;&#35463;&#24373;&#12539;&#30683;&#30462;&#12434;&#26908;&#20986;&#12290;">Cross-validate site claims against actual source code. Detects exaggerations &amp; contradictions.</p>\n'
+        '        </div>\n'
+        '      </div>\n'
+        '      <div class="w-full">\n'
         '        <button id="private-toggle" class="flex items-center gap-2 text-sm text-slate-500 hover:text-accent transition-all cursor-pointer pl-2">\n'
         '          <svg id="private-chevron" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>\n'
         '          <span data-en="Private repo? Add your PAT (Personal Access Token)" data-ja="Private&#12522;&#12509;&#65311; PAT&#65288;Personal Access Token&#65289;&#12434;&#36861;&#21152;">Private repo? Add your PAT (Personal Access Token)</span>\n'
@@ -293,7 +304,7 @@ def _build_landing_html() -> str:
         '          <input type="checkbox" id="pro-analysis-check" class="w-5 h-5 rounded border-slate-600 text-accent focus:ring-accent bg-slate-900" />\n'
         '          <span class="text-sm text-white" data-en="Enable Pro Analysis (\u00a55,000 per analysis, Stripe payment)" data-ja="Pro\u5206\u6790\u3092\u6709\u52b9\u5316\uff08\u00a55,000/\u56de\u3001Stripe\u6c7a\u6e08\uff09">Enable Pro Analysis (\u00a55,000 per analysis, Stripe payment)</span>\n'
         '        </label>\n'
-        '        <p class="text-xs text-slate-500" data-en="Payment will be processed via Stripe before analysis starts. Coming soon." data-ja="\u5206\u6790\u958b\u59cb\u524d\u306bStripe\u3067\u6c7a\u6e08\u3055\u308c\u307e\u3059\u3002\u8fd1\u65e5\u516c\u958b\u3002">Payment will be processed via Stripe before analysis starts. Coming soon.</p>\n'
+        '        <p class="text-xs text-slate-500" data-en="Secure payment via Stripe. You will be redirected to checkout before analysis starts." data-ja="Stripe\u3067\u5b89\u5168\u306b\u6c7a\u6e08\u3002\u5206\u6790\u958b\u59cb\u524d\u306b\u30c1\u30a7\u30c3\u30af\u30a2\u30a6\u30c8\u306b\u30ea\u30c0\u30a4\u30ec\u30af\u30c8\u3055\u308c\u307e\u3059\u3002">Secure payment via Stripe. You will be redirected to checkout before analysis starts.</p>\n'
         '      </div>\n'
         '    </div>\n'
         '  </div>\n'
@@ -370,6 +381,8 @@ def _build_landing_html() -> str:
         '  statusText.textContent = currentLang === "ja" ? "\\u30ea\\u30dd\\u30b8\\u30c8\\u30ea\\u3092\\u30af\\u30ed\\u30fc\\u30f3\\u4e2d..." : "Cloning repository...";\n'
         '\n'
         '  var body = {repo_url: repo};\n'
+        '  var siteEl = document.getElementById("site-url");\n'
+        '  if (siteEl && siteEl.value.trim()) { body.site_url = siteEl.value.trim(); }\n'
         '  var patEl = document.getElementById("pat-input");\n'
         '  if (patEl && patEl.value.trim()) { body.pat_token = patEl.value.trim(); }\n'
         '\n'
@@ -383,8 +396,45 @@ def _build_landing_html() -> str:
         '  if (Object.keys(apiKeys).length > 0) body.api_keys = apiKeys;\n'
         '\n'
         '  var proCheck = document.getElementById("pro-analysis-check");\n'
-        '  if (proCheck && proCheck.checked) body.pro_analysis = true;\n'
+        '  var isProAnalysis = proCheck && proCheck.checked;\n'
         '\n'
+        '  // Pro分析の場合: まずStripe Checkoutへリダイレクト\n'
+        '  if (isProAnalysis) {\n'
+        '    // URLパラメータから決済済みsession_idを確認\n'
+        '    var urlParams = new URLSearchParams(window.location.search);\n'
+        '    var proSession = urlParams.get("pro_session");\n'
+        '    if (proSession) {\n'
+        '      // 決済済み: session_idを付けて分析実行\n'
+        '      body.pro_analysis = true;\n'
+        '      body.stripe_session_id = proSession;\n'
+        '      doAnalysis(body);\n'
+        '    } else {\n'
+        '      // 未決済: Stripe Checkoutセッション作成→リダイレクト\n'
+        '      statusText.textContent = currentLang === "ja" ? "\\u6c7a\\u6e08\\u30da\\u30fc\\u30b8\\u3078\\u79fb\\u52d5\\u4e2d..." : "Redirecting to payment...";\n'
+        '      fetch("/api/v1/stripe/checkout", {\n'
+        '        method: "POST",\n'
+        '        headers: {"Content-Type": "application/json"},\n'
+        '        body: JSON.stringify({repo_url: repo, lang: currentLang})\n'
+        '      }).then(function(r) {\n'
+        '        if (r.ok) return r.json();\n'
+        '        return r.json().then(function(e) { throw new Error(e.detail || "Stripe error"); });\n'
+        '      }).then(function(d) {\n'
+        '        window.location.href = d.checkout_url;\n'
+        '      }).catch(function(err) {\n'
+        '        statusText.textContent = "Error: " + err.message;\n'
+        '        statusSub.textContent = currentLang === "ja" ? "\\u3082\\u3046\\u4e00\\u5ea6\\u304a\\u8a66\\u3057\\u304f\\u3060\\u3055\\u3044" : "Please try again.";\n'
+        '        btn.disabled = false;\n'
+        '        btn.textContent = currentLang === "ja" ? "\\u5206\\u6790" : "Analyze";\n'
+        '        inp.disabled = false;\n'
+        '      });\n'
+        '      return;\n'
+        '    }\n'
+        '  } else {\n'
+        '    doAnalysis(body);\n'
+        '  }\n'
+        '});\n'
+        '\n'
+        'function doAnalysis(body) {\n'
         '  fetch("/api/v1/analyze/url", {\n'
         '    method: "POST",\n'
         '    headers: {"Content-Type": "application/json"},\n'
@@ -401,6 +451,7 @@ def _build_landing_html() -> str:
         '    btn.textContent = currentLang === "ja" ? "\\u5206\\u6790" : "Analyze";\n'
         '    inp.disabled = false;\n'
         '  });\n'
+        '}\n'
         '});\n'
         '\n'
         'inp.focus();\n'
@@ -1210,6 +1261,90 @@ def _render_results_page(analysis_id: str, data: dict[str, Any], lang: str = "en
         else:
             red_flags_html = ""
 
+    # Site Cross-Validation section
+    site_cross_html = ""
+    cross_val = getattr(result, "cross_validation", None)
+    site_info = getattr(result, "site_analysis", None)
+    if cross_val is not None:
+        cv_title = "Site vs Code Cross-Validation" if lang == "en" else "サイト vs コード クロス検証"
+        cred_score = cross_val.credibility_score if isinstance(cross_val, dict) is False else cross_val.get("credibility_score", 50)
+        cred_score_val = cred_score if not isinstance(cross_val, dict) else cross_val.get("credibility_score", 50)
+
+        # credibility_scoreに応じた色
+        if hasattr(cross_val, "credibility_score"):
+            cred_score_val = cross_val.credibility_score
+        elif isinstance(cross_val, dict):
+            cred_score_val = cross_val.get("credibility_score", 50)
+        else:
+            cred_score_val = 50
+
+        cred_color = "green" if cred_score_val >= 70 else "yellow" if cred_score_val >= 40 else "red"
+
+        verified = cross_val.verified_claims if hasattr(cross_val, "verified_claims") else cross_val.get("verified_claims", [])
+        unverified = cross_val.unverified_claims if hasattr(cross_val, "unverified_claims") else cross_val.get("unverified_claims", [])
+        contradictions = cross_val.contradictions if hasattr(cross_val, "contradictions") else cross_val.get("contradictions", [])
+        exaggerations = cross_val.exaggerations if hasattr(cross_val, "exaggerations") else cross_val.get("exaggerations", [])
+        cv_summary = cross_val.summary if hasattr(cross_val, "summary") else cross_val.get("summary", "")
+
+        site_url_display = ""
+        if site_info:
+            su = site_info.site_url if hasattr(site_info, "site_url") else site_info.get("site_url", "")
+            if su:
+                site_url_display = f'<p class="text-xs text-slate-500 mb-4">Site: <a href="{su}" target="_blank" class="text-accent hover:underline">{su}</a></p>'
+
+        verified_html = ""
+        for v in verified:
+            claim = v.get("claim", "") if isinstance(v, dict) else str(v)
+            verified_html += f'<div class="flex items-center gap-2 text-green-400 text-sm"><span>✅</span><span>{claim}</span></div>'
+
+        unverified_html = ""
+        for u in unverified:
+            claim = u.get("claim", "") if isinstance(u, dict) else str(u)
+            unverified_html += f'<div class="flex items-center gap-2 text-yellow-400 text-sm"><span>❓</span><span>{claim}</span></div>'
+
+        contradiction_html = ""
+        for c in contradictions:
+            claim = c.get("claim", "") if isinstance(c, dict) else str(c)
+            note = c.get("note", "") if isinstance(c, dict) else ""
+            contradiction_html += f'<div class="flex items-start gap-2 text-red-400 text-sm"><span>❌</span><div><span class="font-semibold">{claim}</span><br/><span class="text-xs text-red-400/70">{note}</span></div></div>'
+
+        exag_html = ""
+        for e in exaggerations:
+            claim = e.get("claim", "") if isinstance(e, dict) else str(e)
+            exag_html += f'<div class="flex items-center gap-2 text-orange-400 text-sm"><span>⚠️</span><span>{claim}</span></div>'
+
+        site_cross_html = f"""
+        <div class="bg-surface rounded-xl p-6 border border-{cred_color}-800/50 mb-6">
+          <h2 class="text-lg font-semibold text-accent mb-2">{cv_title}</h2>
+          {site_url_display}
+          <div class="flex items-center gap-4 mb-4">
+            <div class="text-3xl font-bold text-{cred_color}-400">{cred_score_val:.0f}</div>
+            <div>
+              <div class="text-sm text-white">{"Credibility Score" if lang == "en" else "信頼性スコア"}</div>
+              <div class="text-xs text-slate-500">{cv_summary}</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 class="text-xs text-green-400 uppercase tracking-wider mb-2 font-bold">{"Verified" if lang == "en" else "検証済み"} ({len(verified)})</h4>
+              <div class="space-y-1">{verified_html if verified_html else '<span class="text-xs text-slate-600">—</span>'}</div>
+            </div>
+            <div>
+              <h4 class="text-xs text-yellow-400 uppercase tracking-wider mb-2 font-bold">{"Unverified" if lang == "en" else "未検証"} ({len(unverified)})</h4>
+              <div class="space-y-1">{unverified_html if unverified_html else '<span class="text-xs text-slate-600">—</span>'}</div>
+            </div>
+            <div>
+              <h4 class="text-xs text-red-400 uppercase tracking-wider mb-2 font-bold">{"Contradictions" if lang == "en" else "矛盾"} ({len(contradictions)})</h4>
+              <div class="space-y-1">{contradiction_html if contradiction_html else '<span class="text-xs text-slate-600">—</span>'}</div>
+            </div>
+            <div>
+              <h4 class="text-xs text-orange-400 uppercase tracking-wider mb-2 font-bold">{"Exaggerations" if lang == "en" else "誇張の可能性"} ({len(exaggerations)})</h4>
+              <div class="space-y-1">{exag_html if exag_html else '<span class="text-xs text-slate-600">—</span>'}</div>
+            </div>
+          </div>
+        </div>
+        """
+
     # Determine purge action URL based on whether we have a GitHub connection
     if connection_id:
         purge_url = f"/api/github/disconnect/{connection_id}?analysis_id={analysis_id}"
@@ -1320,6 +1455,7 @@ def _render_results_page(analysis_id: str, data: dict[str, Any], lang: str = "en
     </div>
 
     {score_html}
+    {site_cross_html}
     {red_flags_html}
     {actions_html}
     """

@@ -172,6 +172,37 @@ class AIProviderResult(BaseModel):
     error: str | None = None  # エラー時のメッセージ
 
 
+class SiteClaimModel(BaseModel):
+    """サイトから抽出した主張。"""
+    category: str = ""
+    claim: str = ""
+    source_url: str = ""
+    confidence: float = 0.5
+
+
+class SiteAnalysisModel(BaseModel):
+    """サイト分析結果（AnalysisResultに埋め込み用）。"""
+    site_url: str = ""
+    pages_analyzed: int = 0
+    claims: list[SiteClaimModel] = Field(default_factory=list)
+    technologies_mentioned: list[str] = Field(default_factory=list)
+    team_info: dict[str, Any] = Field(default_factory=dict)
+    traction_claims: list[str] = Field(default_factory=list)
+    red_flags: list[RedFlag] = Field(default_factory=list)
+    findings: list[str] = Field(default_factory=list)
+
+
+class CrossValidationModel(BaseModel):
+    """サイト vs コードのクロス検証結果。"""
+    verified_claims: list[dict[str, str]] = Field(default_factory=list)
+    unverified_claims: list[dict[str, str]] = Field(default_factory=list)
+    contradictions: list[dict[str, str]] = Field(default_factory=list)
+    exaggerations: list[dict[str, str]] = Field(default_factory=list)
+    credibility_score: float = 50.0
+    red_flags: list[RedFlag] = Field(default_factory=list)
+    summary: str = ""
+
+
 class AnalysisResult(BaseModel):
     """Complete analysis result aggregating all passes."""
 
@@ -182,6 +213,8 @@ class AnalysisResult(BaseModel):
     doc_analysis: DocAnalysisResult = Field(default_factory=DocAnalysisResult)
     git_forensics: GitForensicsResult = Field(default_factory=GitForensicsResult)
     consistency: ConsistencyResult = Field(default_factory=ConsistencyResult)
+    site_analysis: SiteAnalysisModel | None = None  # サイト分析結果
+    cross_validation: CrossValidationModel | None = None  # サイト vs コード クロス検証
     score: Score | None = None
     ai_results: dict[str, AIProviderResult] = Field(default_factory=dict)  # provider名→結果
     model_usage: dict[str, dict[str, int]] = Field(default_factory=dict)
