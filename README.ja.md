@@ -38,6 +38,16 @@
 
 ---
 
+## まず簡易AIで試してみる（セットアップ不要）
+
+自分のAPIキーを設定する前に、ホスティング版のデモで体験できます：
+
+**https://due-diligence-engine.web.app/dashboard/**
+
+公開GitHubリポジトリのURLを貼って「Analyze」を押すだけ。APIキー不要で基本分析が実行されます。
+
+---
+
 ## URLを入れるだけ
 
 ```bash

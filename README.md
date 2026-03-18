@@ -38,6 +38,16 @@ Total time: **~15 minutes** vs. weeks with traditional Tech DD.
 
 ---
 
+## Try It Now (No Setup Required)
+
+Want to see how it works before setting up your own API key? Try our hosted demo:
+
+**https://due-diligence-engine.web.app/dashboard/**
+
+Just paste any public GitHub URL and click Analyze. No API key needed for basic analysis.
+
+---
+
 ## Just Paste the URL
 
 ```bash
