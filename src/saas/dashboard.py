@@ -172,7 +172,7 @@ def _build_landing_html() -> str:
         '        <span class="bg-emerald-950/50 text-emerald-300 text-sm px-4 py-2 rounded-full border border-emerald-800/50 font-semibold">ChatGPT</span>\n'
         '      </div>\n'
         '      <p class="text-accent text-sm font-bold tracking-wider mb-4" data-en="3 AIs Cross-Validate Your Investment" data-ja="3\u793e\u306eAI\u304c\u30af\u30ed\u30b9\u691c\u8a3c\u3059\u308b\u6295\u8cc7\u5224\u65ad">3 AIs Cross-Validate Your Investment</p>\n'
-        '      <p id="hero-sub" class="text-slate-400 text-lg mb-6" data-en="Paste a GitHub URL. Get a technology score in minutes." data-ja="GitHub URL&#12434;&#36028;&#12427;&#12384;&#12369;&#12290;&#25968;&#20998;&#12391;&#25216;&#34899;&#12473;&#12467;&#12450;&#12434;&#21462;&#24471;&#12290;">Paste a GitHub URL. Get a technology score in minutes.</p>\n'
+        '      <p id="hero-sub" class="text-slate-400 text-lg mb-6" data-en="Analyze any product by its website URL or GitHub repo. Uncover real technology depth in minutes." data-ja="\u30b5\u30a4\u30c8URL\u307e\u305f\u306fGitHub\u30ea\u30dd\u304b\u3089\u3001\u30d7\u30ed\u30c0\u30af\u30c8\u306e\u771f\u306e\u6280\u8853\u529b\u3092\u6570\u5206\u3067\u53ef\u8996\u5316\u3002">Analyze any product by its website URL or GitHub repo. Uncover real technology depth in minutes.</p>\n'
         '      <div class="bg-yellow-950/30 border border-yellow-800/50 rounded-xl px-5 py-3 mb-8 max-w-xl mx-auto">\n'
         '        <p class="text-yellow-400/90 text-xs leading-relaxed" data-en="&#9888; This demo runs a quick preliminary check (local code analysis only). For accurate, in-depth AI-powered analysis, please set up your own AI API key &mdash; Claude, Gemini, or ChatGPT (BYOK: cost is on your account). See &lt;a href=https://github.com/taka-avantgarde/Due-diligence-engine#configuration target=_blank class=underline&gt;Configuration&lt;/a&gt;." data-ja="&#9888; &#12371;&#12398;&#12487;&#12514;&#12399;&#31777;&#26131;&#12481;&#12455;&#12483;&#12463;&#65288;&#12525;&#12540;&#12459;&#12523;&#12467;&#12540;&#12489;&#20998;&#26512;&#12398;&#12415;&#65289;&#12391;&#12377;&#12290;&#27491;&#30906;&#12394;AI&#20998;&#26512;&#12395;&#12399;&#12289;&#12372;&#33258;&#36523;&#12398;AI API&#12461;&#12540;&#12434;&#35373;&#23450;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356; &mdash; Claude, Gemini, ChatGPT&#65288;BYOK: &#12467;&#12473;&#12488;&#12399;&#21508;&#33258;&#12398;&#12450;&#12459;&#12454;&#12531;&#12488;&#36000;&#25285;&#65289;&#12290;&lt;a href=https://github.com/taka-avantgarde/Due-diligence-engine/blob/main/README.ja.md#%E8%A8%AD%E5%AE%9A target=_blank class=underline&gt;&#35373;&#23450;&#26041;&#27861;&lt;/a&gt;">\n'
         '          &#9888; This demo runs a quick preliminary check (local code analysis only). For accurate, in-depth AI-powered analysis, please set up your own AI API key &mdash; Claude, Gemini, or ChatGPT (BYOK: cost is on your account). See <a href="https://github.com/taka-avantgarde/Due-diligence-engine#configuration" target="_blank" class="underline">Configuration</a>.\n'
@@ -186,17 +186,17 @@ def _build_landing_html() -> str:
         '          <input id="repo-url" type="text" placeholder="https://github.com/owner/repo" class="flex-1 bg-transparent text-white text-lg px-4 py-5 outline-none placeholder-slate-600" autocomplete="off" spellcheck="false" />\n'
         '          <button type="submit" id="analyze-btn" class="bg-accent hover:bg-cyan-400 text-slate-950 font-bold text-lg px-8 py-5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" data-en="Analyze" data-ja="&#20998;&#26512;">Analyze</button>\n'
         '        </div>\n'
-        '        <p id="url-hint" class="text-slate-600 text-sm mt-3 text-left pl-2" data-en="Public repos: paste URL directly." data-ja="&#20844;&#38283;&#12522;&#12509;: URL&#12434;&#36028;&#12427;&#12384;&#12369;&#12290;">Public repos: paste URL directly.</p>\n'
+        '        <p id="url-hint" class="text-slate-600 text-sm mt-3 text-left pl-2" data-en="GitHub repo URL (optional if Site URL is provided below)." data-ja="GitHub\u30ea\u30ddURL\uff08\u4e0b\u306e\u30b5\u30a4\u30c8URL\u3060\u3051\u3067\u3082\u5206\u6790\u53ef\u80fd\uff09">GitHub repo URL (optional if Site URL is provided below).</p>\n'
         '      </form>\n'
         '      <div class="mt-4 w-full">\n'
         '        <div class="bg-surface rounded-xl border border-slate-800 p-4 mb-4">\n'
         '          <div class="flex items-center gap-2 mb-2">\n'
         '            <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>\n'
-        '            <span class="text-white text-sm font-semibold" data-en="Product/Service Website (optional)" data-ja="&#12503;&#12525;&#12480;&#12463;&#12488;/&#12469;&#12540;&#12499;&#12473;&#12398;Web&#12469;&#12452;&#12488; (&#20219;&#24847;)">Product/Service Website (optional)</span>\n'
+        '            <span class="text-white text-sm font-semibold" data-en="Product / Service Website" data-ja="\u30d7\u30ed\u30c0\u30af\u30c8 / \u30b5\u30fc\u30d3\u30b9\u306eWeb\u30b5\u30a4\u30c8">Product / Service Website</span>\n'
         '            <span class="bg-orange-900/40 text-orange-400 text-xs px-2 py-0.5 rounded-full font-bold">NEW</span>\n'
         '          </div>\n'
         '          <input id="site-url" type="text" placeholder="https://example.com" class="w-full bg-slate-900 border border-slate-700 focus:border-accent rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-colors" autocomplete="off" />\n'
-        '          <p class="text-xs text-slate-500 mt-2" data-en="Cross-validate site claims against actual source code. Detects exaggerations &amp; contradictions." data-ja="&#12469;&#12452;&#12488;&#12398;&#20027;&#24373;&#12434;&#12477;&#12540;&#12473;&#12467;&#12540;&#12489;&#12392;&#29031;&#21512;&#12290;&#35463;&#24373;&#12539;&#30683;&#30462;&#12434;&#26908;&#20986;&#12290;">Cross-validate site claims against actual source code. Detects exaggerations &amp; contradictions.</p>\n'
+        '          <p class="text-xs text-slate-500 mt-2" data-en="&lt;b&gt;Site URL only&lt;/b&gt; &mdash; Instantly assess a product\'s innovation, tech depth, and credibility from its website alone.&lt;br/&gt;&lt;b&gt;Site URL + GitHub repo&lt;/b&gt; &mdash; Cross-validate: does the site\'s technology narrative match the actual codebase? Detect gaps between marketing claims and real implementation." data-ja="&lt;b&gt;\u30b5\u30a4\u30c8URL\u306e\u307f&lt;/b&gt; &mdash; \u30d7\u30ed\u30c0\u30af\u30c8\u306e\u9769\u65b0\u6027\u30fb\u6280\u8853\u6df1\u5ea6\u30fb\u4fe1\u983c\u6027\u3092Web\u30b5\u30a4\u30c8\u3060\u3051\u3067\u5373\u5ea7\u306b\u8a55\u4fa1\u3002&lt;br/&gt;&lt;b&gt;\u30b5\u30a4\u30c8URL + GitHub\u30ea\u30dd&lt;/b&gt; &mdash; \u30b5\u30a4\u30c8\u306e\u6280\u8853\u4e3b\u5f35\u3068\u5b9f\u969b\u306e\u30bd\u30fc\u30b9\u30b3\u30fc\u30c9\u3092\u7167\u5408\u3002\u8b33\u308f\u308c\u3066\u3044\u308b\u6280\u8853\u304c\u5b9f\u5728\u3059\u308b\u304b\u3001\u4f4e\u30ec\u30d9\u30eb\u3067\u306f\u306a\u3044\u304b\u3092\u691c\u8a3c\u3002">\u30b5\u30a4\u30c8URL\u3060\u3051\u3067\u9769\u65b0\u6027\u3092\u8a55\u4fa1\u3002\u30ea\u30dd\u4f75\u7528\u3067\u4e3b\u5f35\u3068\u5b9f\u614b\u306e\u4e56\u96e2\u3092\u691c\u51fa\u3002</p>\n'
         '        </div>\n'
         '      </div>\n'
         '      <div class="w-full">\n'
@@ -1017,7 +1017,6 @@ def _render_site_only_results(analysis_id: str, data: dict[str, Any], lang: str 
         "Security Posture": "セキュリティ態勢",
         "Transparency": "透明性・文書化",
         "Market Traction": "市場トラクション",
-        "Team Credibility": "チーム技術力",
         "Innovation Score": "イノベーション度",
         "Credibility Signals": "信頼性シグナル",
     }
@@ -1111,7 +1110,7 @@ def _render_site_only_results(analysis_id: str, data: dict[str, Any], lang: str 
 
       <!-- 8軸バーチャート -->
       <div class="bg-surface rounded-xl p-6 border border-slate-800 mb-8">
-        <h2 class="text-xl font-bold text-white mb-6">{"8軸評価" if lang == "ja" else "8-Dimension Assessment"}</h2>
+        <h2 class="text-xl font-bold text-white mb-6">{"7軸評価" if lang == "ja" else "7-Dimension Assessment"}</h2>
         {bars_html}
       </div>
 

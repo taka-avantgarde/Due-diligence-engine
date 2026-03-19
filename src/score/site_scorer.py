@@ -1,14 +1,13 @@
 """サイト単体スコアリングエンジン — GitHubリポなしで100点満点技術レポートを生成。
 
-8軸評価:
-1. Tech Stack Depth     (0.15) — 言及技術の数・先進度・組み合わせの妥当性
+7軸評価:
+1. Tech Stack Depth     (0.20) — 言及技術の数・先進度・組み合わせの妥当性
 2. Product Maturity     (0.15) — デモ・API Docs・料金ページ・変更履歴の有無
 3. Security Posture     (0.10) — 認証・コンプライアンス・暗号化の主張
 4. Transparency         (0.10) — 技術文書・ホワイトペーパー・OSS公開
 5. Market Traction      (0.15) — ユーザー数・売上・パートナー・受賞歴
-6. Team Credibility     (0.10) — チーム規模・著名企業出身・技術的経歴
-7. Innovation Score     (0.15) — 独自技術の主張 vs バズワード密度
-8. Credibility Signals  (0.10) — 内部整合性・誇張度・具体性
+6. Innovation Score     (0.20) — 独自技術の主張 vs バズワード密度
+7. Credibility Signals  (0.10) — 内部整合性・誇張度・具体性
 """
 
 from __future__ import annotations
@@ -24,7 +23,7 @@ SITE_DIMENSIONS = {
     "tech_stack_depth": {
         "name": "Tech Stack Depth",
         "name_ja": "技術スタック深度",
-        "weight": 0.15,
+        "weight": 0.20,
     },
     "product_maturity": {
         "name": "Product Maturity",
@@ -46,15 +45,10 @@ SITE_DIMENSIONS = {
         "name_ja": "市場トラクション",
         "weight": 0.15,
     },
-    "team_credibility": {
-        "name": "Team Credibility",
-        "name_ja": "チーム技術力",
-        "weight": 0.10,
-    },
     "innovation_score": {
         "name": "Innovation Score",
         "name_ja": "イノベーション度",
-        "weight": 0.15,
+        "weight": 0.20,
     },
     "credibility_signals": {
         "name": "Credibility Signals",
@@ -110,7 +104,6 @@ class SiteScorer:
             self._score_security_posture(site_result, all_text),
             self._score_transparency(site_result, all_text),
             self._score_market_traction(site_result, all_text),
-            self._score_team_credibility(site_result, all_text),
             self._score_innovation(site_result, all_text),
             self._score_credibility_signals(site_result, all_text),
         ]
@@ -345,54 +338,6 @@ class SiteScorer:
             weight=dim["weight"],
             rationale=f"Traction: {', '.join(details) if details else 'no traction data'}.",
             sub_scores={"traction_count": traction_count, "points": points},
-        )
-
-    def _score_team_credibility(
-        self, sr: SiteAnalysisResult, text: str
-    ) -> ScoreDimension:
-        """チーム技術力: チーム規模・著名企業出身・技術的経歴。"""
-        dim = SITE_DIMENSIONS["team_credibility"]
-        points = 0
-        details = []
-
-        team_info = sr.team_info
-
-        # チーム規模
-        if "team_size" in team_info:
-            points += 2
-            details.append(f"team: {team_info['team_size']}")
-
-        # 著名企業出身
-        if "notable_backgrounds" in team_info:
-            bg_count = len(team_info["notable_backgrounds"])
-            points += bg_count * 2
-            details.append(f"ex-{', '.join(team_info['notable_backgrounds'][:3])}")
-
-        # チームページの存在
-        team_pages = [
-            url for url in sr.raw_texts
-            if any(kw in url.lower() for kw in ["team", "about", "people"])
-        ]
-        if team_pages:
-            points += 2
-            details.append("team page")
-
-        # LinkedIn / 個人プロフィールへのリンク
-        if re.search(r"linkedin\.com", text):
-            points += 1
-            details.append("LinkedIn profiles")
-
-        raw = min(100, points * 8 + 15)
-
-        if not team_info and not team_pages:
-            raw = 15
-
-        return ScoreDimension(
-            name=dim["name"],
-            score=round(raw, 1),
-            weight=dim["weight"],
-            rationale=f"Team: {', '.join(details) if details else 'no team info found'}.",
-            sub_scores={"points": points},
         )
 
     def _score_innovation(
