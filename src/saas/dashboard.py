@@ -85,7 +85,7 @@ tailwind.config = {{
     <div class="max-w-5xl mx-auto flex items-center justify-between">
       <a href="/dashboard/" class="text-accent font-bold text-lg tracking-wide">DUE DILIGENCE ENGINE</a>
       <div class="flex items-center gap-4">
-        <a href="/dashboard/pricing" class="text-sm text-slate-400 hover:text-accent transition-colors" data-en="Pricing" data-ja="&#26009;&#37329;">Pricing</a>
+        <a href="/dashboard/pricing" class="text-sm text-slate-400 hover:text-accent transition-colors ja-only" style="display:none">\u6599\u91d1</a>
         <div id="lang-toggle" style="cursor:pointer;user-select:none;display:inline-block;font-size:12px;border:1px solid #334155;border-radius:8px;padding:6px 14px"><span id="lang-en" style="color:#fff;font-weight:700">English</span> <span style="color:#475569">/</span> <span id="lang-ja" style="color:#64748b">日本語</span></div>
         <div id="auth-area" class="flex items-center gap-3">
           <button id="signin-btn" onclick="signInWithGoogle()" class="hidden bg-accent hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors" data-en="Sign in" data-ja="&#12525;&#12464;&#12452;&#12531;">Sign in</button>
@@ -225,6 +225,9 @@ tailwind.config = {{
       jaSpan.style.color = currentLang === "ja" ? "#fff" : "#64748b";
       jaSpan.style.fontWeight = currentLang === "ja" ? "700" : "400";
     }}
+    document.querySelectorAll(".ja-only").forEach(function(el) {
+      el.style.display = currentLang === "ja" ? "" : "none";
+    });
     document.documentElement.lang = currentLang;
   }}
   document.getElementById("lang-toggle").addEventListener("click", toggleLang);
@@ -341,7 +344,7 @@ def _build_landing_html() -> str:
         '        </div>\n'
         '      </div>\n'
         '      <div class="mt-3 text-center">\n'
-        '        <a href="/dashboard/pricing" class="text-sm text-slate-500 hover:text-accent transition-colors" data-en="View Pricing &rarr;" data-ja="\u6599\u91d1\u30d7\u30e9\u30f3\u3092\u898b\u308b &rarr;">View Pricing &rarr;</a>\n'
+        '        <a href="/dashboard/pricing" class="text-sm text-slate-500 hover:text-accent transition-colors ja-only" style="display:none">\u6599\u91d1\u30d7\u30e9\u30f3\u3092\u898b\u308b &rarr;</a>\n'
         '      </div>\n'
         '      <div class="mt-4 w-full">\n'
         '        <div class="bg-surface rounded-xl border border-slate-800 p-4 mb-4">\n'
@@ -773,80 +776,97 @@ async def pricing_page() -> HTMLResponse:
     content = (
         '<div class="max-w-4xl mx-auto">\n'
         '  <div class="text-center mb-12">\n'
-        '    <h1 class="text-4xl font-bold text-white mb-3" data-en="Pricing" data-ja="\u6599\u91d1\u30d7\u30e9\u30f3">Pricing</h1>\n'
-        '    <p class="text-slate-400 text-lg" data-en="Pay per report. No subscription required." data-ja="\u30ec\u30dd\u30fc\u30c8\u5358\u4f4d\u306e\u8ab2\u91d1\u3002\u30b5\u30d6\u30b9\u30af\u30ea\u30d7\u30b7\u30e7\u30f3\u4e0d\u8981\u3002">Pay per report. No subscription required.</p>\n'
+        '    <h1 class="text-4xl font-bold text-white mb-3">\u6599\u91d1\u30d7\u30e9\u30f3</h1>\n'
+        '    <p class="text-slate-400 text-lg">\u30ec\u30dd\u30fc\u30c8\u5358\u4f4d\u306e\u8ab2\u91d1\u3002\u30b5\u30d6\u30b9\u30af\u30ea\u30d7\u30b7\u30e7\u30f3\u4e0d\u8981\u3002</p>\n'
+        '    <p class="text-slate-500 text-sm mt-2">Claude + Gemini \u306b\u3088\u308bAI\u5206\u6790\u30ec\u30dd\u30fc\u30c8\u3092\u4ee3\u884c\u4f5c\u6210\u3057\u307e\u3059\u3002</p>\n'
         '  </div>\n'
         '  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">\n'
-        # --- Tier 1: 1 Report ---
+        # --- Tier 1: 1件 ---
         '    <div class="bg-surface rounded-2xl border border-slate-800 p-6 flex flex-col hover:border-accent/50 transition-all">\n'
         '      <div class="text-accent text-sm font-bold tracking-wider mb-2">STARTER</div>\n'
-        '      <div class="text-white text-3xl font-bold mb-1" data-en="1 Report" data-ja="1\u30ec\u30dd\u30fc\u30c8">1 Report</div>\n'
+        '      <div class="text-white text-3xl font-bold mb-1">1\u30ec\u30dd\u30fc\u30c8</div>\n'
         '      <div class="text-white text-2xl font-bold mb-1">&yen;3,000</div>\n'
-        '      <div class="text-slate-500 text-sm mb-4" data-en="&yen;3,000 / report" data-ja="&yen;3,000 / \u4ef6">&yen;3,000 / report</div>\n'
+        '      <div class="text-slate-500 text-sm mb-4">&yen;3,000 / \u4ef6</div>\n'
         '      <div class="flex-1"></div>\n'
-        '      <div class="text-slate-500 text-xs mb-4" data-en="No account required" data-ja="\u30a2\u30ab\u30a6\u30f3\u30c8\u4e0d\u8981">No account required</div>\n'
-        '      <button onclick="purchaseTier(\'single\', 3000)" class="w-full bg-accent hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors" data-en="Purchase" data-ja="\u8cfc\u5165">Purchase</button>\n'
+        '      <div class="text-slate-500 text-xs mb-4">\u30a2\u30ab\u30a6\u30f3\u30c8\u4e0d\u8981</div>\n'
+        '      <button onclick="purchaseTier(\'single\', 3000)" class="w-full bg-accent hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors" onclick="window.location.href=\'mailto:support@atlasassociates.io?subject=DDE%E3%83%81%E3%82%B1%E3%83%83%E3%83%88%E8%B3%BC%E5%85%A5\'">\u304a\u554f\u3044\u5408\u308f\u305b</button>\n'
         '    </div>\n'
-        # --- Tier 2: 10 Reports ---
+        # --- Tier 2: 10件 ---
         '    <div class="bg-surface rounded-2xl border border-accent/50 p-6 flex flex-col relative hover:border-accent transition-all">\n'
-        '      <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full" data-en="POPULAR" data-ja="\u4eba\u6c17">POPULAR</div>\n'
+        '      <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full">\u4eba\u6c17</div>\n'
         '      <div class="text-accent text-sm font-bold tracking-wider mb-2">TEAM</div>\n'
-        '      <div class="text-white text-3xl font-bold mb-1" data-en="10 Reports" data-ja="10\u30ec\u30dd\u30fc\u30c8">10 Reports</div>\n'
+        '      <div class="text-white text-3xl font-bold mb-1">10\u30ec\u30dd\u30fc\u30c8</div>\n'
         '      <div class="text-white text-2xl font-bold mb-1">&yen;28,000</div>\n'
-        '      <div class="text-slate-500 text-sm mb-4" data-en="&yen;2,800 / report" data-ja="&yen;2,800 / \u4ef6">&yen;2,800 / report</div>\n'
+        '      <div class="text-slate-500 text-sm mb-4">&yen;2,800 / \u4ef6</div>\n'
         '      <div class="flex-1"></div>\n'
-        '      <div class="text-slate-500 text-xs mb-4" data-en="Login required" data-ja="\u8981\u30ed\u30b0\u30a4\u30f3">Login required</div>\n'
-        '      <button onclick="purchaseTier(\'team\', 28000)" class="w-full bg-accent hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors" data-en="Purchase" data-ja="\u8cfc\u5165">Purchase</button>\n'
+        '      <div class="text-slate-500 text-xs mb-4">\u8981\u30ed\u30b0\u30a4\u30f3</div>\n'
+        '      <button onclick="purchaseTier(\'pack_10\', 28000)" class="w-full bg-accent hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors" onclick="window.location.href=\'mailto:support@atlasassociates.io?subject=DDE%E3%83%81%E3%82%B1%E3%83%83%E3%83%88%E8%B3%BC%E5%85%A5\'">\u304a\u554f\u3044\u5408\u308f\u305b</button>\n'
         '    </div>\n'
-        # --- Tier 3: 50 Reports ---
+        # --- Tier 3: 50件 ---
         '    <div class="bg-surface rounded-2xl border border-slate-800 p-6 flex flex-col hover:border-accent/50 transition-all">\n'
         '      <div class="text-accent text-sm font-bold tracking-wider mb-2">BUSINESS</div>\n'
-        '      <div class="text-white text-3xl font-bold mb-1" data-en="50 Reports" data-ja="50\u30ec\u30dd\u30fc\u30c8">50 Reports</div>\n'
+        '      <div class="text-white text-3xl font-bold mb-1">50\u30ec\u30dd\u30fc\u30c8</div>\n'
         '      <div class="text-white text-2xl font-bold mb-1">&yen;120,000</div>\n'
-        '      <div class="text-slate-500 text-sm mb-4" data-en="&yen;2,400 / report" data-ja="&yen;2,400 / \u4ef6">&yen;2,400 / report</div>\n'
+        '      <div class="text-slate-500 text-sm mb-4">&yen;2,400 / \u4ef6</div>\n'
         '      <div class="flex-1"></div>\n'
-        '      <div class="text-slate-500 text-xs mb-4" data-en="Login required" data-ja="\u8981\u30ed\u30b0\u30a4\u30f3">Login required</div>\n'
-        '      <button onclick="purchaseTier(\'business\', 120000)" class="w-full bg-accent hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors" data-en="Purchase" data-ja="\u8cfc\u5165">Purchase</button>\n'
+        '      <div class="text-slate-500 text-xs mb-4">\u8981\u30ed\u30b0\u30a4\u30f3</div>\n'
+        '      <button onclick="purchaseTier(\'pack_50\', 120000)" class="w-full bg-accent hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors" onclick="window.location.href=\'mailto:support@atlasassociates.io?subject=DDE%E3%83%81%E3%82%B1%E3%83%83%E3%83%88%E8%B3%BC%E5%85%A5\'">\u304a\u554f\u3044\u5408\u308f\u305b</button>\n'
         '    </div>\n'
-        # --- Tier 4: 100 Reports ---
+        # --- Tier 4: 100件 ---
         '    <div class="bg-surface rounded-2xl border border-slate-800 p-6 flex flex-col hover:border-accent/50 transition-all">\n'
         '      <div class="text-accent text-sm font-bold tracking-wider mb-2">ENTERPRISE</div>\n'
-        '      <div class="text-white text-3xl font-bold mb-1" data-en="100 Reports" data-ja="100\u30ec\u30dd\u30fc\u30c8">100 Reports</div>\n'
+        '      <div class="text-white text-3xl font-bold mb-1">100\u30ec\u30dd\u30fc\u30c8</div>\n'
         '      <div class="text-white text-2xl font-bold mb-1">&yen;220,000</div>\n'
-        '      <div class="text-slate-500 text-sm mb-4" data-en="&yen;2,200 / report" data-ja="&yen;2,200 / \u4ef6">&yen;2,200 / report</div>\n'
+        '      <div class="text-slate-500 text-sm mb-4">&yen;2,200 / \u4ef6</div>\n'
         '      <div class="flex-1"></div>\n'
-        '      <div class="text-slate-500 text-xs mb-4" data-en="Login required" data-ja="\u8981\u30ed\u30b0\u30a4\u30f3">Login required</div>\n'
-        '      <button onclick="purchaseTier(\'enterprise\', 220000)" class="w-full bg-accent hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors" data-en="Purchase" data-ja="\u8cfc\u5165">Purchase</button>\n'
+        '      <div class="text-slate-500 text-xs mb-4">\u8981\u30ed\u30b0\u30a4\u30f3</div>\n'
+        '      <button onclick="purchaseTier(\'pack_100\', 220000)" class="w-full bg-accent hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors" onclick="window.location.href=\'mailto:support@atlasassociates.io?subject=DDE%E3%83%81%E3%82%B1%E3%83%83%E3%83%88%E8%B3%BC%E5%85%A5\'">\u304a\u554f\u3044\u5408\u308f\u305b</button>\n'
         '    </div>\n'
         '  </div>\n'
+        '  <div class="mt-8 bg-surface rounded-2xl border border-slate-800 p-6">\n'
+        '    <div class="flex flex-wrap justify-center gap-3 mb-4">\n'
+        '      <span class="bg-orange-950/50 text-orange-300 text-sm px-4 py-2 rounded-full border border-orange-800/50 font-semibold">Claude</span>\n'
+        '      <span class="text-slate-500 text-lg">\u00d7</span>\n'
+        '      <span class="bg-blue-950/50 text-blue-300 text-sm px-4 py-2 rounded-full border border-blue-800/50 font-semibold">Gemini</span>\n'
+        '    </div>\n'
+        '    <p class="text-slate-400 text-sm text-center">\u5f53\u793e\u306eClaude + Gemini API\u3092\u4f7f\u7528\u3057\u3001\u6295\u8cc7\u5bb6\u5411\u3051\u306e\u672c\u683cDD\u30ec\u30dd\u30fc\u30c8\u3092\u4ee3\u884c\u4f5c\u6210\u3002<br/>\u30b5\u30a4\u30c8\u306e\u6280\u8853\u4e3b\u5f35\u3068\u5b9f\u969b\u306e\u30bd\u30fc\u30b9\u30b3\u30fc\u30c9\u3092\u7167\u5408\u3057\u3001\u8b33\u308f\u308c\u3066\u3044\u308b\u6280\u8853\u304c\u5b9f\u5728\u3059\u308b\u304b\u691c\u8a3c\u3057\u307e\u3059\u3002</p>\n'
+        '  </div>\n'
         '  <div class="mt-12 bg-surface rounded-2xl border border-slate-800 p-8">\n'
-        '    <h2 class="text-xl font-bold text-white mb-4" data-en="How it works" data-ja="\u5229\u7528\u65b9\u6cd5">How it works</h2>\n'
+        '    <h2 class="text-xl font-bold text-white mb-4">\u5229\u7528\u65b9\u6cd5</h2>\n'
         '    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">\n'
         '      <div class="flex items-start gap-3">\n'
         '        <div class="bg-accent/20 text-accent font-bold w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">1</div>\n'
         '        <div>\n'
-        '          <div class="text-white font-semibold text-sm" data-en="Purchase tickets" data-ja="\u30c1\u30b1\u30c3\u30c8\u8cfc\u5165">Purchase tickets</div>\n'
-        '          <div class="text-slate-500 text-xs mt-1" data-en="Each ticket = 1 full AI-powered DD report" data-ja="1\u30c1\u30b1\u30c3\u30c8 = 1\u4ef6\u306eAI DD\u30ec\u30dd\u30fc\u30c8">Each ticket = 1 full AI-powered DD report</div>\n'
+        '          <div class="text-white font-semibold text-sm">\u30c1\u30b1\u30c3\u30c8\u8cfc\u5165</div>\n'
+        '          <div class="text-slate-500 text-xs mt-1">1\u30c1\u30b1\u30c3\u30c8 = 1\u4ef6\u306eClaude + Gemini DD\u30ec\u30dd\u30fc\u30c8</div>\n'
         '        </div>\n'
         '      </div>\n'
         '      <div class="flex items-start gap-3">\n'
         '        <div class="bg-accent/20 text-accent font-bold w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">2</div>\n'
         '        <div>\n'
-        '          <div class="text-white font-semibold text-sm" data-en="Enter URL" data-ja="URL\u5165\u529b">Enter URL</div>\n'
-        '          <div class="text-slate-500 text-xs mt-1" data-en="Paste a GitHub repo or website URL" data-ja="GitHub\u30ea\u30dd\u307e\u305f\u306f\u30b5\u30a4\u30c8URL\u3092\u8cbc\u308a\u4ed8\u3051">Paste a GitHub repo or website URL</div>\n'
+        '          <div class="text-white font-semibold text-sm">URL\u5165\u529b</div>\n'
+        '          <div class="text-slate-500 text-xs mt-1">GitHub\u30ea\u30dd\u307e\u305f\u306f\u30b5\u30a4\u30c8URL\u3092\u8cbc\u308a\u4ed8\u3051</div>\n'
         '        </div>\n'
         '      </div>\n'
         '      <div class="flex items-start gap-3">\n'
         '        <div class="bg-accent/20 text-accent font-bold w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">3</div>\n'
         '        <div>\n'
-        '          <div class="text-white font-semibold text-sm" data-en="Get report" data-ja="\u30ec\u30dd\u30fc\u30c8\u53d6\u5f97">Get report</div>\n'
-        '          <div class="text-slate-500 text-xs mt-1" data-en="Claude + Gemini + ChatGPT cross-validated DD" data-ja="Claude + Gemini + ChatGPT \u30af\u30ed\u30b9\u691c\u8a3cDD">Claude + Gemini + ChatGPT cross-validated DD</div>\n'
+        '          <div class="text-white font-semibold text-sm">\u30ec\u30dd\u30fc\u30c8\u53d6\u5f97</div>\n'
+        '          <div class="text-slate-500 text-xs mt-1">Claude + Gemini \u30af\u30ed\u30b9\u691c\u8a3cDD\u30ec\u30dd\u30fc\u30c8</div>\n'
         '        </div>\n'
         '      </div>\n'
         '    </div>\n'
         '  </div>\n'
-        '  <div class="text-center mt-8">\n'
-        '    <a href="/dashboard/" class="text-accent hover:underline text-sm" data-en="&larr; Back to Analysis" data-ja="&larr; \u5206\u6790\u30da\u30fc\u30b8\u3078\u623b\u308b">&larr; Back to Analysis</a>\n'
+        '  <div class="mt-8 bg-surface rounded-2xl border border-accent/30 p-6 text-center">\n'
+        '    <p class="text-slate-300 text-sm mb-2">\u203b \u6c7a\u6e08\u6a5f\u80fd\u306f\u73fe\u5728\u6e96\u5099\u4e2d\u3067\u3059\u3002\u8cfc\u5165\u3054\u5e0c\u671b\u306e\u65b9\u306f\u304a\u6c17\u8efd\u306b\u304a\u554f\u3044\u5408\u308f\u305b\u304f\u3060\u3055\u3044\u3002</p>\n'
+        '    <div class="flex flex-col items-center gap-2 mt-3">\n'
+        '      <a href="https://www.atlasassociates.io/" target="_blank" class="text-accent hover:underline font-semibold">Atlas Associates &rarr;</a>\n'
+        '      <a href="mailto:support@atlasassociates.io" class="text-slate-400 hover:text-white transition-colors">support@atlasassociates.io</a>\n'
+        '    </div>\n'
+        '  </div>\n'
+        '  <div class="mt-6 text-center">\n'
+        '    <p class="text-slate-500 text-xs mb-4">\u30ec\u30dd\u30fc\u30c8\u306f\u4f5c\u6210\u65e5\u304b\u308990\u65e5\u9593\u4fdd\u5b58\u3055\u308c\u307e\u3059\u3002</p>\n'
+        '    <a href="/dashboard/" class="text-accent hover:underline text-sm">&larr; \u5206\u6790\u30da\u30fc\u30b8\u3078\u623b\u308b</a>\n'
         '  </div>\n'
         '</div>\n'
     )
