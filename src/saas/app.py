@@ -975,6 +975,88 @@ async def analyze_url(
         loader.destroy()
 
 
+class AnalyzeSiteRequest(BaseModel):
+    """サイト単体分析リクエスト。GitHubリポ不要。"""
+    site_url: str
+    lang: str = "en"
+
+
+@app.post("/api/v1/analyze/site")
+async def analyze_site_only(request: AnalyzeSiteRequest) -> dict:
+    """サイト単体分析 — GitHubリポなしで100点満点の技術レポートを生成。
+
+    プロダクト/サービスのWebサイトURLだけで8軸評価を実行。
+    """
+    import uuid
+
+    site_url = request.site_url.strip()
+    if not site_url:
+        raise HTTPException(status_code=400, detail="site_url is required")
+
+    analysis_id = uuid.uuid4().hex[:16]
+
+    store_analysis(analysis_id, {
+        "status": "running",
+        "connection_id": "",
+        "result": None,
+        "purge_cert": None,
+        "mode": "site_only",
+    })
+
+    try:
+        from src.analyze.site_analyzer import SiteAnalyzer
+        from src.score.site_scorer import SiteScorer
+        from src.models import SiteAnalysisModel, SiteClaimModel
+
+        logger.info(f"Site-only analysis: {site_url}")
+        analyzer = SiteAnalyzer()
+        site_result = analyzer.analyze(site_url)
+
+        # 8軸スコアリング
+        scorer = SiteScorer()
+        score = scorer.score(site_result)
+
+        # AnalysisResult互換オブジェクトを作成
+        site_model = SiteAnalysisModel(
+            site_url=site_result.site_url,
+            pages_analyzed=site_result.pages_analyzed,
+            claims=[SiteClaimModel(
+                category=c.category, claim=c.claim,
+                source_url=c.source_url, confidence=c.confidence,
+            ) for c in site_result.claims],
+            technologies_mentioned=site_result.technologies_mentioned,
+            team_info=site_result.team_info,
+            traction_claims=site_result.traction_claims,
+            red_flags=site_result.red_flags,
+            findings=site_result.findings,
+        )
+
+        # 結果を格納（site_only用の軽量形式）
+        store_analysis(analysis_id, {
+            "status": "completed",
+            "connection_id": "",
+            "result": None,
+            "purge_cert": None,
+            "mode": "site_only",
+            "site_analysis": site_model.model_dump(),
+            "site_score": score.model_dump(),
+        })
+
+        return {"analysis_id": analysis_id, "status": "completed", "mode": "site_only"}
+
+    except Exception as e:
+        logger.error(f"Site-only analysis failed for {site_url}: {e}")
+        store_analysis(analysis_id, {
+            "status": "error",
+            "connection_id": "",
+            "result": None,
+            "purge_cert": None,
+            "mode": "site_only",
+            "error": str(e),
+        })
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
+
+
 @app.get("/api/report/{analysis_id}/pdf")
 async def download_pdf_report(
     analysis_id: str,

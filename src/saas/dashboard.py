@@ -414,9 +414,37 @@ def _build_landing_html() -> str:
         'form.addEventListener("submit", function(e) {\n'
         '  e.preventDefault();\n'
         '  var repo = parseUrl(inp.value);\n'
-        '  if (!repo) {\n'
-        '    document.getElementById("url-hint").textContent = currentLang === "ja" ? "GitHub URL\\u3092\\u5165\\u529b\\u3057\\u3066\\u304f\\u3060\\u3055\\u3044 (\\u4f8b: https://github.com/owner/repo)" : "Please enter a valid GitHub URL (e.g., https://github.com/owner/repo)";\n'
+        '  var siteEl = document.getElementById("site-url");\n'
+        '  var siteUrl = siteEl ? siteEl.value.trim() : "";\n'
+        '  // GitHub URLもサイトURLもない場合はエラー\n'
+        '  if (!repo && !siteUrl) {\n'
+        '    document.getElementById("url-hint").textContent = currentLang === "ja" ? "GitHub URL\\u307e\\u305f\\u306f\\u30b5\\u30a4\\u30c8URL\\u3092\\u5165\\u529b\\u3057\\u3066\\u304f\\u3060\\u3055\\u3044" : "Please enter a GitHub URL or Site URL";\n'
         '    document.getElementById("url-hint").style.color = "#f87171";\n'
+        '    return;\n'
+        '  }\n'
+        '  // サイトURLのみ → サイト単体分析\n'
+        '  if (!repo && siteUrl) {\n'
+        '    btn.disabled = true;\n'
+        '    btn.textContent = currentLang === "ja" ? "\\u30b5\\u30a4\\u30c8\\u5206\\u6790\\u4e2d..." : "Analyzing site...";\n'
+        '    inp.disabled = true;\n'
+        '    statusArea.style.display = "block";\n'
+        '    statusArea.classList.remove("hidden");\n'
+        '    statusText.textContent = currentLang === "ja" ? "\\u30b5\\u30a4\\u30c8\\u3092\\u30af\\u30ed\\u30fc\\u30eb\\u4e2d..." : "Crawling site...";\n'
+        '    fetch("/api/v1/analyze/site", {\n'
+        '      method: "POST",\n'
+        '      headers: {"Content-Type": "application/json"},\n'
+        '      body: JSON.stringify({site_url: siteUrl, lang: currentLang})\n'
+        '    }).then(function(resp) {\n'
+        '      if (resp.ok) return resp.json();\n'
+        '      return resp.json().then(function(err) { throw new Error(err.detail || "Analysis failed"); });\n'
+        '    }).then(function(data) {\n'
+        '      window.location.href = "/dashboard/analysis/" + data.analysis_id + "?lang=" + currentLang;\n'
+        '    }).catch(function(err) {\n'
+        '      statusText.textContent = "Error: " + err.message;\n'
+        '      btn.disabled = false;\n'
+        '      btn.textContent = currentLang === "ja" ? "\\u5206\\u6790" : "Analyze";\n'
+        '      inp.disabled = false;\n'
+        '    });\n'
         '    return;\n'
         '  }\n'
         '  btn.disabled = true;\n'
@@ -903,6 +931,8 @@ async def analysis_page(
 
     if status == "running":
         return _render_progress_page(analysis_id, lang)
+    elif status == "completed" and data.get("mode") == "site_only":
+        return _render_site_only_results(analysis_id, data, lang)
     elif status == "completed":
         return _render_results_page(analysis_id, data, lang)
     elif status == "purged":
@@ -953,6 +983,153 @@ def _render_progress_page(analysis_id: str, lang: str = "en") -> HTMLResponse:
     """
 
     return _render_page("Analyzing...", content, scripts)
+
+
+def _render_site_only_results(analysis_id: str, data: dict[str, Any], lang: str = "en") -> HTMLResponse:
+    """サイト単体分析の結果ページ（8軸バーチャート）。"""
+    t = _I18N.get(lang, _I18N["en"])
+    site_data = data.get("site_analysis", {})
+    score_data = data.get("site_score", {})
+
+    site_url = site_data.get("site_url", "")
+    pages = site_data.get("pages_analyzed", 0)
+    techs = site_data.get("technologies_mentioned", [])
+    overall = score_data.get("overall_score", 0)
+    grade = score_data.get("grade", "?")
+    recommendation = score_data.get("recommendation", "")
+    dims = score_data.get("dimensions", [])
+    red_flags = score_data.get("red_flags", [])
+
+    # グレード色
+    grade_colors = {
+        "A": "text-green-400 border-green-500",
+        "B": "text-blue-400 border-blue-500",
+        "C": "text-yellow-400 border-yellow-500",
+        "D": "text-orange-400 border-orange-500",
+        "F": "text-red-400 border-red-500",
+    }
+    gc = grade_colors.get(grade, "text-slate-400 border-slate-500")
+
+    # 軸名翻訳
+    dim_name_ja = {
+        "Tech Stack Depth": "技術スタック深度",
+        "Product Maturity": "プロダクト成熟度",
+        "Security Posture": "セキュリティ態勢",
+        "Transparency": "透明性・文書化",
+        "Market Traction": "市場トラクション",
+        "Team Credibility": "チーム技術力",
+        "Innovation Score": "イノベーション度",
+        "Credibility Signals": "信頼性シグナル",
+    }
+
+    # バーの色
+    def bar_color(s: float) -> str:
+        if s >= 80:
+            return "#22c55e"
+        if s >= 60:
+            return "#5271FF"
+        if s >= 40:
+            return "#eab308"
+        return "#ef4444"
+
+    # 8軸バーチャートHTML
+    bars_html = ""
+    for d in dims:
+        name = d.get("name", "")
+        score_val = d.get("score", 0)
+        weight = d.get("weight", 0)
+        disp_name = dim_name_ja.get(name, name) if lang == "ja" else name
+        color = bar_color(score_val)
+        bars_html += (
+            f'<div class="mb-4">'
+            f'  <div class="flex justify-between items-center mb-1">'
+            f'    <span class="text-sm text-slate-300">{disp_name}</span>'
+            f'    <span class="text-sm font-bold" style="color:{color}">{score_val:.0f}</span>'
+            f'  </div>'
+            f'  <div class="w-full bg-slate-800 rounded-full h-3">'
+            f'    <div class="h-3 rounded-full transition-all" style="width:{score_val}%;background:{color}"></div>'
+            f'  </div>'
+            f'  <div class="text-xs text-slate-600 mt-0.5">weight: {weight:.0%}</div>'
+            f'</div>'
+        )
+
+    # 技術一覧
+    tech_chips = ""
+    for tech in techs[:20]:
+        tech_chips += f'<span class="bg-slate-800 text-slate-300 text-xs px-2 py-1 rounded">{tech}</span> '
+
+    # レッドフラグ
+    flags_html = ""
+    if red_flags:
+        flags_html += '<div class="mt-6"><h3 class="text-lg font-bold text-red-400 mb-3">⚠ Red Flags</h3>'
+        for f in red_flags:
+            sev = f.get("severity", "info")
+            sev_color = {"critical": "red", "high": "orange", "medium": "yellow", "low": "slate"}.get(sev, "slate")
+            flags_html += (
+                f'<div class="bg-{sev_color}-950/30 border border-{sev_color}-800/50 rounded-lg p-3 mb-2">'
+                f'  <div class="text-{sev_color}-300 font-semibold text-sm">{f.get("title", "")}</div>'
+                f'  <div class="text-slate-400 text-xs mt-1">{f.get("description", "")}</div>'
+                f'</div>'
+            )
+        flags_html += '</div>'
+
+    rec_text = _GRADE_REC.get(lang, _GRADE_REC["en"]).get(grade, recommendation)
+    title_text = "サイト分析レポート" if lang == "ja" else "Site Analysis Report"
+    score_label = "総合スコア" if lang == "ja" else "Overall Score"
+    tech_label = "検出された技術" if lang == "ja" else "Technologies Detected"
+    pages_label = "分析ページ数" if lang == "ja" else "Pages Analyzed"
+
+    content = f"""
+    <div class="max-w-3xl mx-auto">
+      <div class="mb-6">
+        <a href="/dashboard/?lang={lang}" class="text-accent hover:underline text-sm">&larr; {t['return_home']}</a>
+      </div>
+      <h1 class="text-3xl font-bold text-white mb-2">{title_text}</h1>
+      <p class="text-slate-400 mb-8">{site_url}</p>
+
+      <!-- スコアカード -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-surface rounded-xl p-6 border border-slate-800 text-center">
+          <div class="text-sm text-slate-500 mb-2">{score_label}</div>
+          <div class="text-5xl font-bold text-white">{overall:.0f}</div>
+          <div class="text-slate-500 text-sm">/100</div>
+        </div>
+        <div class="bg-surface rounded-xl p-6 border border-slate-800 text-center">
+          <div class="text-sm text-slate-500 mb-2">Grade</div>
+          <div class="text-5xl font-bold {gc} border-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto">{grade}</div>
+        </div>
+        <div class="bg-surface rounded-xl p-6 border border-slate-800 text-center">
+          <div class="text-sm text-slate-500 mb-2">{pages_label}</div>
+          <div class="text-5xl font-bold text-white">{pages}</div>
+        </div>
+      </div>
+
+      <!-- 推奨事項 -->
+      <div class="bg-surface rounded-xl p-6 border border-slate-800 mb-8">
+        <p class="text-slate-300">{rec_text}</p>
+      </div>
+
+      <!-- 8軸バーチャート -->
+      <div class="bg-surface rounded-xl p-6 border border-slate-800 mb-8">
+        <h2 class="text-xl font-bold text-white mb-6">{"8軸評価" if lang == "ja" else "8-Dimension Assessment"}</h2>
+        {bars_html}
+      </div>
+
+      <!-- 技術一覧 -->
+      <div class="bg-surface rounded-xl p-6 border border-slate-800 mb-8">
+        <h2 class="text-lg font-bold text-white mb-4">{tech_label}</h2>
+        <div class="flex flex-wrap gap-2">{tech_chips if tech_chips else '<span class="text-slate-500">None detected</span>'}</div>
+      </div>
+
+      <!-- レッドフラグ -->
+      {flags_html}
+
+      <div class="text-center mt-8 text-xs text-slate-600">
+        Analysis ID: {analysis_id}
+      </div>
+    </div>
+    """
+    return _render_page(f"Site Report — {grade} ({overall:.0f})", content)
 
 
 def _render_results_page(analysis_id: str, data: dict[str, Any], lang: str = "en") -> HTMLResponse:
