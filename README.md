@@ -135,6 +135,82 @@ Worst                                       Baseline                            
 
 ---
 
+### Example Output — "NeuralPay" (Fintech AI startup)
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  DUE DILIGENCE ENGINE  ·  NeuralPay / neuralpay/core-api
+  Analyzed by: Claude + Gemini + ChatGPT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  OVERALL SCORE                          GRADE
+  ┌────────────────────────────┐         ┌───────┐
+  │  ████████████████░░░░  78  │         │   B   │
+  └────────────────────────────┘         └───────┘
+  ▲ Viable with conditions
+
+  Score Barometer:
+  0          40          60         [75]        90        100
+  |----------|-----------|-----------|----●------|----------|
+  F          D           C           B           A
+                                     ^here
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  6-DIMENSION BREAKDOWN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Technical Originality   (25%)   Lv.7 / 10
+  ████████████████████░░░░░░░░░░  72   ← Custom ML model, not a wrapper
+
+  Technology Advancement  (20%)   Lv.8 / 10
+  ████████████████████████░░░░░░  84   ← Rust + TypeScript, modern stack
+
+  Implementation Depth    (20%)   Lv.6 / 10
+  ██████████████████░░░░░░░░░░░░  61   ← Beta-level; tests present but thin
+
+  Architecture Quality    (15%)   Lv.7 / 10
+  ████████████████████░░░░░░░░░░  73   ← Clean micro-services, some gaps
+
+  Claim Consistency       (10%)   Lv.5 / 10
+  ██████████████░░░░░░░░░░░░░░░░  54   ⚠ "SOC2" claimed, no evidence in code
+
+  Security Posture        (10%)   Lv.6 / 10
+  ██████████████████░░░░░░░░░░░░  62   ← TLS everywhere, but no pen-test docs
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  AI PROVIDER SCORES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Claude   (Anthropic)  ████████████████████░░░░░░  80
+  Gemini   (Google)     ███████████████████░░░░░░░░  77
+  ChatGPT  (OpenAI)     ████████████████████░░░░░░░  79
+  ─────────────────────────────────────────────────────
+  AI Consensus                                    78.7  ✓ High agreement
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  RED FLAGS (2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ⚠️  [MEDIUM] Compliance claim mismatch
+      Pitch deck: "SOC2 Type II certified"
+      Codebase:   No audit logs, no compliance tooling found
+
+  ⚠️  [LOW]    Git forensics: 40% of commits in final 2 weeks before DD
+      Pattern suggests rushed cleanup prior to investor review
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  RECOMMENDATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ B — Viable with conditions
+  Technology stack and core ML model are genuinely original.
+  Resolve SOC2 claim discrepancy and address test coverage
+  before proceeding to term sheet.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+
 ## Quick Start
 
 ```bash
