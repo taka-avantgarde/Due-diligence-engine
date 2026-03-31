@@ -245,6 +245,58 @@ dde analyze some-startup/repo --skip-ai
 
 ---
 
+## AIターミナルから使う（Claude Code / Cursor 等）
+
+すでにIDEでAIを使っていますか？ AIターミナルにプロンプトを**コピペするだけ**で自分のプロジェクトを分析できます。
+
+### 1. セットアップ（初回のみ）
+
+AIターミナルに貼り付けてください：
+
+```
+https://github.com/taka-avantgarde/Due-diligence-engine をcloneして `pip install -e .` でインストールして
+```
+
+### 2. プロジェクトを分析
+
+開発中のプロジェクトディレクトリで：
+
+```
+`dde analyze .` でこのプロジェクトの技術デューデリジェンスを実行して
+```
+
+任意の公開GitHubリポを分析：
+
+```
+`dde analyze owner/repo` でデューデリジェンス分析を実行して
+```
+
+### 仕組み
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  あなたのIDE（VS Code / JetBrains 等）                  │
+│                                                         │
+│  ┌─────────────────────────────────┐                    │
+│  │  AIターミナル                    │                    │
+│  │  (Claude Code / Cursor 等)      │                    │
+│  │                                 │                    │
+│  │  > 「このプロジェクトを          │                    │
+│  │     DDEで分析して」             │                    │
+│  │                                 │  ┌──────────────┐  │
+│  │  AIがコードを読み取り ──────────┼─▶│ DDE Engine   │  │
+│  │  dde analyze . を実行           │  │ (ローカルCLI) │  │
+│  │                                 │  └──────┬───────┘  │
+│  │  ◀── スコア、レッドフラグ、 ────┼─────────┘          │
+│  │      推奨アクション             │                    │
+│  └─────────────────────────────────┘                    │
+└─────────────────────────────────────────────────────────┘
+```
+
+> **あなたのAPIキーをそのまま使用** — BYOK（Bring Your Own Key）。設定済みのAIプロバイダーキー（`ANTHROPIC_API_KEY`、`GOOGLE_AI_API_KEY`、`OPENAI_API_KEY`）をDDEが直接利用します。追加コストなし。`--skip-ai` でAI不使用の無料分析も可能。
+
+---
+
 ## Privateリポジトリアクセス（PAT）
 
 1. GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)

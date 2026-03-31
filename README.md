@@ -251,6 +251,58 @@ dde serve
 
 ---
 
+## Use from Your AI Terminal (Claude Code, Cursor, etc.)
+
+Already using AI in your IDE? You can run DDE analysis on your own project by pasting a single prompt into your AI terminal.
+
+### 1. Setup (one-time)
+
+Paste this into your AI terminal:
+
+```
+Clone https://github.com/taka-avantgarde/Due-diligence-engine and install it with `pip install -e .`
+```
+
+### 2. Analyze Your Project
+
+Then, from your project directory, paste:
+
+```
+Run `dde analyze .` to perform a technical due diligence analysis on this project.
+```
+
+Or analyze any public GitHub repo:
+
+```
+Run `dde analyze owner/repo` to perform a due diligence analysis.
+```
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Your IDE (VS Code / JetBrains / etc.)                  │
+│                                                         │
+│  ┌─────────────────────────────────┐                    │
+│  │  AI Terminal                    │                    │
+│  │  (Claude Code / Cursor / etc.)  │                    │
+│  │                                 │                    │
+│  │  > "Analyze this project        │                    │
+│  │     with DDE"                   │                    │
+│  │                                 │  ┌──────────────┐  │
+│  │  AI reads your codebase ────────┼─▶│ DDE Engine   │  │
+│  │  and runs dde analyze .         │  │ (local CLI)  │  │
+│  │                                 │  └──────┬───────┘  │
+│  │  ◀── Scores, red flags, ────────┼─────────┘          │
+│  │      recommendations            │                    │
+│  └─────────────────────────────────┘                    │
+└─────────────────────────────────────────────────────────┘
+```
+
+> **Your API keys are used directly** — BYOK (Bring Your Own Key). DDE uses whichever AI provider keys you have set (`ANTHROPIC_API_KEY`, `GOOGLE_AI_API_KEY`, `OPENAI_API_KEY`). No additional cost beyond your existing API usage. Use `--skip-ai` for free local-only analysis.
+
+---
+
 ## Private Repository Access (PAT)
 
 For private repos, provide a **GitHub Personal Access Token**:
