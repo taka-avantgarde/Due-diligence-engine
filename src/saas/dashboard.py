@@ -319,11 +319,19 @@ def _build_landing_html() -> str:
         '        <span class="text-slate-500 text-lg">\u00d7</span>\n'
         '        <span class="bg-emerald-950/50 text-emerald-300 text-sm px-4 py-2 rounded-full border border-emerald-800/50 font-semibold">ChatGPT</span>\n'
         '      </div>\n'
-        '      <p class="text-accent text-sm font-bold tracking-wider mb-4" data-en="3 AIs Cross-Validate Your Investment" data-ja="3\u793e\u306eAI\u304c\u30af\u30ed\u30b9\u691c\u8a3c\u3059\u308b\u6295\u8cc7\u5224\u65ad">3 AIs Cross-Validate Your Investment</p>\n'
-        '      <p id="hero-sub" class="text-slate-400 text-lg mb-6" data-en="Analyze any GitHub repository. Uncover real technology depth, code quality, and risk signals in minutes." data-ja="\u30b5\u30a4\u30c8URL\u307e\u305f\u306fGitHub\u30ea\u30dd\u304b\u3089\u3001\u30d7\u30ed\u30c0\u30af\u30c8\u306e\u771f\u306e\u6280\u8853\u529b\u3092\u6570\u5206\u3067\u53ef\u8996\u5316\u3002">Analyze any GitHub repository. Uncover real technology depth, code quality, and risk signals in minutes.</p>\n'
+        '      <p class="text-accent text-sm font-bold tracking-wider mb-4" data-en="Your IDE\'s AI Becomes a Due Diligence Analyst" data-ja="IDE\u306eAI\u304c\u3001\u30c7\u30e5\u30fc\u30c7\u30ea\u30b8\u30a7\u30f3\u30b9\u30a2\u30ca\u30ea\u30b9\u30c8\u306b\u306a\u308b">Your IDE\'s AI Becomes a Due Diligence Analyst</p>\n'
+        '      <p id="hero-sub" class="text-slate-400 text-lg mb-6" data-en="Run dde prompt in your terminal, or paste a GitHub URL here. Uncover real technology depth in minutes." data-ja="dde prompt \u3092\u30bf\u30fc\u30df\u30ca\u30eb\u3067\u5b9f\u884c\u3001\u307e\u305f\u306fGitHub URL\u3092\u8cbc\u308a\u4ed8\u3051\u3002\u30d7\u30ed\u30c0\u30af\u30c8\u306e\u771f\u306e\u6280\u8853\u529b\u3092\u6570\u5206\u3067\u53ef\u8996\u5316\u3002">Run <code class="bg-slate-800 px-2 py-1 rounded text-accent text-base">dde prompt</code> in your terminal, or paste a GitHub URL here. Uncover real technology depth in minutes.</p>\n'
         '      <div class="bg-yellow-950/30 border border-yellow-800/50 rounded-xl px-5 py-3 mb-8 max-w-xl mx-auto">\n'
         '        <p class="text-yellow-400/90 text-xs leading-relaxed" data-en="&#9888; &lt;b&gt;Free analysis uses pattern-matching only (no AI).&lt;/b&gt; For AI-powered analysis, add your own API keys below &mdash; &lt;b&gt;BYOK (Bring Your Own Key)&lt;/b&gt;: Claude (Anthropic), Gemini (Google), or ChatGPT (OpenAI) are all supported. Costs are billed to your own account. See &lt;a href=https://github.com/taka-avantgarde/Due-diligence-engine#configuration target=_blank class=underline&gt;Configuration&lt;/a&gt;." data-ja="&#9888; &lt;b&gt;\u7121\u6599\u5206\u6790\u306fAI\u672a\u4f7f\u7528\uff08\u30d1\u30bf\u30fc\u30f3\u30de\u30c3\u30c1\u30f3\u30b0\u306e\u307f\uff09\u3067\u3059\u3002&lt;/b&gt; Claude + Gemini + ChatGPT\u306b\u3088\u308b\u672c\u683c\u5206\u6790\u306b\u306f\u3001\u4e0b\u8a18\u304b\u3089\u3054\u81ea\u8eab\u306eAPI\u30ad\u30fc\u3092\u8ffd\u52a0\u3057\u3066\u304f\u3060\u3055\u3044\uff08BYOK &mdash; Bring Your Own Key\uff1a\u30b3\u30b9\u30c8\u306f\u5404\u81ea\u306e\u30a2\u30ab\u30a6\u30f3\u30c8\u8ca0\u62c5\uff09\u3002&lt;a href=https://github.com/taka-avantgarde/Due-diligence-engine/blob/main/README.ja.md#%E8%A8%AD%E5%AE%9A target=_blank class=underline&gt;\u8a2d\u5b9a\u65b9\u6cd5&lt;/a&gt;">\n'
         '          &#9888; <b>Free analysis uses pattern-matching only (no AI).</b> For AI-powered analysis, add your own API keys below &mdash; <b>BYOK (Bring Your Own Key)</b>: Claude (Anthropic), Gemini (Google), or ChatGPT (OpenAI) are all supported. Costs are billed to your own account. See <a href="https://github.com/taka-avantgarde/Due-diligence-engine#configuration" target="_blank" class="underline">Configuration</a>.\n'
+        '        </p>\n'
+        '      </div>\n'
+        '      <div class="bg-slate-800/50 border border-slate-700 rounded-xl px-5 py-4 mb-8 max-w-xl mx-auto">\n'
+        '        <p class="text-white text-sm font-bold mb-2" data-en="&#x1F680; Prefer your AI terminal?" data-ja="&#x1F680; AI\u30bf\u30fc\u30df\u30ca\u30eb\u3092\u304a\u4f7f\u3044\u3067\u3059\u304b\uff1f">\n'
+        '          &#x1F680; Prefer your AI terminal?\n'
+        '        </p>\n'
+        '        <p class="text-slate-400 text-xs leading-relaxed" data-en="Run &lt;code class=bg-slate-900&nbsp;px-2&nbsp;py-0.5&nbsp;rounded&nbsp;text-accent&gt;dde prompt owner/repo&lt;/code&gt; in Claude Code, Cursor, or Copilot. Zero API keys needed &mdash; your IDE\'s AI does the evaluation." data-ja="Claude Code\u3001Cursor\u3001Copilot\u3067 &lt;code class=bg-slate-900&nbsp;px-2&nbsp;py-0.5&nbsp;rounded&nbsp;text-accent&gt;dde prompt owner/repo --lang ja&lt;/code&gt; \u3092\u5b9f\u884c\u3002API\u30ad\u30fc\u4e0d\u8981 &mdash; IDE\u306eAI\u304c\u8a55\u4fa1\u3057\u307e\u3059\u3002">\n'
+        '          Run <code class="bg-slate-900 px-2 py-0.5 rounded text-accent">dde prompt owner/repo</code> in Claude Code, Cursor, or Copilot. Zero API keys needed &mdash; your IDE\'s AI does the evaluation.\n'
         '        </p>\n'
         '      </div>\n'
         '      <form id="analyze-form" class="relative w-full">\n'
@@ -1806,89 +1814,8 @@ def _render_results_page(analysis_id: str, data: dict[str, Any], lang: str = "en
         else:
             red_flags_html = ""
 
-    # Site Cross-Validation section
+    # Site Cross-Validation section removed (feature deprecated — use dde prompt for site claim verification)
     site_cross_html = ""
-    cross_val = getattr(result, "cross_validation", None)
-    site_info = getattr(result, "site_analysis", None)
-    if cross_val is not None:
-        cv_title = "Site vs Code Cross-Validation" if lang == "en" else "サイト vs コード クロス検証"
-        cred_score = cross_val.credibility_score if isinstance(cross_val, dict) is False else cross_val.get("credibility_score", 50)
-        cred_score_val = cred_score if not isinstance(cross_val, dict) else cross_val.get("credibility_score", 50)
-
-        # credibility_scoreに応じた色
-        if hasattr(cross_val, "credibility_score"):
-            cred_score_val = cross_val.credibility_score
-        elif isinstance(cross_val, dict):
-            cred_score_val = cross_val.get("credibility_score", 50)
-        else:
-            cred_score_val = 50
-
-        cred_color = "green" if cred_score_val >= 70 else "yellow" if cred_score_val >= 40 else "red"
-
-        verified = cross_val.verified_claims if hasattr(cross_val, "verified_claims") else cross_val.get("verified_claims", [])
-        unverified = cross_val.unverified_claims if hasattr(cross_val, "unverified_claims") else cross_val.get("unverified_claims", [])
-        contradictions = cross_val.contradictions if hasattr(cross_val, "contradictions") else cross_val.get("contradictions", [])
-        exaggerations = cross_val.exaggerations if hasattr(cross_val, "exaggerations") else cross_val.get("exaggerations", [])
-        cv_summary = cross_val.summary if hasattr(cross_val, "summary") else cross_val.get("summary", "")
-
-        site_url_display = ""
-        if site_info:
-            su = site_info.site_url if hasattr(site_info, "site_url") else site_info.get("site_url", "")
-            if su:
-                site_url_display = f'<p class="text-xs text-slate-500 mb-4">Site: <a href="{su}" target="_blank" class="text-accent hover:underline">{su}</a></p>'
-
-        verified_html = ""
-        for v in verified:
-            claim = v.get("claim", "") if isinstance(v, dict) else str(v)
-            verified_html += f'<div class="flex items-center gap-2 text-green-400 text-sm"><span>✅</span><span>{claim}</span></div>'
-
-        unverified_html = ""
-        for u in unverified:
-            claim = u.get("claim", "") if isinstance(u, dict) else str(u)
-            unverified_html += f'<div class="flex items-center gap-2 text-yellow-400 text-sm"><span>❓</span><span>{claim}</span></div>'
-
-        contradiction_html = ""
-        for c in contradictions:
-            claim = c.get("claim", "") if isinstance(c, dict) else str(c)
-            note = c.get("note", "") if isinstance(c, dict) else ""
-            contradiction_html += f'<div class="flex items-start gap-2 text-red-400 text-sm"><span>❌</span><div><span class="font-semibold">{claim}</span><br/><span class="text-xs text-red-400/70">{note}</span></div></div>'
-
-        exag_html = ""
-        for e in exaggerations:
-            claim = e.get("claim", "") if isinstance(e, dict) else str(e)
-            exag_html += f'<div class="flex items-center gap-2 text-orange-400 text-sm"><span>⚠️</span><span>{claim}</span></div>'
-
-        site_cross_html = f"""
-        <div class="bg-surface rounded-xl p-6 border border-{cred_color}-800/50 mb-6">
-          <h2 class="text-lg font-semibold text-accent mb-2">{cv_title}</h2>
-          {site_url_display}
-          <div class="flex items-center gap-4 mb-4">
-            <div class="text-3xl font-bold text-{cred_color}-400">{cred_score_val:.0f}</div>
-            <div>
-              <div class="text-sm text-white">{"Credibility Score" if lang == "en" else "信頼性スコア"}</div>
-              <div class="text-xs text-slate-500">{cv_summary}</div>
-            </div>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 class="text-xs text-green-400 uppercase tracking-wider mb-2 font-bold">{"Verified" if lang == "en" else "検証済み"} ({len(verified)})</h4>
-              <div class="space-y-1">{verified_html if verified_html else '<span class="text-xs text-slate-600">—</span>'}</div>
-            </div>
-            <div>
-              <h4 class="text-xs text-yellow-400 uppercase tracking-wider mb-2 font-bold">{"Unverified" if lang == "en" else "未検証"} ({len(unverified)})</h4>
-              <div class="space-y-1">{unverified_html if unverified_html else '<span class="text-xs text-slate-600">—</span>'}</div>
-            </div>
-            <div>
-              <h4 class="text-xs text-red-400 uppercase tracking-wider mb-2 font-bold">{"Contradictions" if lang == "en" else "矛盾"} ({len(contradictions)})</h4>
-              <div class="space-y-1">{contradiction_html if contradiction_html else '<span class="text-xs text-slate-600">—</span>'}</div>
-            </div>
-            <div>
-              <h4 class="text-xs text-orange-400 uppercase tracking-wider mb-2 font-bold">{"Exaggerations" if lang == "en" else "誇張の可能性"} ({len(exaggerations)})</h4>
-              <div class="space-y-1">{exag_html if exag_html else '<span class="text-xs text-slate-600">—</span>'}</div>
-            </div>
-          </div>
-        </div>
-        """
 
     # Determine purge action URL based on whether we have a GitHub connection
     if connection_id:
