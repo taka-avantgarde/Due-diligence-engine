@@ -253,53 +253,69 @@ dde serve
 
 ## Use from Your AI Terminal (Claude Code, Cursor, etc.)
 
-Already using AI in your IDE? You can run DDE analysis on your own project by pasting a single prompt into your AI terminal.
+Already using AI in your IDE? Run `dde prompt` to generate a structured evaluation prompt — then let **your IDE's AI** analyze it. No API keys needed.
 
 ### 1. Setup (one-time)
 
-Paste this into your AI terminal:
-
-```
-Clone https://github.com/taka-avantgarde/Due-diligence-engine and install it with `pip install -e .`
+```bash
+pip install git+https://github.com/taka-avantgarde/Due-diligence-engine.git
 ```
 
-### 2. Analyze Your Project
+### 2. Generate Prompt & Evaluate
 
-Then, from your project directory, paste:
+```bash
+# Generate an evaluation prompt for your project
+dde prompt .
 
-```
-Run `dde analyze .` to perform a technical due diligence analysis on this project.
+# Or for any public GitHub repo
+dde prompt owner/repo
+
+# Japanese output with startup stage context
+dde prompt owner/repo --lang ja --stage seed
+
+# Save to file or copy to clipboard
+dde prompt . -o prompt.md
+dde prompt . --copy
 ```
 
-Or analyze any public GitHub repo:
+### 3. Paste into Your AI Terminal
 
-```
-Run `dde analyze owner/repo` to perform a due diligence analysis.
-```
+Just paste the generated prompt into Claude Code, Cursor, Copilot, or any AI terminal.
+The AI will read your codebase, evaluate all 6 dimensions, and generate a full report with:
+
+- **Status bar scoring** — visual 100-point evaluation per dimension
+- **Plain-language explanations** — no engineering jargon, readable by non-technical investors
+- **Strengths & what they enable** — "Because of X, users can do Y"
+- **Improvements** — "If you do X, Y becomes possible"
+- **Service site cross-validation** — paste a URL to check if claims match code
+- **Investor questions** — ready-to-use questions for startup meetings
 
 ### How It Works
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Your IDE (VS Code / JetBrains / etc.)                  │
-│                                                         │
-│  ┌─────────────────────────────────┐                    │
-│  │  AI Terminal                    │                    │
-│  │  (Claude Code / Cursor / etc.)  │                    │
-│  │                                 │                    │
-│  │  > "Analyze this project        │                    │
-│  │     with DDE"                   │                    │
-│  │                                 │  ┌──────────────┐  │
-│  │  AI reads your codebase ────────┼─▶│ DDE Engine   │  │
-│  │  and runs dde analyze .         │  │ (local CLI)  │  │
-│  │                                 │  └──────┬───────┘  │
-│  │  ◀── Scores, red flags, ────────┼─────────┘          │
-│  │      recommendations            │                    │
-│  └─────────────────────────────────┘                    │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  Your IDE (VS Code / JetBrains / etc.)                   │
+│                                                          │
+│  ┌──────────────────────────────────┐                    │
+│  │  AI Terminal                     │                    │
+│  │  (Claude Code / Cursor / etc.)   │                    │
+│  │                                  │                    │
+│  │  $ dde prompt .                  │  ┌──────────────┐  │
+│  │      ↓                           │  │ DDE Engine   │  │
+│  │  Heuristic data collected ───────┼─▶│ (local, no   │  │
+│  │  + evaluation instructions       │  │  AI API)     │  │
+│  │      ↓                           │  └──────────────┘  │
+│  │  AI reads prompt + codebase      │                    │
+│  │      ↓                           │                    │
+│  │  Full evaluation report with     │                    │
+│  │  scores, strengths, questions    │                    │
+│  └──────────────────────────────────┘                    │
+│                                                          │
+│  Cost: $0 extra — uses your existing AI subscription     │
+└──────────────────────────────────────────────────────────┘
 ```
 
-> **Your API keys are used directly** — BYOK (Bring Your Own Key). DDE uses whichever AI provider keys you have set (`ANTHROPIC_API_KEY`, `GOOGLE_AI_API_KEY`, `OPENAI_API_KEY`). No additional cost beyond your existing API usage. Use `--skip-ai` for free local-only analysis.
+> **Zero additional cost** — `dde prompt` runs entirely locally (no AI API calls). The evaluation is performed by your IDE's existing AI subscription. BYOK (Bring Your Own Key) is also supported via `dde analyze` for direct API-based analysis.
 
 ---
 
