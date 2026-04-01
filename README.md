@@ -19,6 +19,17 @@ For deeper analysis, DDE also runs Claude, Gemini, and ChatGPT **in parallel** �
 
 ---
 
+## Two Ways to Use DDE
+
+| | Method | What It Does | Cost |
+|---|--------|-------------|------|
+| 🖥️ | **From your AI terminal** (Claude Code / Cursor / Copilot) | Run `dde prompt` → your IDE's AI reads the code and generates a full evaluation | Free (no API keys) |
+| 🌐 | **From the Web dashboard** | Paste a GitHub URL → Multi-AI (Claude + Gemini + ChatGPT) cross-verification | Free with BYOK |
+
+> **Which should I use?** If you already have an AI-powered IDE, `dde prompt` is the fastest path — zero setup, zero cost. The Web dashboard is ideal when you want multi-provider cross-verification or a shareable report.
+
+---
+
 ## Multi-AI Cross-Verification
 
 ```
