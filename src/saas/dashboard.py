@@ -12,6 +12,7 @@ All HTML is rendered via inline Jinja2 templates (no separate template files).
 
 from __future__ import annotations
 
+import base64
 import logging
 import os
 import uuid
@@ -1800,10 +1801,23 @@ def _render_results_page(analysis_id: str, data: dict[str, Any], lang: str = "en
     modal_cancel = "Cancel" if lang == "en" else "\u30ad\u30e3\u30f3\u30bb\u30eb"
     modal_confirm = "Confirm Disconnect &amp; Purge" if lang == "en" else "\u5207\u65ad &amp; \u7834\u68c4\u3092\u5b9f\u884c"
 
-    # Action buttons
-    actions_html = f"""
-    <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8 mb-8">
-      <a href="/api/report/{analysis_id}/pdf?lang={lang}"
+    # Generate PDF at render time and embed as base64 data URI
+    pdf_data_uri = ""
+    pdf_filename = f"dde_report_{result.project_name}_{analysis_id}.pdf"
+    pdf_filename = "".join(c if c.isalnum() or c in "._-" else "_" for c in pdf_filename)
+    try:
+        from src.report.pdf_generator import PDFReportGenerator
+        purge_cert = data.get("purge_cert")
+        pdf_gen = PDFReportGenerator()
+        pdf_bytes = pdf_gen.generate(result, purge_cert=purge_cert, lang=lang)
+        pdf_b64 = base64.b64encode(pdf_bytes).decode("ascii")
+        pdf_data_uri = f"data:application/pdf;base64,{pdf_b64}"
+    except Exception:
+        logger.exception("Failed to generate PDF for embedding")
+
+    if pdf_data_uri:
+        pdf_button = f"""
+      <a href="{pdf_data_uri}" download="{pdf_filename}"
          class="inline-flex items-center justify-center gap-2 bg-accent hover:bg-cyan-500
                 text-slate-950 font-semibold px-6 py-3 rounded-xl transition-colors duration-200">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1811,7 +1825,14 @@ def _render_results_page(analysis_id: str, data: dict[str, Any], lang: str = "en
                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
         {t['export_pdf']}
-      </a>
+      </a>"""
+    else:
+        pdf_button = ""
+
+    # Action buttons
+    actions_html = f"""
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8 mb-8">
+      {pdf_button}
 
       <button onclick="showDisconnectModal()"
               class="inline-flex items-center justify-center gap-2 bg-red-900/50 hover:bg-red-800
