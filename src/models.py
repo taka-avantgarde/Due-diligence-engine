@@ -341,6 +341,74 @@ class EnhancedDimensionScore(BaseModel):
     enables: str = ""
 
 
+# ---------------------------------------------------------------------------
+# Site Verification models
+# ---------------------------------------------------------------------------
+
+class SiteVerificationItem(BaseModel):
+    """A single site verification check (scored 0-100)."""
+
+    item_key: str = ""          # e.g. "feature_claim_match"
+    item_name: str = ""         # EN label
+    item_name_ja: str = ""      # JA label
+    score: float = Field(default=0.0, ge=0, le=100)
+    confidence: str = "medium"  # "high" | "medium" | "low"
+    rationale: str = ""
+    evidence: list[str] = Field(default_factory=list)
+
+
+class SiteVerificationReport(BaseModel):
+    """Cross-reference of website claims vs codebase evidence."""
+
+    urls_analyzed: list[str] = Field(default_factory=list)
+    items: list[SiteVerificationItem] = Field(default_factory=list)
+    overall_credibility: float = 0.0
+    summary: str = ""
+
+
+# ---------------------------------------------------------------------------
+# Competitive Analysis models
+# ---------------------------------------------------------------------------
+
+class CompetitorDataPoint(BaseModel):
+    """A single company's position on a competitive chart."""
+
+    name: str = ""
+    x: float = 0.0       # 0-100 range
+    y: float = 0.0       # 0-100 range
+    z: float = 0.0       # bubble size for 3D charts, 0 otherwise
+    is_target: bool = False
+
+
+class MarketChart(BaseModel):
+    """A single chart for a market segment."""
+
+    chart_type: str = ""  # magic_quadrant | bcg_matrix | mckinsey_moat | gs_risk_return | bubble_3d
+    title: str = ""
+    title_ja: str = ""
+    x_axis_label: str = ""
+    x_axis_label_ja: str = ""
+    y_axis_label: str = ""
+    y_axis_label_ja: str = ""
+    data_points: list[CompetitorDataPoint] = Field(default_factory=list)
+
+
+class MarketPosition(BaseModel):
+    """Competitive analysis for a single market segment."""
+
+    market_name: str = ""
+    market_name_ja: str = ""
+    charts: list[MarketChart] = Field(default_factory=list)
+
+
+class CompetitiveAnalysis(BaseModel):
+    """Complete competitive analysis across multiple market segments."""
+
+    target_company: str = ""
+    home_country: str = ""
+    markets: list[MarketPosition] = Field(default_factory=list)
+
+
 class ConsultingReport(BaseModel):
     """Complete AI-generated consulting report parsed from structured JSON.
 
@@ -368,3 +436,5 @@ class ConsultingReport(BaseModel):
     ai_model_used: str = ""
     analysis_id: str = ""
     project_name: str = ""
+    site_verification: SiteVerificationReport | None = None
+    competitive_analysis: CompetitiveAnalysis | None = None

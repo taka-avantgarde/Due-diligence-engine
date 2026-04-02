@@ -937,6 +937,7 @@ def generate_consulting_prompt(
     result: AnalysisResult,
     lang: str = "en",
     stage: str = "unknown",
+    urls: list[str] | None = None,
 ) -> str:
     """Generate an enhanced prompt that instructs IDE AI to produce JSON + PDF.
 
@@ -945,15 +946,17 @@ def generate_consulting_prompt(
       - All heuristic data (same as normal prompt)
       - Role assignment (world-class consultant)
       - SWOT / future outlook / strategic advice / investment thesis instructions
+      - Site verification instructions (when URLs are provided)
+      - Competitive analysis instructions (always)
       - Strict JSON output schema
       - ``dde report --consulting`` command to generate PDF
     """
     if lang == "ja":
-        return _generate_consulting_ja(result, stage)
-    return _generate_consulting_en(result, stage)
+        return _generate_consulting_ja(result, stage, urls=urls)
+    return _generate_consulting_en(result, stage, urls=urls)
 
 
-def _generate_consulting_en(result: AnalysisResult, stage: str) -> str:
+def _generate_consulting_en(result: AnalysisResult, stage: str, *, urls: list[str] | None = None) -> str:
     sections: list[str] = []
 
     sections.append(_CONSULTING_HEADER_EN)
@@ -981,6 +984,15 @@ def _generate_consulting_en(result: AnalysisResult, stage: str) -> str:
         )
 
     sections.append(_get_stage_context_en(stage))
+
+    # Site verification (only when URLs are provided)
+    if urls:
+        url_list = "\n".join(f"  - {u}" for u in urls)
+        sections.append(_SITE_VERIFICATION_INSTRUCTIONS_EN.format(url_list=url_list))
+
+    # Competitive analysis (always included)
+    sections.append(_COMPETITIVE_ANALYSIS_INSTRUCTIONS_EN)
+
     sections.append(_CONSULTING_EVAL_EN)
     sections.append(_CONSULTING_JSON_SCHEMA)
     sections.append(_consulting_pdf_command(result, "en"))
@@ -988,7 +1000,7 @@ def _generate_consulting_en(result: AnalysisResult, stage: str) -> str:
     return "\n".join(sections)
 
 
-def _generate_consulting_ja(result: AnalysisResult, stage: str) -> str:
+def _generate_consulting_ja(result: AnalysisResult, stage: str, *, urls: list[str] | None = None) -> str:
     sections: list[str] = []
 
     sections.append(_CONSULTING_HEADER_JA)
@@ -1016,6 +1028,15 @@ def _generate_consulting_ja(result: AnalysisResult, stage: str) -> str:
         )
 
     sections.append(_get_stage_context_ja(stage))
+
+    # サイト検証（URLが提供された場合のみ）
+    if urls:
+        url_list = "\n".join(f"  - {u}" for u in urls)
+        sections.append(_SITE_VERIFICATION_INSTRUCTIONS_JA.format(url_list=url_list))
+
+    # 競合分析（常に含める）
+    sections.append(_COMPETITIVE_ANALYSIS_INSTRUCTIONS_JA)
+
     sections.append(_CONSULTING_EVAL_JA)
     sections.append(_CONSULTING_JSON_SCHEMA)
     sections.append(_consulting_pdf_command(result, "ja"))
@@ -1026,6 +1047,142 @@ def _generate_consulting_ja(result: AnalysisResult, stage: str) -> str:
 # ---------------------------------------------------------------------------
 # Consulting-mode templates
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Site Verification & Competitive Analysis instruction templates
+# ---------------------------------------------------------------------------
+
+_SITE_VERIFICATION_INSTRUCTIONS_EN = """## Site Verification Task
+
+The user provided the following product/service URLs for cross-validation:
+{url_list}
+
+**Visit each URL** (using WebFetch or browser tool), read the content, and evaluate the following 10 credibility items by comparing site claims against the codebase:
+
+| # | Key | Item Name | What to Check |
+|---|-----|-----------|---------------|
+| 1 | feature_claim_match | Feature Claim Match | Do features listed on the site exist in the code? |
+| 2 | tech_stack_consistency | Tech Stack Consistency | Does the tech stack described match actual dependencies? |
+| 3 | security_claim_verification | Security Claim Verification | Are security claims (E2EE, encryption, etc.) implemented? |
+| 4 | performance_claim_plausibility | Performance Claim Plausibility | Are performance numbers (speed, uptime) plausible from the code? |
+| 5 | scale_claim_consistency | Scale Claim Consistency | Do scale claims (users, data volume) match infrastructure? |
+| 6 | team_size_estimation | Team Size Estimation | Does the implied team size match git contributor count? |
+| 7 | launch_date_verification | Launch Date Verification | Does the claimed launch timeline match git history? |
+| 8 | pricing_feasibility | Pricing Model Feasibility | Is the pricing model sustainable given the tech stack costs? |
+| 9 | compliance_display | Compliance Display Audit | Are required legal/compliance notices properly displayed? |
+| 10 | ai_washing_index | AI-Washing Index | Are AI claims genuine or just buzzword decoration? |
+
+For each item, assign:
+- **score**: 0-100 (100 = perfectly consistent, 0 = completely fabricated)
+- **confidence**: "high" | "medium" | "low"
+- **rationale**: Evidence-based explanation
+- **evidence**: List of specific URLs, file paths, or code snippets
+
+Calculate **overall_credibility** as the weighted average of all 10 scores.
+Provide a **summary** paragraph explaining the overall site credibility.
+
+Include the results in the `site_verification` section of the JSON output.
+"""
+
+_SITE_VERIFICATION_INSTRUCTIONS_JA = """## サイト検証タスク
+
+以下のプロダクト/サービスURLが検証用に提供されました:
+{url_list}
+
+**各URLにアクセス**（WebFetchまたはブラウザツール使用）し、サイトの内容を読み取り、コードベースと照合して以下の10項目の信頼性を評価してください:
+
+| # | キー | 項目名 | チェック内容 |
+|---|------|--------|-------------|
+| 1 | feature_claim_match | 機能主張一致度 | サイトに記載された機能がコードに存在するか |
+| 2 | tech_stack_consistency | 技術スタック整合性 | 記載された技術スタックが実際の依存関係と一致するか |
+| 3 | security_claim_verification | セキュリティ主張検証 | セキュリティに関する主張（E2EE、暗号化等）が実装されているか |
+| 4 | performance_claim_plausibility | パフォーマンス主張妥当性 | パフォーマンス数値（速度、稼働率）がコードから見て妥当か |
+| 5 | scale_claim_consistency | 規模主張一貫性 | 規模に関する主張（ユーザー数、データ量）がインフラと整合するか |
+| 6 | team_size_estimation | チーム規模推定 | 示唆されるチーム規模がgitコントリビューター数と一致するか |
+| 7 | launch_date_verification | ローンチ日検証 | 主張するローンチ日がgit履歴と一致するか |
+| 8 | pricing_feasibility | 料金モデル実現性 | 料金モデルが技術スタックのコストに対して持続可能か |
+| 9 | compliance_display | コンプライアンス表示監査 | 法的・コンプライアンス表示が適切に行われているか |
+| 10 | ai_washing_index | AIウォッシュ指数 | AI関連の主張が本物か、バズワード装飾に過ぎないか |
+
+各項目について以下を付与:
+- **score**: 0-100（100 = 完全に整合、0 = 完全に虚偽）
+- **confidence**: "high" | "medium" | "low"
+- **rationale**: エビデンスに基づく説明
+- **evidence**: 具体的なURL、ファイルパス、コード断片のリスト
+
+**overall_credibility** を全10項目のスコアの加重平均として算出。
+**summary** で全体的なサイト信頼性を説明する段落を記述。
+
+結果はJSON出力の `site_verification` セクションに含めてください。
+"""
+
+_COMPETITIVE_ANALYSIS_INSTRUCTIONS_EN = """## Competitive Analysis Task
+
+Produce a comprehensive competitive analysis for the target company across **6 markets**.
+For each market, generate the specified chart data with 5-8 competitors (including the target).
+
+### Market × Chart Assignments
+
+| Market | Charts to Generate |
+|--------|-------------------|
+| Global | Magic Quadrant, Risk-Return, Bubble |
+| Home Country (detect from code/docs) | Magic Quadrant, BCG Matrix, Tech Moat |
+| US | BCG Matrix, Tech Moat, Risk-Return |
+| EMEA | Magic Quadrant, BCG Matrix, Risk-Return |
+| SEA | BCG Matrix, Tech Moat, Risk-Return |
+| LATAM | BCG Matrix, Tech Moat, Risk-Return |
+
+### Chart Types
+
+1. **magic_quadrant** — X: Completeness of Vision (0-100), Y: Ability to Execute (0-100)
+2. **bcg_matrix** — X: Relative Market Share (0-100), Y: Market Growth Rate (0-100)
+3. **mckinsey_moat** — X: Competitive Strength (0-100), Y: Tech Moat Depth (0-100)
+4. **gs_risk_return** — X: Risk Level (0-100), Y: Expected Return (0-100)
+5. **bubble_3d** — X: Market Presence (0-100), Y: Innovation Score (0-100), Z: Revenue Scale (0-100, bubble size)
+
+### Guidelines
+- Use real competitor names (publicly known companies in the same space)
+- Mark the target company with `is_target: true`
+- All axis values must be 0-100
+- Provide localized titles and axis labels (EN + JA)
+- Base positioning on publicly available data, analyst reports, and code analysis
+
+Include the results in the `competitive_analysis` section of the JSON output.
+"""
+
+_COMPETITIVE_ANALYSIS_INSTRUCTIONS_JA = """## 競合分析タスク
+
+対象企業について **6つの市場** にわたる包括的な競合分析を作成してください。
+各市場について、指定されたチャートデータを競合5-8社（対象企業含む）で生成します。
+
+### 市場 × チャート割り当て
+
+| 市場 | 生成するチャート |
+|------|-----------------|
+| グローバル | Magic Quadrant, Risk-Return, Bubble |
+| 本国市場（コード/ドキュメントから検出） | Magic Quadrant, BCG Matrix, Tech Moat |
+| 米国 | BCG Matrix, Tech Moat, Risk-Return |
+| EMEA | Magic Quadrant, BCG Matrix, Risk-Return |
+| 東南アジア | BCG Matrix, Tech Moat, Risk-Return |
+| 中南米 | BCG Matrix, Tech Moat, Risk-Return |
+
+### チャートタイプ
+
+1. **magic_quadrant** — X: ビジョンの完全性 (0-100), Y: 実行能力 (0-100)
+2. **bcg_matrix** — X: 相対市場シェア (0-100), Y: 市場成長率 (0-100)
+3. **mckinsey_moat** — X: 競争力 (0-100), Y: 技術的堀の深さ (0-100)
+4. **gs_risk_return** — X: リスクレベル (0-100), Y: 期待リターン (0-100)
+5. **bubble_3d** — X: 市場プレゼンス (0-100), Y: イノベーションスコア (0-100), Z: 収益規模 (0-100, バブルサイズ)
+
+### ガイドライン
+- 実在する競合企業名を使用（同じ領域の公開企業）
+- 対象企業には `is_target: true` を設定
+- 全軸の値は0-100の範囲
+- タイトルと軸ラベルは英日両方を提供
+- ポジショニングは公開情報、アナリストレポート、コード分析に基づく
+
+結果はJSON出力の `competitive_analysis` セクションに含めてください。
+"""
 
 _CONSULTING_HEADER_EN = """# DDE Consulting-Grade Technical Due Diligence
 
@@ -1168,9 +1325,56 @@ Do not add markdown formatting around it — output raw JSON only.
   "glossary_additions": [
     { "term": "technical term", "definition": "plain-language explanation" }
   ],
-  "ai_model_used": "your model name (e.g. Claude Sonnet 4, GPT-4o, etc.)"
+  "ai_model_used": "your model name (e.g. Claude Sonnet 4, GPT-4o, etc.)",
+  "site_verification": {
+    "urls_analyzed": ["https://example.com", "..."],
+    "items": [
+      {
+        "item_key": "feature_claim_match",
+        "item_name": "Feature Claim Match",
+        "item_name_ja": "機能主張一致度",
+        "score": 0-100,
+        "confidence": "high|medium|low",
+        "rationale": "evidence-based explanation",
+        "evidence": ["URL or file path 1", "..."]
+      }
+    ],
+    "overall_credibility": 0-100,
+    "summary": "overall credibility assessment paragraph"
+  },
+  "competitive_analysis": {
+    "target_company": "company name",
+    "home_country": "e.g. Japan",
+    "markets": [
+      {
+        "market_name": "Global",
+        "market_name_ja": "グローバル",
+        "charts": [
+          {
+            "chart_type": "magic_quadrant|bcg_matrix|mckinsey_moat|gs_risk_return|bubble_3d",
+            "title": "Chart Title",
+            "title_ja": "チャートタイトル",
+            "x_axis_label": "X Axis",
+            "x_axis_label_ja": "X軸",
+            "y_axis_label": "Y Axis",
+            "y_axis_label_ja": "Y軸",
+            "data_points": [
+              { "name": "Company A", "x": 0-100, "y": 0-100, "z": 0-100, "is_target": false },
+              { "name": "Target Co", "x": 0-100, "y": 0-100, "z": 0-100, "is_target": true }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
+
+**IMPORTANT**:
+- If no URLs were provided for site verification, set `"site_verification": null`
+- The `competitive_analysis` section is **always required** — never set it to null
+- For `site_verification.items`, include all 10 items (feature_claim_match, tech_stack_consistency, security_claim_verification, performance_claim_plausibility, scale_claim_consistency, team_size_estimation, launch_date_verification, pricing_feasibility, compliance_display, ai_washing_index)
+- For `competitive_analysis.markets`, include all 6 markets (Global, Home Country, US, EMEA, SEA, LATAM) with the chart types specified in the Competitive Analysis Task section
 """
 
 

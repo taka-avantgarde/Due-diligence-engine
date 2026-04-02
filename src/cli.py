@@ -245,6 +245,26 @@ def prompt(
             lang = "en" if choice == "1" else "ja"
             console.print()
 
+    site_urls: list[str] = []
+    if pdf:
+        console.print(
+            Panel(
+                "[bold]Enter product/service URLs for site verification (up to 3)[/bold]\n"
+                "サイト検証用URLを入力してください（最大3つ、空白でスキップ）",
+                title="DDE — Site URLs",
+                border_style="cyan",
+            )
+        )
+        for i in range(1, 4):
+            url = click.prompt(f"  URL {i} (blank to skip / 空白でスキップ)", default="", show_default=False)
+            if url.strip():
+                site_urls.append(url.strip())
+            else:
+                break
+        if site_urls:
+            console.print(f"  [dim]{len(site_urls)} URL(s) registered[/dim]")
+        console.print()
+
     config = get_config()
     # Force skip AI — prompt mode never calls AI APIs
     config.anthropic_api_key = ""
@@ -316,7 +336,7 @@ def prompt(
             console.print("[dim]Continuing anyway...[/dim]\n")
 
         from src.prompt.generator import generate_consulting_prompt
-        prompt_text = generate_consulting_prompt(result, lang=lang, stage=stage)
+        prompt_text = generate_consulting_prompt(result, lang=lang, stage=stage, urls=site_urls)
     else:
         prompt_text = generate_prompt(result, lang=lang, stage=stage)
 
