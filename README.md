@@ -54,7 +54,7 @@ For deeper analysis, DDE also runs Claude, Gemini, and ChatGPT **in parallel** â
 
 **Fastest way** â€” in your AI terminal (Claude Code, Cursor, etc.):
 ```bash
-pip install git+https://github.com/taka-avantgarde/Due-diligence-engine.git
+pip install --no-cache-dir git+https://github.com/taka-avantgarde/Due-diligence-engine.git
 dde prompt owner/repo --pdf
 ```
 
@@ -280,7 +280,7 @@ dde serve
 ### One-Command PDF Generation
 
 ```bash
-pip install git+https://github.com/taka-avantgarde/Due-diligence-engine.git
+pip install --no-cache-dir git+https://github.com/taka-avantgarde/Due-diligence-engine.git
 dde prompt owner/repo --pdf --lang ja
 ```
 

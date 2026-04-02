@@ -54,7 +54,7 @@
 
 **最速の方法** — AIターミナル（Claude Code、Cursor等）で:
 ```bash
-pip install git+https://github.com/taka-avantgarde/Due-diligence-engine.git
+pip install --no-cache-dir git+https://github.com/taka-avantgarde/Due-diligence-engine.git
 dde prompt owner/repo --pdf --lang ja
 ```
 
@@ -285,7 +285,7 @@ dde report --consulting result.json --pdf --lang ja
 ### 1コマンドでPDF生成
 
 ```bash
-pip install git+https://github.com/taka-avantgarde/Due-diligence-engine.git
+pip install --no-cache-dir git+https://github.com/taka-avantgarde/Due-diligence-engine.git
 dde prompt owner/repo --pdf --lang ja
 ```
 
