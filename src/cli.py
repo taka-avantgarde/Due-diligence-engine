@@ -367,7 +367,7 @@ def report(
     output_dir = Path(output) if output else config.output_dir
 
     if consulting:
-        # Consulting PDF mode
+        # Consulting PDF mode — always save to ~/Downloads
         from src.prompt.response_parser import parse_consulting_json
         from src.report.pdf_generator import PDFReportGenerator
 
@@ -388,7 +388,12 @@ def report(
 
         pdf_gen = PDFReportGenerator()
         safe_name = result.project_name.replace("/", "_").replace("\\", "_")
-        pdf_path = output_dir / f"dde_consulting_{safe_name}_{result.analysis_id}.pdf"
+
+        # Use ~/Downloads as default output for consulting PDFs
+        downloads_dir = Path.home() / "Downloads"
+        consulting_output = Path(output) if output else downloads_dir
+        consulting_output.mkdir(parents=True, exist_ok=True)
+        pdf_path = consulting_output / f"dde_consulting_{safe_name}_{result.analysis_id}.pdf"
         pdf_gen.generate_to_file(result, pdf_path, lang=lang)
 
         console.print(

@@ -1184,7 +1184,7 @@ def _consulting_pdf_command(result: AnalysisResult, lang: str) -> str:
 dde report --consulting /tmp/{filename} --pdf --lang ja
 ```
 
-**Step 4**: 生成されたPDFのファイルパスをユーザーに伝える
+**Step 4**: PDFは `~/Downloads/` に保存される。ファイルパスをユーザーに伝える
 
 **禁止事項:**
 - JSONの内容をユーザーに表示しない
@@ -1203,7 +1203,7 @@ dde report --consulting /tmp/{filename} --pdf --lang ja
 dde report --consulting /tmp/{filename} --pdf --lang en
 ```
 
-**Step 4**: Tell the user the generated PDF file path
+**Step 4**: PDF is saved to `~/Downloads/`. Tell the user the file path.
 
 **Do NOT:**
 - Print the JSON to the user
