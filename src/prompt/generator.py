@@ -926,3 +926,291 @@ def _collect_flags(result: AnalysisResult) -> list[RedFlag]:
     flags.extend(result.git_forensics.red_flags)
     flags.extend(result.consistency.red_flags)
     return flags
+
+
+# ===========================================================================
+# Consulting Prompt (--pdf mode)
+# ===========================================================================
+
+
+def generate_consulting_prompt(
+    result: AnalysisResult,
+    lang: str = "en",
+    stage: str = "unknown",
+) -> str:
+    """Generate an enhanced prompt that instructs IDE AI to produce JSON + PDF.
+
+    When ``dde prompt --pdf`` is used, this prompt replaces the standard one.
+    It includes:
+      - All heuristic data (same as normal prompt)
+      - Role assignment (world-class consultant)
+      - SWOT / future outlook / strategic advice / investment thesis instructions
+      - Strict JSON output schema
+      - ``dde report --consulting`` command to generate PDF
+    """
+    if lang == "ja":
+        return _generate_consulting_ja(result, stage)
+    return _generate_consulting_en(result, stage)
+
+
+def _generate_consulting_en(result: AnalysisResult, stage: str) -> str:
+    sections: list[str] = []
+
+    sections.append(_CONSULTING_HEADER_EN)
+    sections.append("## Glossary\n")
+    for term, definition in GLOSSARY_EN.items():
+        sections.append(f"- **{term}**: {definition}")
+    sections.append("")
+
+    sections.append("## Heuristic Analysis Results\n")
+    sections.append(_format_heuristic_en(result))
+
+    sections.append("## Match Rate: Claims vs. Reality\n")
+    sections.append(_format_match_rate_en(result))
+
+    sections.append("## Red Flags Detected\n")
+    sections.append(_format_red_flags_en(result))
+
+    sections.append("## Scoring Framework (6 dimensions, 10-level scale)\n")
+    for dim in DIMENSIONS_EN:
+        sections.append(
+            f"### {dim['name']} (Weight: {dim['weight']})\n"
+            f"**Evaluate**: {dim['what']}\n"
+            f"**Scale**: {dim['levels']}\n"
+            f"**Analogy**: {dim['analogy']}\n"
+        )
+
+    sections.append(_get_stage_context_en(stage))
+    sections.append(_CONSULTING_EVAL_EN)
+    sections.append(_CONSULTING_JSON_SCHEMA)
+    sections.append(_consulting_pdf_command(result, "en"))
+
+    return "\n".join(sections)
+
+
+def _generate_consulting_ja(result: AnalysisResult, stage: str) -> str:
+    sections: list[str] = []
+
+    sections.append(_CONSULTING_HEADER_JA)
+    sections.append("## 用語集\n")
+    for term, definition in GLOSSARY_JA.items():
+        sections.append(f"- **{term}**: {definition}")
+    sections.append("")
+
+    sections.append("## ヒューリスティック分析結果\n")
+    sections.append(_format_heuristic_ja(result))
+
+    sections.append("## マッチ率: 主張 vs 実態\n")
+    sections.append(_format_match_rate_ja(result))
+
+    sections.append("## 検出されたレッドフラグ\n")
+    sections.append(_format_red_flags_ja(result))
+
+    sections.append("## スコアリング基準（6次元 × 10段階評価）\n")
+    for dim in DIMENSIONS_JA:
+        sections.append(
+            f"### {dim['name']}（重み: {dim['weight']}）\n"
+            f"**評価観点**: {dim['what']}\n"
+            f"**尺度**: {dim['levels']}\n"
+            f"**たとえ**: {dim['analogy']}\n"
+        )
+
+    sections.append(_get_stage_context_ja(stage))
+    sections.append(_CONSULTING_EVAL_JA)
+    sections.append(_CONSULTING_JSON_SCHEMA)
+    sections.append(_consulting_pdf_command(result, "ja"))
+
+    return "\n".join(sections)
+
+
+# ---------------------------------------------------------------------------
+# Consulting-mode templates
+# ---------------------------------------------------------------------------
+
+_CONSULTING_HEADER_EN = """# DDE Consulting-Grade Technical Due Diligence
+
+## CRITICAL: Autonomous Execution Instructions
+
+**You are an autonomous agent. Execute all steps below WITHOUT asking questions.**
+**Do NOT ask for confirmation, clarification, or repo selection.**
+**Do NOT print JSON to the user. Do NOT explain what you are doing.**
+**Just silently: read code → evaluate → save JSON → run PDF command → show file path.**
+
+The heuristic data below was already collected by DDE from the target repository.
+Your job: read the code, evaluate it, and generate a consulting PDF. That's it.
+"""
+
+_CONSULTING_HEADER_JA = """# DDE コンサルティンググレード テクニカルデューデリジェンス
+
+## 最重要: 自律実行の指示
+
+**あなたは自律エージェントです。以下の全ステップを質問なしで実行してください。**
+**確認・質問・リポジトリ選択は一切不要です。**
+**JSONをユーザーに表示しないでください。作業説明も不要です。**
+**黙って: コード読取 → 評価 → JSON保存 → PDFコマンド実行 → ファイルパス表示。**
+
+以下のヒューリスティックデータは、DDEが対象リポジトリから既に収集済みです。
+あなたの仕事: コードを読み、評価し、コンサルティングPDFを生成すること。以上です。
+"""
+
+_CONSULTING_EVAL_EN = """## Evaluation Task (execute silently — no user interaction)
+
+Role: World-class technology consultant and senior software engineer.
+
+**Read all code in the repository**, then produce a JSON evaluation containing:
+
+1. **6-Dimension Scoring** (1-10 scale, with rationale and what it enables)
+2. **SWOT Analysis** — concrete, evidence-based
+3. **Future Outlook** — product vision, viability, 1/3/5-year projections with confidence
+4. **Strategic Advice** — immediate actions, medium-term priorities, long-term vision
+5. **Investment Thesis** — recommendation with risks, upside, comparable companies
+6. **Red Flag Re-evaluation** — correct heuristic false positives
+7. **Glossary Additions** — technical terms with plain-language definitions
+
+Guidelines: Evidence-based. Cite file paths. No filler. Clear language. Include your model name.
+"""
+
+_CONSULTING_EVAL_JA = """## 評価タスク（黙って実行 — ユーザーとの対話なし）
+
+役割: 世界トップクラスのテクノロジーコンサルタント兼シニアソフトウェアエンジニア。
+
+**リポジトリ内の全コードを読み取り**、以下を含むJSON評価を生成:
+
+1. **6次元スコアリング**（各次元1-10、根拠と「何が可能になるか」付き）
+2. **SWOT分析** — 具体的・エビデンスベース
+3. **将来性評価** — ビジョン、実現可能性、1/3/5年予測（信頼度付き）
+4. **戦略アドバイス** — 即座/中期/長期
+5. **投資判断** — 推奨度＋根拠＋リスク/アップサイド＋類似企業
+6. **レッドフラグ再評価** — 誤検知の修正
+7. **追加用語集** — 技術用語の注釈
+
+ガイドライン: エビデンスベース。ファイルパス引用。冗長さ排除。明確な言葉。モデル名を含める。
+"""
+
+_CONSULTING_JSON_SCHEMA = """## Output Format: JSON
+
+Output your evaluation as a single JSON object with **exactly** this structure.
+Do not add markdown formatting around it — output raw JSON only.
+
+```json
+{
+  "executive_summary": "2-3 paragraph technical summary",
+  "executive_summary_business": "2-3 paragraph non-technical summary for board/investors",
+  "dimension_scores": {
+    "technical_originality": {
+      "score": 0-100,
+      "level": 1-10,
+      "label": "e.g. Original, Extended, Frontier",
+      "rationale": "evidence-based explanation",
+      "business_explanation": "what this means in business terms",
+      "enables": "what this capability makes possible"
+    },
+    "technology_advancement": { "score": 0-100, "level": 1-10, "label": "", "rationale": "", "business_explanation": "", "enables": "" },
+    "implementation_depth": { "score": 0-100, "level": 1-10, "label": "", "rationale": "", "business_explanation": "", "enables": "" },
+    "architecture_quality": { "score": 0-100, "level": 1-10, "label": "", "rationale": "", "business_explanation": "", "enables": "" },
+    "claim_consistency": { "score": 0-100, "level": 1-10, "label": "", "rationale": "", "business_explanation": "", "enables": "" },
+    "security_posture": { "score": 0-100, "level": 1-10, "label": "", "rationale": "", "business_explanation": "", "enables": "" }
+  },
+  "overall_score": 0-100,
+  "grade": "A|B|C|D|F",
+  "swot": {
+    "strengths": [
+      { "point": "title", "explanation": "detail", "business_analogy": "real-world comparison" }
+    ],
+    "weaknesses": [
+      { "point": "title", "explanation": "detail", "business_impact": "consequence" }
+    ],
+    "opportunities": [
+      { "point": "title", "explanation": "detail", "potential_value": "upside" }
+    ],
+    "threats": [
+      { "point": "title", "explanation": "detail", "mitigation": "how to address" }
+    ]
+  },
+  "future_outlook": {
+    "product_vision": "what this product/service is trying to achieve",
+    "viability_assessment": "can they pull it off? why or why not?",
+    "year_1": { "projection": "...", "confidence": "high|medium|low", "key_milestones": ["..."] },
+    "year_3": { "projection": "...", "confidence": "high|medium|low", "key_milestones": ["..."] },
+    "year_5": { "projection": "...", "confidence": "high|medium|low", "key_milestones": ["..."] }
+  },
+  "strategic_advice": {
+    "immediate_actions": [
+      { "action": "what to do", "rationale": "why", "expected_impact": "outcome" }
+    ],
+    "medium_term": [
+      { "action": "what to do", "rationale": "why", "expected_impact": "outcome" }
+    ],
+    "long_term_vision": "where this should be heading"
+  },
+  "investment_thesis": {
+    "recommendation": "strong_invest|invest_with_conditions|cautious|pass|strong_pass",
+    "rationale": "3-5 sentences explaining the recommendation",
+    "key_risks": ["risk 1", "risk 2"],
+    "key_upside": ["upside 1", "upside 2"],
+    "comparable_companies": ["company 1", "company 2"],
+    "suggested_valuation_factors": "what affects valuation"
+  },
+  "red_flags": [
+    { "title": "flag title", "description": "detail", "severity": "critical|high|medium|low", "business_impact": "impact" }
+  ],
+  "tech_level_summary": {
+    "overall_level": 1-10,
+    "overall_label": "e.g. Production-Grade",
+    "plain_explanation": "what this level means in everyday terms"
+  },
+  "glossary_additions": [
+    { "term": "technical term", "definition": "plain-language explanation" }
+  ],
+  "ai_model_used": "your model name (e.g. Claude Sonnet 4, GPT-4o, etc.)"
+}
+```
+"""
+
+
+def _consulting_pdf_command(result: AnalysisResult, lang: str) -> str:
+    """Generate the final instruction to save JSON and produce PDF."""
+    from datetime import datetime
+
+    project_safe = result.project_name.replace("/", "_").replace("\\", "_")
+    date_stamp = datetime.now().strftime("%Y%m%d")
+    filename = f"dde_consulting_{project_safe}_{date_stamp}.json"
+
+    if lang == "ja":
+        return f"""## 実行手順（質問せずに全て実行すること）
+
+**Step 1**: リポジトリのコードを読み取り、上記スキーマに従ったJSONを生成する
+**Step 2**: JSONを `/tmp/{filename}` に保存する（Write toolまたはcatコマンドで）
+**Step 3**: 以下のコマンドを実行する:
+
+```bash
+dde report --consulting /tmp/{filename} --pdf --lang ja
+```
+
+**Step 4**: PDFは `~/Downloads/` に保存される。ファイルパスをユーザーに伝える
+
+**禁止事項:**
+- JSONの内容をユーザーに表示しない
+- 「どのリポジトリを分析しますか」等の質問をしない
+- 作業の途中経過を説明しない
+- 実行前に許可を求めない（ツール実行の同意のみ必要）
+"""
+    else:
+        return f"""## Execution Steps (do NOT ask questions — just execute)
+
+**Step 1**: Read the repository code and generate JSON following the schema above
+**Step 2**: Save JSON to `/tmp/{filename}` (via Write tool or cat command)
+**Step 3**: Run this command:
+
+```bash
+dde report --consulting /tmp/{filename} --pdf --lang en
+```
+
+**Step 4**: PDF is saved to `~/Downloads/`. Tell the user the file path.
+
+**Do NOT:**
+- Print the JSON to the user
+- Ask "which repository?" or any clarification questions
+- Explain what you are doing step by step
+- Ask for permission before executing (only tool approval is needed)
+"""

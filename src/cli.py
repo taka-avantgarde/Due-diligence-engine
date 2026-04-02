@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import click
@@ -174,7 +175,7 @@ def analyze(
 
 
 @cli.command()
-@click.argument("target")
+@click.argument("target", default=".", required=False)
 @click.option("--name", "-n", default=None, help="Project name (auto-detected if omitted)")
 @click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja"]),
               help="Output language (en: English, ja: Japanese)")
@@ -185,6 +186,8 @@ def analyze(
               help="Save prompt to file instead of stdout")
 @click.option("--copy", "-c", is_flag=True, help="Copy prompt to clipboard")
 @click.option("--skip-git", is_flag=True, help="Skip git forensics analysis")
+@click.option("--pdf", "-p", is_flag=True,
+              help="Generate consulting-grade PDF (requires AI terminal like Claude Code)")
 def prompt(
     target: str,
     name: str | None,
@@ -193,6 +196,7 @@ def prompt(
     output: str | None,
     copy: bool,
     skip_git: bool,
+    pdf: bool,
 ) -> None:
     """Generate an AI evaluation prompt for IDE terminals.
 
@@ -200,24 +204,19 @@ def prompt(
     prompt that you can paste into Claude Code, Cursor, GitHub Copilot, etc.
 
     \b
-    TARGET can be:
+    TARGET can be (defaults to current directory if omitted):
       GitHub URL:  https://github.com/owner/repo
       Short form:  owner/repo
-      Local path:  /path/to/project
+      Local path:  /path/to/project (default: .)
       Zip archive: /path/to/project.zip
 
     \b
     Examples:
-      dde prompt .                           # Analyze current directory
-      dde prompt owner/repo --lang ja        # Japanese output
+      dde prompt --pdf --lang ja             # Current dir → consulting PDF
+      dde prompt owner/repo --pdf            # GitHub repo → consulting PDF
+      dde prompt . --lang ja                 # Current dir, Japanese output
+      dde prompt owner/repo --lang ja        # GitHub repo, Japanese output
       dde prompt ./my-startup -s seed -c     # Seed stage, copy to clipboard
-      dde prompt owner/repo -o prompt.md     # Save to file
-
-    \b
-    Then paste into your AI terminal:
-      Claude Code:  Just paste the output
-      Cursor:       Paste into Composer
-      Copilot:      Paste into Chat
     """
     from src.analyze.engine import AnalysisEngine
     from src.ingest.secure_loader import SecureLoader
@@ -274,7 +273,29 @@ def prompt(
     loader.destroy()
 
     # Generate the structured prompt
-    prompt_text = generate_prompt(result, lang=lang, stage=stage)
+    if pdf:
+        # --pdf mode: check if running inside an AI terminal
+        if not _detect_ai_terminal():
+            console.print(
+                Panel(
+                    "[bold yellow]⚠ AI terminal not detected[/bold yellow]\n\n"
+                    "This command requires an AI-powered terminal to generate the PDF.\n"
+                    "Please run inside one of:\n"
+                    "  • [cyan]Claude Code[/cyan] (claude)\n"
+                    "  • [cyan]Cursor[/cyan] Terminal\n"
+                    "  • [cyan]GitHub Copilot[/cyan] Chat\n\n"
+                    "Without AI, use: [dim]dde prompt owner/repo --lang ja[/dim] (prompt-only)",
+                    title="DDE",
+                    border_style="yellow",
+                )
+            )
+            # Continue anyway — the user may know what they're doing
+            console.print("[dim]Continuing anyway...[/dim]\n")
+
+        from src.prompt.generator import generate_consulting_prompt
+        prompt_text = generate_consulting_prompt(result, lang=lang, stage=stage)
+    else:
+        prompt_text = generate_prompt(result, lang=lang, stage=stage)
 
     # Output
     if output:
@@ -297,36 +318,123 @@ def prompt(
         except (FileNotFoundError, OSError):
             console.print("[yellow]Could not copy to clipboard (pbcopy/xclip not found)[/yellow]")
 
-    console.print(
-        Panel(
-            f"[bold]Next step[/bold]: Paste the prompt into your AI terminal\n"
-            f"(Claude Code, Cursor, GitHub Copilot, etc.)\n\n"
-            f"The AI will read the data and generate a full evaluation report.\n"
-            f"[dim]No API keys needed — your IDE's AI handles the analysis.[/dim]",
-            title="DDE Prompt Generated",
-            border_style="green",
+    if not pdf:
+        console.print(
+            Panel(
+                f"[bold]Next step[/bold]: Paste the prompt into your AI terminal\n"
+                f"(Claude Code, Cursor, GitHub Copilot, etc.)\n\n"
+                f"The AI will read the data and generate a full evaluation report.\n"
+                f"[dim]No API keys needed — your IDE's AI handles the analysis.[/dim]",
+                title="DDE Prompt Generated",
+                border_style="green",
+            )
         )
-    )
+    # --pdf mode: no trailing panel — the prompt itself contains all instructions for the AI
 
 
 @cli.command()
-@click.argument("result_file", type=click.Path(exists=True))
+@click.argument("result_file", type=click.Path(exists=True), required=False, default=None)
 @click.option("--format", "-f", "fmt", default="md", type=click.Choice(["md", "html"]))
 @click.option("--output", "-o", type=click.Path(), default=None)
-def report(result_file: str, fmt: str, output: str | None) -> None:
-    """Generate a report from a saved analysis result JSON."""
+@click.option("--consulting", type=click.Path(exists=True), default=None,
+              help="Consulting report JSON from AI evaluation (generates consulting-grade PDF)")
+@click.option("--pdf", "-p", is_flag=True, help="Generate PDF output")
+@click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja"]),
+              help="PDF language")
+def report(
+    result_file: str | None,
+    fmt: str,
+    output: str | None,
+    consulting: str | None,
+    pdf: bool,
+    lang: str,
+) -> None:
+    """Generate a report from a saved analysis result JSON.
+
+    \b
+    Standard mode:
+      dde report result.json                    # Markdown report
+      dde report result.json -f html            # HTML report
+
+    \b
+    Consulting mode (from AI evaluation):
+      dde report --consulting ai_result.json --pdf --lang ja
+    """
     from src.models import AnalysisResult
     from src.report.generator import ReportGenerator
+
+    config = get_config()
+    config.ensure_dirs()
+    output_dir = Path(output) if output else config.output_dir
+
+    if consulting:
+        # Consulting PDF mode — always save to ~/Downloads
+        from src.prompt.response_parser import parse_consulting_json
+        from src.report.pdf_generator import PDFReportGenerator
+
+        cr = parse_consulting_json(consulting)
+
+        # Build a minimal AnalysisResult with consulting report attached
+        if result_file:
+            result_path = Path(result_file)
+            data = json.loads(result_path.read_text(encoding="utf-8"))
+            result = AnalysisResult(**data)
+        else:
+            result = AnalysisResult(
+                project_name=cr.project_name or "unknown",
+                analysis_id=cr.analysis_id or "consulting",
+            )
+
+        result.consulting_report = cr
+
+        pdf_gen = PDFReportGenerator()
+        safe_name = result.project_name.replace("/", "_").replace("\\", "_")
+
+        # Date stamp in filename (ja: 2026年04月02日, en: 2026-04-02)
+        now = datetime.now()
+        if lang == "ja":
+            date_str = now.strftime("%Y年%m月%d日")
+        else:
+            date_str = now.strftime("%Y-%m-%d")
+
+        # Use ~/Downloads as default output for consulting PDFs
+        downloads_dir = Path.home() / "Downloads"
+        consulting_output = Path(output) if output else downloads_dir
+        consulting_output.mkdir(parents=True, exist_ok=True)
+        pdf_path = consulting_output / f"dde_consulting_{safe_name}_{date_str}.pdf"
+        pdf_gen.generate_to_file(result, pdf_path, lang=lang)
+
+        console.print(
+            Panel(
+                f"[bold green]Consulting PDF generated![/bold green]\n\n"
+                f"  [cyan]{pdf_path}[/cyan]\n\n"
+                f"Grade: {cr.grade} | Score: {cr.overall_score:.0f}/100\n"
+                f"AI Model: {cr.ai_model_used or 'unknown'}",
+                title="DDE Consulting Report",
+                border_style="green",
+            )
+        )
+        return
+
+    # Standard report mode
+    if not result_file:
+        console.print("[red]Error: RESULT_FILE is required (or use --consulting)[/red]")
+        sys.exit(1)
 
     result_path = Path(result_file)
     data = json.loads(result_path.read_text(encoding="utf-8"))
     result = AnalysisResult(**data)
 
     report_gen = ReportGenerator()
-    config = get_config()
-    output_dir = Path(output) if output else config.output_dir
-
     saved = report_gen.save_report(result, output_dir, formats=[fmt])
+
+    if pdf:
+        from src.report.pdf_generator import PDFReportGenerator
+        pdf_gen = PDFReportGenerator()
+        safe_name = result.project_name.replace("/", "_").replace("\\", "_")
+        pdf_path = output_dir / f"dde_report_{safe_name}_{result.analysis_id}.pdf"
+        pdf_gen.generate_to_file(result, pdf_path, lang=lang)
+        saved.append(pdf_path)
 
     for p in saved:
         console.print(f"[green]Report saved: {p}[/green]")
@@ -533,6 +641,26 @@ def _display_score_summary(result, score) -> None:
             console.print("[bold yellow]HIGH SEVERITY FLAGS:[/bold yellow]")
             for flag in high:
                 console.print(f"  [yellow]! {flag.title}[/yellow]: {flag.description[:100]}")
+
+
+def _detect_ai_terminal() -> bool:
+    """Best-effort detection of whether we're running inside an AI terminal."""
+    import os
+    # Claude Code sets CLAUDE_CODE or similar env vars
+    if os.environ.get("CLAUDE_CODE"):
+        return True
+    # Cursor sets CURSOR_SESSION or TERM_PROGRAM contains "cursor"
+    if os.environ.get("CURSOR_SESSION"):
+        return True
+    term_program = os.environ.get("TERM_PROGRAM", "").lower()
+    if "cursor" in term_program or "claude" in term_program:
+        return True
+    # Check if parent process name hints at AI terminal
+    # (heuristic — not always reliable)
+    if os.environ.get("VSCODE_GIT_ASKPASS_NODE"):
+        # Running inside VS Code / Cursor terminal
+        return True
+    return False
 
 
 def _is_github_url(target: str) -> bool:

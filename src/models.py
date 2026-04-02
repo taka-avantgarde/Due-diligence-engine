@@ -219,6 +219,7 @@ class AnalysisResult(BaseModel):
     ai_results: dict[str, AIProviderResult] = Field(default_factory=dict)  # provider名→結果
     model_usage: dict[str, dict[str, int]] = Field(default_factory=dict)
     total_cost_usd: float = 0.0
+    consulting_report: ConsultingReport | None = None
 
 
 class TechLevel(BaseModel):
@@ -257,3 +258,113 @@ class PurgeCertificate(BaseModel):
     method: str = "cryptographic_erasure"
     verification_hash: str = ""
     operator: str = ""
+
+
+# ---------------------------------------------------------------------------
+# Consulting Report models (for IDE AI-generated evaluation)
+# ---------------------------------------------------------------------------
+
+
+class SWOTItem(BaseModel):
+    """A single item in a SWOT analysis quadrant."""
+
+    point: str
+    explanation: str
+    business_analogy: str = ""
+    business_impact: str = ""
+    potential_value: str = ""
+    mitigation: str = ""
+
+
+class SWOTAnalysis(BaseModel):
+    """SWOT analysis result."""
+
+    strengths: list[SWOTItem] = Field(default_factory=list)
+    weaknesses: list[SWOTItem] = Field(default_factory=list)
+    opportunities: list[SWOTItem] = Field(default_factory=list)
+    threats: list[SWOTItem] = Field(default_factory=list)
+
+
+class YearProjection(BaseModel):
+    """Projection for a specific time horizon."""
+
+    projection: str
+    confidence: str = "medium"
+    key_milestones: list[str] = Field(default_factory=list)
+
+
+class FutureOutlook(BaseModel):
+    """Product/service future outlook assessment."""
+
+    product_vision: str = ""
+    viability_assessment: str = ""
+    year_1: YearProjection | None = None
+    year_3: YearProjection | None = None
+    year_5: YearProjection | None = None
+
+
+class StrategicAction(BaseModel):
+    """A single strategic recommendation."""
+
+    action: str
+    rationale: str
+    expected_impact: str
+
+
+class StrategicAdvice(BaseModel):
+    """Prioritized strategic recommendations."""
+
+    immediate_actions: list[StrategicAction] = Field(default_factory=list)
+    medium_term: list[StrategicAction] = Field(default_factory=list)
+    long_term_vision: str = ""
+
+
+class InvestmentThesis(BaseModel):
+    """Investment recommendation with rationale."""
+
+    recommendation: str = ""
+    rationale: str = ""
+    key_risks: list[str] = Field(default_factory=list)
+    key_upside: list[str] = Field(default_factory=list)
+    comparable_companies: list[str] = Field(default_factory=list)
+    suggested_valuation_factors: str = ""
+
+
+class EnhancedDimensionScore(BaseModel):
+    """AI-generated score for a single evaluation dimension."""
+
+    score: float = Field(default=0.0, ge=0, le=100)
+    level: int = Field(default=1, ge=1, le=10)
+    label: str = ""
+    rationale: str = ""
+    business_explanation: str = ""
+    enables: str = ""
+
+
+class ConsultingReport(BaseModel):
+    """Complete AI-generated consulting report parsed from structured JSON.
+
+    This is populated by the IDE AI (Claude Code, Cursor, etc.) when
+    ``dde prompt --pdf`` is used, then fed back to ``dde report --consulting``
+    for PDF generation.
+    """
+
+    executive_summary: str = ""
+    executive_summary_business: str = ""
+    dimension_scores: dict[str, EnhancedDimensionScore] = Field(
+        default_factory=dict,
+    )
+    overall_score: float = 0.0
+    grade: str = ""
+    swot: SWOTAnalysis = Field(default_factory=SWOTAnalysis)
+    future_outlook: FutureOutlook = Field(default_factory=FutureOutlook)
+    strategic_advice: StrategicAdvice = Field(default_factory=StrategicAdvice)
+    investment_thesis: InvestmentThesis = Field(
+        default_factory=InvestmentThesis,
+    )
+    red_flags: list[dict[str, Any]] = Field(default_factory=list)
+    tech_level_summary: dict[str, Any] = Field(default_factory=dict)
+    glossary_additions: list[dict[str, str]] = Field(default_factory=list)
+    ai_model_used: str = ""
+    analysis_id: str = ""
+    project_name: str = ""

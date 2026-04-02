@@ -28,6 +28,8 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm, mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.graphics import renderPDF
+from reportlab.graphics.shapes import Drawing, Rect, String
 from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
@@ -162,6 +164,47 @@ _PDF_I18N = {
         "no": "No",
         "no_score": "No score was computed for this analysis.",
         "improvement_title": "Improvement Recommendations",
+        # Consulting report sections
+        "business_summary": "Executive Business Summary",
+        "swot_analysis": "SWOT Analysis",
+        "strengths": "Strengths",
+        "weaknesses": "Weaknesses",
+        "opportunities": "Opportunities",
+        "threats": "Threats",
+        "tech_level": "Technology Level Assessment",
+        "future_outlook": "Future Outlook",
+        "product_vision": "Product Vision",
+        "viability": "Viability Assessment",
+        "year_1": "Year 1",
+        "year_3": "Year 3",
+        "year_5": "Year 5",
+        "confidence": "Confidence",
+        "milestones": "Key Milestones",
+        "strategic_advice": "Strategic Advice",
+        "immediate_actions": "Immediate Actions",
+        "medium_term": "Medium-Term Priorities",
+        "long_term_vision": "Long-Term Vision",
+        "investment_thesis": "Investment Thesis",
+        "recommendation": "Recommendation",
+        "key_risks": "Key Risks",
+        "key_upside": "Key Upside",
+        "comparable_companies": "Comparable Companies",
+        "valuation_factors": "Valuation Factors",
+        "glossary": "Glossary",
+        "term": "Term",
+        "definition": "Definition",
+        "ai_model": "AI Model Used",
+        "enables": "Enables",
+        "action": "Action",
+        "rationale": "Rationale",
+        "impact": "Expected Impact",
+        "invest_strong": "Strong Invest",
+        "invest_conditions": "Invest with Conditions",
+        "invest_cautious": "Cautious",
+        "invest_pass": "Pass",
+        "invest_strong_pass": "Strong Pass",
+        "score_dashboard": "Score Dashboard",
+        "score_dashboard_subtitle": "6-Dimension Evaluation at a Glance",
     },
     "ja": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -237,7 +280,48 @@ _PDF_I18N = {
         "yes": "\u3042\u308a",
         "no": "\u306a\u3057",
         "no_score": "\u3053\u306e\u5206\u6790\u306e\u30b9\u30b3\u30a2\u306f\u8a08\u7b97\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002",
-        "improvement_title": "\u6539\u5584\u63d0\u6848",
+        "improvement_title": "改善提案",
+        # Consulting report sections
+        "business_summary": "ビジネスサマリー",
+        "swot_analysis": "SWOT分析",
+        "strengths": "強み",
+        "weaknesses": "弱み",
+        "opportunities": "機会",
+        "threats": "脅威",
+        "tech_level": "技術レベル評価",
+        "future_outlook": "将来性評価",
+        "product_vision": "プロダクトビジョン",
+        "viability": "実現可能性",
+        "year_1": "1年後",
+        "year_3": "3年後",
+        "year_5": "5年後",
+        "confidence": "信頼度",
+        "milestones": "主要マイルストーン",
+        "strategic_advice": "戦略アドバイス",
+        "immediate_actions": "即座のアクション",
+        "medium_term": "中期優先事項",
+        "long_term_vision": "長期ビジョン",
+        "investment_thesis": "投資判断",
+        "recommendation": "推奨度",
+        "key_risks": "主要リスク",
+        "key_upside": "アップサイド",
+        "comparable_companies": "類似企業",
+        "valuation_factors": "バリュエーション要因",
+        "glossary": "用語集",
+        "term": "用語",
+        "definition": "定義",
+        "ai_model": "使用AIモデル",
+        "enables": "これにより可能になること",
+        "action": "アクション",
+        "rationale": "根拠",
+        "impact": "期待される効果",
+        "invest_strong": "強く投資推奨",
+        "invest_conditions": "条件付き投資",
+        "invest_cautious": "慎重",
+        "invest_pass": "見送り",
+        "invest_strong_pass": "強く見送り",
+        "score_dashboard": "スコアダッシュボード",
+        "score_dashboard_subtitle": "6次元評価の概要",
     },
 }
 
@@ -391,6 +475,15 @@ def _build_styles(lang: str = "en") -> dict[str, ParagraphStyle]:
             spaceAfter=3 * mm,
             fontName=font_normal,
         ),
+        "body_dim": ParagraphStyle(
+            "CustomBodyDim",
+            parent=base["Normal"],
+            fontSize=9,
+            textColor=COLOR_TEXT_DIM,
+            spaceAfter=2 * mm,
+            leading=12,
+            fontName=font_normal,
+        ),
         "nda_notice": ParagraphStyle(
             "NDANotice",
             parent=base["Normal"],
@@ -457,24 +550,66 @@ class PDFReportGenerator:
 
         story: list = []
 
+        cr = result.consulting_report
+
         # Cover page
         story.extend(self._build_cover_page(result))
 
-        # Executive summary
-        story.append(PageBreak())
-        story.extend(self._build_executive_summary(result))
-
-        # Score breakdown
-        story.extend(self._build_score_breakdown(result))
-
-        # Multi-AI provider results
-        if result.ai_results:
-            story.extend(self._build_ai_provider_section(result))
-
-        # Red flags
-        if result.score and result.score.red_flags:
+        # --- Consulting report sections (if available) ---
+        if cr is not None:
+            # Score dashboard (bar chart overview) — first page after cover
             story.append(PageBreak())
-            story.extend(self._build_red_flags_section(result))
+            story.extend(self._build_score_dashboard(cr))
+
+            # Business summary
+            story.append(PageBreak())
+            story.extend(self._build_business_summary(cr))
+
+            # SWOT
+            story.append(PageBreak())
+            story.extend(self._build_swot_page(cr))
+
+            # Score breakdown (from consulting report)
+            story.append(PageBreak())
+            story.extend(self._build_consulting_scores(cr))
+
+            # Tech level
+            story.extend(self._build_tech_level_page(cr))
+
+            # Future outlook
+            story.append(PageBreak())
+            story.extend(self._build_future_outlook_page(cr))
+
+            # Strategic advice
+            story.append(PageBreak())
+            story.extend(self._build_strategic_advice_page(cr))
+
+            # Investment thesis
+            story.append(PageBreak())
+            story.extend(self._build_investment_thesis_page(cr))
+
+            # Red flags from consulting
+            if cr.red_flags:
+                story.append(PageBreak())
+                story.extend(self._build_consulting_red_flags(cr))
+
+        else:
+            # Standard report flow (no consulting data)
+            # Executive summary
+            story.append(PageBreak())
+            story.extend(self._build_executive_summary(result))
+
+            # Score breakdown
+            story.extend(self._build_score_breakdown(result))
+
+            # Multi-AI provider results
+            if result.ai_results:
+                story.extend(self._build_ai_provider_section(result))
+
+            # Red flags
+            if result.score and result.score.red_flags:
+                story.append(PageBreak())
+                story.extend(self._build_red_flags_section(result))
 
         # Codebase metrics
         story.append(PageBreak())
@@ -486,6 +621,11 @@ class PDFReportGenerator:
 
         # Consistency check
         story.extend(self._build_consistency_section(result))
+
+        # Glossary (consulting only)
+        if cr is not None:
+            story.append(PageBreak())
+            story.extend(self._build_glossary_page(cr))
 
         # Cost breakdown
         story.extend(self._build_cost_section(result))
@@ -1193,3 +1333,650 @@ class PDFReportGenerator:
         canvas.line(2 * cm, 1.8 * cm, page_width - 2 * cm, 1.8 * cm)
 
         canvas.restoreState()
+
+    # ===================================================================
+    # Consulting Report build methods
+    # ===================================================================
+
+    def _build_score_dashboard(self, cr) -> list:
+        """Score dashboard with overall score + 6-dimension horizontal bar chart."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        # Title
+        elements.append(Paragraph(t["score_dashboard"], s["heading1"]))
+        elements.append(
+            HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=4 * mm)
+        )
+        elements.append(
+            Paragraph(t["score_dashboard_subtitle"], s["body_dim"])
+        )
+        elements.append(Spacer(1, 6 * mm))
+
+        # --- Overall score large display ---
+        grade = cr.grade or "?"
+        grade_color = GRADE_COLORS.get(grade, COLOR_TEXT_DIM)
+
+        overall_text = (
+            f'<font color="{grade_color.hexval()}" size="48">{cr.overall_score:.0f}</font>'
+            f'<font color="{COLOR_TEXT_DIM.hexval()}" size="18"> / 100</font>'
+        )
+        elements.append(Paragraph(overall_text, s["score_large"]))
+
+        grade_label = f'{t["grade_prefix"]}: {grade}'
+        rec = _PDF_GRADE_REC.get(self._lang, _PDF_GRADE_REC["en"])
+        recommendation = rec.get(grade, "")
+        grade_line = (
+            f'<font color="{grade_color.hexval()}" size="14"><b>{grade_label}</b></font>'
+            f'  <font color="{COLOR_TEXT_DIM.hexval()}" size="10">{recommendation}</font>'
+        )
+        elements.append(Paragraph(grade_line, s["center"]))
+        elements.append(Spacer(1, 10 * mm))
+
+        # --- 6-Dimension bar chart ---
+        dim_name_map = {
+            "technical_originality": "Technical Originality",
+            "technology_advancement": "Technology Advancement",
+            "implementation_depth": "Implementation Depth",
+            "architecture_quality": "Architecture Quality",
+            "claim_consistency": "Claim Consistency",
+            "security_posture": "Security Posture",
+        }
+        weights = {
+            "technical_originality": 0.25,
+            "technology_advancement": 0.20,
+            "implementation_depth": 0.20,
+            "architecture_quality": 0.15,
+            "claim_consistency": 0.10,
+            "security_posture": 0.10,
+        }
+
+        # Collect dimension data
+        dims = []
+        for key, en_name in dim_name_map.items():
+            dim = cr.dimension_scores.get(key)
+            if not dim:
+                continue
+            name = _DIM_NAME_JA.get(en_name, en_name) if self._lang == "ja" else en_name
+            w = weights.get(key, 0)
+            dims.append((name, dim.score, dim.level, w))
+
+        if not dims:
+            return elements
+
+        # Drawing dimensions
+        bar_max_w = 280  # max bar width in points
+        row_h = 32       # height per row
+        label_w = 140    # label area width
+        chart_w = label_w + bar_max_w + 80  # total width
+        chart_h = len(dims) * row_h + 10
+
+        d = Drawing(chart_w, chart_h)
+
+        for i, (name, score, level, weight) in enumerate(dims):
+            y = chart_h - (i + 1) * row_h + 6
+
+            # Dimension label (left)
+            font_name = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica"
+            d.add(String(0, y + 4, name, fontName=font_name, fontSize=9,
+                         fillColor=COLOR_TEXT))
+
+            # Background bar (gray track)
+            d.add(Rect(label_w, y, bar_max_w, 16,
+                        fillColor=colors.HexColor("#e2e8f0"),
+                        strokeColor=None, strokeWidth=0))
+
+            # Score bar (colored by score range)
+            bar_w = max(2, (score / 100) * bar_max_w)
+            if score >= 80:
+                bar_color = COLOR_GREEN
+            elif score >= 60:
+                bar_color = COLOR_ACCENT
+            elif score >= 40:
+                bar_color = COLOR_YELLOW
+            else:
+                bar_color = COLOR_RED
+            d.add(Rect(label_w, y, bar_w, 16,
+                        fillColor=bar_color,
+                        strokeColor=None, strokeWidth=0))
+
+            # Score text (right of bar)
+            score_str = f"{score:.0f}  Lv.{level}  ({weight:.0%})"
+            d.add(String(label_w + bar_max_w + 6, y + 3, score_str,
+                         fontName="Helvetica", fontSize=8,
+                         fillColor=COLOR_TEXT_DIM))
+
+        elements.append(d)
+        elements.append(Spacer(1, 8 * mm))
+
+        # Weighted total line
+        weighted_total = sum(sc * w for _, sc, _, w in dims)
+        if self._lang == "ja":
+            total_text = f"加重合計スコア: <b>{weighted_total:.1f}</b> / 100"
+        else:
+            total_text = f"Weighted Total Score: <b>{weighted_total:.1f}</b> / 100"
+        elements.append(Paragraph(total_text, s["body"]))
+
+        # Score barometer
+        elements.append(Spacer(1, 6 * mm))
+        barometer = Drawing(chart_w, 40)
+        # Track
+        barometer.add(Rect(label_w, 15, bar_max_w, 10,
+                           fillColor=colors.HexColor("#e2e8f0"),
+                           strokeColor=None, strokeWidth=0))
+        # Colored segments  (F: 0-40, D: 40-60, C: 60-75, B: 75-90, A: 90-100)
+        segments = [
+            (0, 40, COLOR_RED), (40, 60, COLOR_ORANGE),
+            (60, 75, COLOR_YELLOW), (75, 90, colors.HexColor("#84cc16")),
+            (90, 100, COLOR_GREEN),
+        ]
+        for lo, hi, clr in segments:
+            x = label_w + (lo / 100) * bar_max_w
+            w = ((hi - lo) / 100) * bar_max_w
+            barometer.add(Rect(x, 15, w, 10, fillColor=clr,
+                               strokeColor=None, strokeWidth=0))
+
+        # Position marker
+        marker_x = label_w + (cr.overall_score / 100) * bar_max_w
+        barometer.add(Rect(marker_x - 1.5, 12, 3, 16,
+                           fillColor=COLOR_TEXT, strokeColor=None, strokeWidth=0))
+
+        # Grade labels
+        grade_labels = [("F", 20), ("D", 50), ("C", 67.5), ("B", 82.5), ("A", 95)]
+        for g_label, pos in grade_labels:
+            x = label_w + (pos / 100) * bar_max_w
+            barometer.add(String(x - 3, 2, g_label, fontName="Helvetica-Bold",
+                                 fontSize=8, fillColor=COLOR_TEXT_DIM))
+
+        elements.append(barometer)
+
+        return elements
+
+    def _build_business_summary(self, cr) -> list:
+        """Executive business summary page."""
+        from src.models import ConsultingReport
+
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        elements.append(Paragraph(t["business_summary"], s["heading1"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        # AI model attribution
+        if cr.ai_model_used:
+            elements.append(
+                Paragraph(f"{t['ai_model']}: {cr.ai_model_used}", s["body_dim"])
+            )
+            elements.append(Spacer(1, 4 * mm))
+
+        # Grade badge
+        grade = cr.grade or "N/A"
+        grade_color = GRADE_COLORS.get(grade, COLOR_TEXT_DIM)
+        score_text = f"{cr.overall_score:.0f}/100 — {t['grade_prefix']}: {grade}"
+        elements.append(
+            Paragraph(
+                f'<font color="{grade_color.hexval()}">{score_text}</font>',
+                s["heading2"],
+            )
+        )
+        elements.append(Spacer(1, 6 * mm))
+
+        # Business summary text
+        if cr.executive_summary_business:
+            for para in cr.executive_summary_business.split("\n\n"):
+                para = para.strip()
+                if para:
+                    elements.append(Paragraph(para, s["body"]))
+                    elements.append(Spacer(1, 3 * mm))
+
+        # Technical summary
+        if cr.executive_summary:
+            elements.append(Spacer(1, 4 * mm))
+            elements.append(
+                Paragraph(t.get("exec_summary", "Executive Summary"), s["heading2"])
+            )
+            elements.append(Spacer(1, 3 * mm))
+            for para in cr.executive_summary.split("\n\n"):
+                para = para.strip()
+                if para:
+                    elements.append(Paragraph(para, s["body"]))
+                    elements.append(Spacer(1, 3 * mm))
+
+        return elements
+
+    def _build_swot_page(self, cr) -> list:
+        """SWOT analysis 2x2 grid."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        elements.append(Paragraph(t["swot_analysis"], s["heading1"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        swot = cr.swot
+        quadrants = [
+            (t["strengths"], swot.strengths, colors.HexColor("#166534"), colors.HexColor("#f0fdf4")),
+            (t["weaknesses"], swot.weaknesses, colors.HexColor("#9a3412"), colors.HexColor("#fff7ed")),
+            (t["opportunities"], swot.opportunities, colors.HexColor("#1e40af"), colors.HexColor("#eff6ff")),
+            (t["threats"], swot.threats, colors.HexColor("#991b1b"), colors.HexColor("#fef2f2")),
+        ]
+
+        for title, items, title_color, bg_color in quadrants:
+            elements.append(
+                Paragraph(
+                    f'<font color="{title_color.hexval()}">{title}</font>',
+                    s["heading2"],
+                )
+            )
+            elements.append(Spacer(1, 2 * mm))
+
+            if not items:
+                elements.append(Paragraph("—", s["body_dim"]))
+            else:
+                for item in items:
+                    bullet = f"<b>{item.point}</b>: {item.explanation}"
+                    extra = (
+                        item.business_analogy
+                        or item.business_impact
+                        or item.potential_value
+                        or item.mitigation
+                    )
+                    if extra:
+                        bullet += f"<br/><i>{extra}</i>"
+                    elements.append(Paragraph(f"• {bullet}", s["body"]))
+                    elements.append(Spacer(1, 2 * mm))
+
+            elements.append(Spacer(1, 4 * mm))
+
+        return elements
+
+    def _build_consulting_scores(self, cr) -> list:
+        """Dimension scores from consulting report with business explanations."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        elements.append(Paragraph(t["score_breakdown"], s["heading1"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        dim_name_map = {
+            "technical_originality": "Technical Originality",
+            "technology_advancement": "Technology Advancement",
+            "implementation_depth": "Implementation Depth",
+            "architecture_quality": "Architecture Quality",
+            "claim_consistency": "Claim Consistency",
+            "security_posture": "Security Posture",
+        }
+
+        weights = {
+            "technical_originality": 0.25,
+            "technology_advancement": 0.20,
+            "implementation_depth": 0.20,
+            "architecture_quality": 0.15,
+            "claim_consistency": 0.10,
+            "security_posture": 0.10,
+        }
+
+        # Score table
+        header = [t["dimension"], t["score"], "Lv.", t["weight"], t["weighted_score"]]
+        rows = [header]
+
+        for key in dim_name_map:
+            dim = cr.dimension_scores.get(key)
+            if not dim:
+                continue
+            name = dim_name_map[key]
+            if self._lang == "ja":
+                name = _DIM_NAME_JA.get(name, name)
+            w = weights.get(key, 0)
+            rows.append([
+                name,
+                f"{dim.score:.0f}",
+                f"Lv.{dim.level}",
+                f"{w:.0%}",
+                f"{dim.score * w:.1f}",
+            ])
+
+        if len(rows) > 1:
+            table = Table(rows, colWidths=[140, 50, 40, 50, 70])
+            table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), COLOR_SURFACE),
+                ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
+                ("FONTNAME", (0, 0), (-1, 0), s["body"].fontName),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER),
+                ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [COLOR_LIGHT_BG, COLOR_WHITE]),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]))
+            elements.append(table)
+            elements.append(Spacer(1, 6 * mm))
+
+        # Detailed rationale and business explanation per dimension
+        for key in dim_name_map:
+            dim = cr.dimension_scores.get(key)
+            if not dim or not dim.rationale:
+                continue
+            name = dim_name_map[key]
+            if self._lang == "ja":
+                name = _DIM_NAME_JA.get(name, name)
+
+            elements.append(
+                Paragraph(f"<b>{name}</b> — Lv.{dim.level} {dim.label}", s["body"])
+            )
+            elements.append(Paragraph(dim.rationale, s["body"]))
+            if dim.business_explanation:
+                elements.append(
+                    Paragraph(f"<i>{dim.business_explanation}</i>", s["body_dim"])
+                )
+            if dim.enables:
+                elements.append(
+                    Paragraph(
+                        f"{t['enables']}: {dim.enables}",
+                        s["body_dim"],
+                    )
+                )
+            elements.append(Spacer(1, 4 * mm))
+
+        return elements
+
+    def _build_tech_level_page(self, cr) -> list:
+        """Tech level summary with visual gauge."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        elements.append(Spacer(1, 6 * mm))
+        elements.append(Paragraph(t["tech_level"], s["heading1"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        tls = cr.tech_level_summary
+        if not tls:
+            return elements
+
+        level = int(tls.get("overall_level", 0))
+        label = tls.get("overall_label", "")
+        explanation = tls.get("plain_explanation", "")
+
+        # Visual gauge using text bar
+        filled = "█" * level
+        empty = "░" * (10 - level)
+        gauge_text = f"<font size='14'>{filled}{empty}</font> Lv.{level}/10 — {label}"
+        elements.append(Paragraph(gauge_text, s["body"]))
+        elements.append(Spacer(1, 4 * mm))
+
+        if explanation:
+            elements.append(Paragraph(explanation, s["body"]))
+
+        return elements
+
+    def _build_future_outlook_page(self, cr) -> list:
+        """Future outlook with timeline projections."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        elements.append(Paragraph(t["future_outlook"], s["heading1"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        fo = cr.future_outlook
+
+        if fo.product_vision:
+            elements.append(Paragraph(f"<b>{t['product_vision']}</b>", s["body"]))
+            elements.append(Paragraph(fo.product_vision, s["body"]))
+            elements.append(Spacer(1, 4 * mm))
+
+        if fo.viability_assessment:
+            elements.append(Paragraph(f"<b>{t['viability']}</b>", s["body"]))
+            elements.append(Paragraph(fo.viability_assessment, s["body"]))
+            elements.append(Spacer(1, 6 * mm))
+
+        # Projections
+        confidence_colors = {
+            "high": COLOR_GREEN,
+            "medium": COLOR_YELLOW,
+            "low": COLOR_RED,
+        }
+
+        for label_key, proj in [
+            ("year_1", fo.year_1),
+            ("year_3", fo.year_3),
+            ("year_5", fo.year_5),
+        ]:
+            if proj is None:
+                continue
+            conf_color = confidence_colors.get(proj.confidence, COLOR_TEXT_DIM)
+            elements.append(
+                Paragraph(
+                    f"<b>{t[label_key]}</b> "
+                    f'({t["confidence"]}: <font color="{conf_color.hexval()}">'
+                    f"{proj.confidence}</font>)",
+                    s["heading2"],
+                )
+            )
+            elements.append(Paragraph(proj.projection, s["body"]))
+            if proj.key_milestones:
+                elements.append(
+                    Paragraph(f"<b>{t['milestones']}:</b>", s["body"])
+                )
+                for ms in proj.key_milestones:
+                    elements.append(Paragraph(f"• {ms}", s["body"]))
+            elements.append(Spacer(1, 4 * mm))
+
+        return elements
+
+    def _build_strategic_advice_page(self, cr) -> list:
+        """Strategic advice with prioritized actions."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        elements.append(Paragraph(t["strategic_advice"], s["heading1"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        sa = cr.strategic_advice
+
+        for section_key, actions in [
+            ("immediate_actions", sa.immediate_actions),
+            ("medium_term", sa.medium_term),
+        ]:
+            if not actions:
+                continue
+            elements.append(Paragraph(t[section_key], s["heading2"]))
+            elements.append(Spacer(1, 3 * mm))
+
+            header = [t["action"], t["rationale"], t["impact"]]
+            rows = [header]
+            for act in actions:
+                rows.append([act.action, act.rationale, act.expected_impact])
+
+            col_w = 150
+            table = Table(rows, colWidths=[col_w, col_w, col_w])
+            table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), COLOR_SURFACE),
+                ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
+                ("FONTNAME", (0, 0), (-1, -1), s["body"].fontName),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [COLOR_LIGHT_BG, COLOR_WHITE]),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]))
+            elements.append(table)
+            elements.append(Spacer(1, 6 * mm))
+
+        if sa.long_term_vision:
+            elements.append(Paragraph(t["long_term_vision"], s["heading2"]))
+            elements.append(Spacer(1, 3 * mm))
+            elements.append(Paragraph(sa.long_term_vision, s["body"]))
+
+        return elements
+
+    def _build_investment_thesis_page(self, cr) -> list:
+        """Investment thesis with recommendation badge."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        elements.append(Paragraph(t["investment_thesis"], s["heading1"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        thesis = cr.investment_thesis
+
+        # Recommendation badge
+        rec_labels = {
+            "strong_invest": (t.get("invest_strong", "Strong Invest"), COLOR_GREEN),
+            "invest_with_conditions": (t.get("invest_conditions", "Invest with Conditions"), colors.HexColor("#84cc16")),
+            "cautious": (t.get("invest_cautious", "Cautious"), COLOR_YELLOW),
+            "pass": (t.get("invest_pass", "Pass"), COLOR_ORANGE),
+            "strong_pass": (t.get("invest_strong_pass", "Strong Pass"), COLOR_RED),
+        }
+        rec_label, rec_color = rec_labels.get(
+            thesis.recommendation,
+            (thesis.recommendation, COLOR_TEXT_DIM),
+        )
+        elements.append(
+            Paragraph(
+                f'{t["recommendation"]}: '
+                f'<font color="{rec_color.hexval()}" size="14"><b>{rec_label}</b></font>',
+                s["body"],
+            )
+        )
+        elements.append(Spacer(1, 4 * mm))
+
+        # Rationale
+        if thesis.rationale:
+            elements.append(Paragraph(thesis.rationale, s["body"]))
+            elements.append(Spacer(1, 6 * mm))
+
+        # Two-column: Risks vs Upside
+        risk_items = "".join(f"• {r}<br/>" for r in thesis.key_risks) if thesis.key_risks else "—"
+        upside_items = "".join(f"• {u}<br/>" for u in thesis.key_upside) if thesis.key_upside else "—"
+
+        risk_upside = Table(
+            [
+                [
+                    Paragraph(f"<b>{t['key_risks']}</b><br/>{risk_items}", s["body"]),
+                    Paragraph(f"<b>{t['key_upside']}</b><br/>{upside_items}", s["body"]),
+                ]
+            ],
+            colWidths=[225, 225],
+        )
+        risk_upside.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(risk_upside)
+        elements.append(Spacer(1, 4 * mm))
+
+        # Comparable companies
+        if thesis.comparable_companies:
+            elements.append(
+                Paragraph(
+                    f"<b>{t['comparable_companies']}:</b> "
+                    + ", ".join(thesis.comparable_companies),
+                    s["body"],
+                )
+            )
+            elements.append(Spacer(1, 3 * mm))
+
+        # Valuation factors
+        if thesis.suggested_valuation_factors:
+            elements.append(
+                Paragraph(
+                    f"<b>{t['valuation_factors']}:</b> "
+                    + thesis.suggested_valuation_factors,
+                    s["body"],
+                )
+            )
+
+        return elements
+
+    def _build_consulting_red_flags(self, cr) -> list:
+        """Red flags from consulting report."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        elements.append(Paragraph(t["red_flags"], s["heading1"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        severity_colors = {
+            "critical": COLOR_RED,
+            "high": COLOR_ORANGE,
+            "medium": COLOR_YELLOW,
+            "low": COLOR_GREEN,
+        }
+
+        for flag in cr.red_flags:
+            if not isinstance(flag, dict):
+                continue
+            sev = str(flag.get("severity", "info")).lower()
+            sev_color = severity_colors.get(sev, COLOR_ACCENT)
+            title = flag.get("title", "")
+            desc = flag.get("description", "")
+            impact = flag.get("business_impact", "")
+
+            elements.append(
+                Paragraph(
+                    f'<font color="{sev_color.hexval()}"><b>[{sev.upper()}]</b></font> '
+                    f"<b>{title}</b>",
+                    s["body"],
+                )
+            )
+            if desc:
+                elements.append(Paragraph(desc, s["body"]))
+            if impact:
+                elements.append(
+                    Paragraph(f"<i>{impact}</i>", s["body_dim"])
+                )
+            elements.append(Spacer(1, 3 * mm))
+
+        return elements
+
+    def _build_glossary_page(self, cr) -> list:
+        """Glossary page combining base glossary and AI additions."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        elements.append(Paragraph(t["glossary"], s["heading1"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        # AI-generated glossary additions
+        glossary = cr.glossary_additions or []
+        if not glossary:
+            elements.append(Paragraph("—", s["body_dim"]))
+            return elements
+
+        header = [t["term"], t["definition"]]
+        rows = [header]
+        for entry in glossary:
+            if isinstance(entry, dict):
+                rows.append([
+                    entry.get("term", ""),
+                    entry.get("definition", ""),
+                ])
+
+        if len(rows) > 1:
+            table = Table(rows, colWidths=[120, 330])
+            table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), COLOR_SURFACE),
+                ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
+                ("FONTNAME", (0, 0), (-1, -1), s["body"].fontName),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [COLOR_LIGHT_BG, COLOR_WHITE]),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]))
+            elements.append(table)
+
+        return elements

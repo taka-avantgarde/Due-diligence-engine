@@ -23,10 +23,10 @@ For deeper analysis, DDE also runs Claude, Gemini, and ChatGPT **in parallel** �
 
 | | Method | What It Does | Cost |
 |---|--------|-------------|------|
-| 🖥️ | **From your AI terminal** (Claude Code / Cursor / Copilot) | Run `dde prompt` → your IDE's AI reads the code and generates a full evaluation | Free (no API keys) |
+| 🖥️ | **From your AI terminal** (Claude Code / Cursor / Copilot) | Run `dde prompt --pdf` → AI reads the code, evaluates it, and generates a consulting-grade PDF automatically | Free (no API keys) |
 | 🌐 | **From the Web dashboard** | Paste a GitHub URL → Multi-AI (Claude + Gemini + ChatGPT) cross-verification | Free with BYOK |
 
-> **Which should I use?** If you already have an AI-powered IDE, `dde prompt` is the fastest path — zero setup, zero cost. The Web dashboard is ideal when you want multi-provider cross-verification or a shareable report.
+> **Which should I use?** If you already have an AI-powered IDE, `dde prompt --pdf` is the fastest path — zero setup, zero cost, PDF delivered locally. The Web dashboard is ideal when you want multi-provider cross-verification or a shareable report.
 
 ---
 
@@ -52,15 +52,22 @@ For deeper analysis, DDE also runs Claude, Gemini, and ChatGPT **in parallel** �
 
 ## Try It Now
 
-**Fastest way** — in your AI terminal:
+**Fastest way** — in your AI terminal (Claude Code, Cursor, etc.):
 ```bash
-pip install git+https://github.com/taka-avantgarde/Due-diligence-engine.git
-dde prompt owner/repo
+pip install --no-cache-dir git+https://github.com/taka-avantgarde/Due-diligence-engine.git
+dde prompt --pdf
+```
+
+That's it. Analyzes the current directory by default. The AI reads your codebase, evaluates it as a world-class consultant, and generates a PDF — all automatically.
+
+```bash
+# Or specify a GitHub repo
+dde prompt owner/repo --pdf --lang ja
 ```
 
 **Web dashboard**: https://due-diligence-engine.web.app/dashboard/
 
-> `dde prompt` is free (no API keys). For AI-powered cross-verification, use `dde analyze` with your own API keys — **BYOK (Bring Your Own Key)**: Claude, Gemini, and/or ChatGPT.
+> `dde prompt` is free (no API keys). `--pdf` mode produces a consulting-grade PDF via your IDE's AI. For multi-provider cross-verification, use `dde analyze` with your own API keys — **BYOK (Bring Your Own Key)**: Claude, Gemini, and/or ChatGPT.
 
 ---
 
@@ -69,6 +76,7 @@ dde prompt owner/repo
 | Feature | Description |
 |---------|-------------|
 | **Multi-AI Cross-Verification** | Claude + Gemini + ChatGPT evaluate independently, then cross-verify |
+| **`dde prompt --pdf` — Consulting PDF** | AI reads codebase → SWOT, scoring, future outlook, investment thesis → PDF generated automatically. Zero API keys |
 | **`dde prompt` — IDE AI Integration** | Generate structured prompts for Claude Code / Cursor / Copilot. Zero API keys needed |
 | **BYOK (Bring Your Own Key)** | Use your own API keys — Claude, Gemini, or ChatGPT. 1 provider or all 3. No vendor lock-in |
 | **Plain-Language Glossary** | All technical terms annotated for non-technical investors ("Translation Device" mode) |
@@ -245,8 +253,13 @@ export GITHUB_CLIENT_SECRET="your-github-oauth-app-secret"
 ### CLI Usage
 
 ```bash
-# Generate evaluation prompt for your IDE AI (no API keys needed)
-dde prompt .
+# Generate consulting-grade PDF (in AI terminal — Claude Code, Cursor, etc.)
+dde prompt --pdf                                    # Current directory
+dde prompt --pdf --lang ja                          # Japanese PDF
+dde prompt owner/repo --pdf --lang ja --stage seed  # GitHub repo
+
+# Generate evaluation prompt only (no PDF)
+dde prompt
 dde prompt owner/repo --lang ja --stage seed
 
 # Full analysis with AI APIs (BYOK)
@@ -254,6 +267,9 @@ dde analyze https://github.com/some-startup/their-product
 
 # Local-only heuristic analysis (free, no AI)
 dde analyze some-startup/repo --skip-ai
+
+# Generate PDF from AI evaluation JSON (used internally by --pdf mode)
+dde report --consulting result.json --pdf --lang ja
 ```
 
 ### Web Dashboard
@@ -267,44 +283,55 @@ dde serve
 
 ## Use from Your AI Terminal (Claude Code, Cursor, etc.)
 
-Already using AI in your IDE? Run `dde prompt` to generate a structured evaluation prompt — then let **your IDE's AI** analyze it. No API keys needed.
-
-### 1. Setup (one-time)
+### One-Command PDF Generation
 
 ```bash
-pip install git+https://github.com/taka-avantgarde/Due-diligence-engine.git
+pip install --no-cache-dir git+https://github.com/taka-avantgarde/Due-diligence-engine.git
+dde prompt --pdf --lang ja
 ```
 
-### 2. Generate Prompt & Evaluate
+Analyzes the current directory by default. Or specify a repo: `dde prompt owner/repo --pdf`
+
+The AI autonomously:
+1. Reads the codebase
+2. Evaluates as a world-class technology consultant
+3. Generates a consulting-grade PDF to `~/Downloads/`
+
+No API keys. No questions asked. Just tool-consent prompts from your IDE.
+
+**Output:** `~/Downloads/dde_consulting_<project>_<date>.pdf`
+- English: `dde_consulting_NeuralPay_2026-04-02.pdf`
+- Japanese: `dde_consulting_NeuralPay_2026年04月02日.pdf`
+
+### What's in the PDF
+
+| Page | Section | Content |
+|------|---------|---------|
+| 1 | **Cover** | Project name, overall score, grade badge |
+| 2 | **Score Dashboard** | Overall score (large) + 6-dimension horizontal bar chart with color-coded status bars + score barometer (F→A) |
+| 3 | **Business Summary** | Executive summary readable by non-engineers, with investment grade badge + AI model attribution |
+| 4 | **SWOT Analysis** | Strengths, Weaknesses, Opportunities, Threats — evidence-based, with business analogies |
+| 5 | **Score Breakdown** | Detailed 6-dimension table with rationale, business explanation, and what each score enables |
+| 6 | **Tech Level Assessment** | Visual gauge (Lv.1-10) with plain-language explanation |
+| 7 | **Future Outlook** | Product vision + 1/3/5-year projections with confidence levels and milestones |
+| 8 | **Strategic Advice** | Immediate actions, medium-term priorities, long-term vision |
+| 9 | **Investment Thesis** | Recommendation with risks, upside potential, and comparable companies |
+| 10 | **Red Flags** | Severity-rated issues with business impact |
+| 11 | **Glossary** | All technical terms annotated for non-technical readers |
+
+### Prompt-Only Mode (no PDF)
+
+If you prefer text output instead of PDF, omit `--pdf`:
 
 ```bash
-# Generate an evaluation prompt for your project
-dde prompt .
-
-# Or for any public GitHub repo
-dde prompt owner/repo
-
-# Japanese output with startup stage context
-dde prompt owner/repo --lang ja --stage seed
+dde prompt owner/repo --lang ja
 
 # Save to file or copy to clipboard
 dde prompt . -o prompt.md
 dde prompt . --copy
 ```
 
-### 3. Paste into Your AI Terminal
-
-Just paste the generated prompt into Claude Code, Cursor, Copilot, or any AI terminal.
-The AI will read your codebase, evaluate all 6 dimensions, and generate a full report with:
-
-- **Status bar scoring** — visual 100-point evaluation per dimension
-- **Plain-language explanations** — no engineering jargon, readable by non-technical investors
-- **Strengths & what they enable** — "Because of X, users can do Y"
-- **Improvements** — "If you do X, Y becomes possible"
-- **Service site cross-validation** — paste a URL to check if claims match code
-- **Investor questions** — ready-to-use questions for startup meetings
-
-### How It Works
+### How `--pdf` Mode Works
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -314,22 +341,24 @@ The AI will read your codebase, evaluate all 6 dimensions, and generate a full r
 │  │  AI Terminal                     │                    │
 │  │  (Claude Code / Cursor / etc.)   │                    │
 │  │                                  │                    │
-│  │  $ dde prompt .                  │  ┌──────────────┐  │
+│  │  $ dde prompt --pdf              │  ┌──────────────┐  │
 │  │      ↓                           │  │ DDE Engine   │  │
-│  │  Heuristic data collected ───────┼─▶│ (local, no   │  │
-│  │  + evaluation instructions       │  │  AI API)     │  │
+│  │  1. Heuristic data collected ────┼─▶│ (local, no   │  │
+│  │     + JSON schema + instructions │  │  AI API)     │  │
 │  │      ↓                           │  └──────────────┘  │
-│  │  AI reads prompt + codebase      │                    │
+│  │  2. AI reads code + evaluates    │                    │
 │  │      ↓                           │                    │
-│  │  Full evaluation report with     │                    │
-│  │  scores, strengths, questions    │                    │
+│  │  3. AI saves JSON + runs:        │                    │
+│  │     dde report --consulting ─────┼─▶ PDF generated   │
+│  │      ↓                           │                    │
+│  │  4. PDF file path shown          │                    │
 │  └──────────────────────────────────┘                    │
 │                                                          │
 │  Cost: $0 extra — uses your existing AI subscription     │
 └──────────────────────────────────────────────────────────┘
 ```
 
-> **Zero additional cost** — `dde prompt` runs entirely locally (no AI API calls). The evaluation is performed by your IDE's existing AI subscription. BYOK (Bring Your Own Key) is also supported via `dde analyze` for direct API-based analysis.
+> **Zero additional cost** — `dde prompt` runs entirely locally (no AI API calls). The evaluation is performed by your IDE's existing AI subscription. `--pdf` mode instructs the AI to generate a structured JSON evaluation, then calls `dde report --consulting` to produce a professional PDF. BYOK is also supported via `dde analyze` for direct API-based analysis.
 
 ---
 
@@ -361,7 +390,8 @@ For private repos, provide a **GitHub Personal Access Token**:
 
 | Option | Cost | Description |
 |--------|------|-------------|
-| `dde prompt` | Free | IDE AI evaluates — zero API keys needed |
+| `dde prompt --pdf` | Free | IDE AI evaluates + generates consulting PDF — zero API keys |
+| `dde prompt` | Free | IDE AI evaluates (text output) — zero API keys |
 | Local CLI | Free | `dde analyze owner/repo --skip-ai` |
 | BYOK CLI | Free + API costs | Your own API keys, full AI analysis |
 | BYOK Dashboard | Free + API costs | Web UI with GitHub PAT support |
@@ -377,6 +407,10 @@ For private repos, provide a **GitHub Personal Access Token**:
 - [x] PDF report export
 - [x] Disconnect & Purge with certificate
 - [x] `dde prompt` — IDE AI integration (Claude Code / Cursor / Copilot)
+- [x] `dde prompt --pdf` — Consulting-grade PDF (SWOT, future outlook, investment thesis)
+- [x] Score dashboard with horizontal bar charts and score barometer
+- [x] PDF saved to `~/Downloads/` with localized date stamps (EN/JA)
+- [x] Automated EN/JA PDF generation tests (13 tests)
 - [x] Plain-language glossary for non-technical readers
 - [x] Match rate visualization (claims vs. code)
 - [x] Stage-aware evaluation (seed / series_a / series_b / growth)
