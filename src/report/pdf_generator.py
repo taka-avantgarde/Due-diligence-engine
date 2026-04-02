@@ -29,7 +29,7 @@ from reportlab.lib.units import cm, mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.graphics import renderPDF
-from reportlab.graphics.shapes import Drawing, Rect, String
+from reportlab.graphics.shapes import Drawing, Rect, String, Line, Circle
 from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
@@ -205,6 +205,43 @@ _PDF_I18N = {
         "invest_strong_pass": "Strong Pass",
         "score_dashboard": "Score Dashboard",
         "score_dashboard_subtitle": "6-Dimension Evaluation at a Glance",
+        # Site Verification
+        "site_verification": "Site Verification",
+        "site_verification_subtitle": "Website Claims vs Codebase Evidence",
+        "overall_credibility": "Overall Credibility",
+        "sv_urls_analyzed": "URLs Analyzed",
+        "sv_summary": "Summary",
+        # Competitive Analysis
+        "competitive_analysis": "Competitive Analysis",
+        "competitive_subtitle": "Market Positioning Charts",
+        # Chart type names
+        "chart_magic_quadrant": "Magic Quadrant",
+        "chart_bcg_matrix": "BCG Matrix",
+        "chart_mckinsey_moat": "Tech Moat Analysis",
+        "chart_gs_risk_return": "Risk-Return Analysis",
+        "chart_bubble_3d": "3D Bubble Chart",
+        # Quadrant labels — Magic Quadrant
+        "leaders": "Leaders",
+        "challengers": "Challengers",
+        "visionaries": "Visionaries",
+        "niche_players": "Niche Players",
+        # Quadrant labels — BCG Matrix
+        "stars": "Stars",
+        "cash_cows": "Cash Cows",
+        "question_marks": "Question Marks",
+        "dogs": "Dogs",
+        # Quadrant labels — Tech Moat
+        "fortress": "Fortress",
+        "innovator": "Innovator",
+        "commodity": "Commodity",
+        "fast_follower": "Fast Follower",
+        # Risk-Return / Bubble zones
+        "sweet_spot": "Sweet Spot",
+        "avoid": "Avoid",
+        # Confidence badges
+        "confidence_high": "H",
+        "confidence_medium": "M",
+        "confidence_low": "L",
     },
     "ja": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -322,6 +359,43 @@ _PDF_I18N = {
         "invest_strong_pass": "強く見送り",
         "score_dashboard": "スコアダッシュボード",
         "score_dashboard_subtitle": "6次元評価の概要",
+        # Site Verification
+        "site_verification": "サイト検証",
+        "site_verification_subtitle": "Webサイト主張 vs コードベース検証",
+        "overall_credibility": "総合信頼性",
+        "sv_urls_analyzed": "分析URL",
+        "sv_summary": "サマリー",
+        # Competitive Analysis
+        "competitive_analysis": "競合分析",
+        "competitive_subtitle": "市場ポジショニングチャート",
+        # Chart type names
+        "chart_magic_quadrant": "マジック・クアドラント",
+        "chart_bcg_matrix": "BCGマトリックス",
+        "chart_mckinsey_moat": "テクノロジーモート分析",
+        "chart_gs_risk_return": "リスク・リターン分析",
+        "chart_bubble_3d": "3Dバブルチャート",
+        # Quadrant labels — Magic Quadrant
+        "leaders": "リーダー",
+        "challengers": "チャレンジャー",
+        "visionaries": "ビジョナリー",
+        "niche_players": "ニッチプレイヤー",
+        # Quadrant labels — BCG Matrix
+        "stars": "花形",
+        "cash_cows": "金のなる木",
+        "question_marks": "問題児",
+        "dogs": "負け犬",
+        # Quadrant labels — Tech Moat
+        "fortress": "要塞",
+        "innovator": "イノベーター",
+        "commodity": "コモディティ",
+        "fast_follower": "ファストフォロワー",
+        # Risk-Return / Bubble zones
+        "sweet_spot": "最適ゾーン",
+        "avoid": "回避",
+        # Confidence badges
+        "confidence_high": "H",
+        "confidence_medium": "M",
+        "confidence_low": "L",
     },
 }
 
@@ -592,6 +666,15 @@ class PDFReportGenerator:
             if cr.red_flags:
                 story.append(PageBreak())
                 story.extend(self._build_consulting_red_flags(cr))
+
+            # Site Verification
+            if cr.site_verification and cr.site_verification.items:
+                story.append(PageBreak())
+                story.extend(self._build_site_verification_page(cr))
+
+            # Competitive Analysis
+            if cr.competitive_analysis and cr.competitive_analysis.markets:
+                story.extend(self._build_competitive_analysis_pages(cr))
 
         else:
             # Standard report flow (no consulting data)
@@ -2195,5 +2278,395 @@ class PDFReportGenerator:
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
             ]))
             elements.append(table)
+
+        return elements
+
+    # ------------------------------------------------------------------
+    # Site Verification page
+    # ------------------------------------------------------------------
+
+    def _build_site_verification_page(self, cr) -> list:
+        """Site verification page with horizontal bar chart for 10 items."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        sv = cr.site_verification
+        if not sv or not sv.items:
+            return elements
+
+        # Title + subtitle
+        elements.append(Paragraph(t["site_verification"], s["heading1"]))
+        elements.append(
+            HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=4 * mm)
+        )
+        elements.append(Paragraph(t["site_verification_subtitle"], s["body_dim"]))
+        elements.append(Spacer(1, 4 * mm))
+
+        # URLs analyzed
+        if sv.urls_analyzed:
+            elements.append(
+                Paragraph(f"<b>{t['sv_urls_analyzed']}:</b>", s["body"])
+            )
+            for url in sv.urls_analyzed:
+                elements.append(Paragraph(f"  {url}", s["body_small"]))
+            elements.append(Spacer(1, 4 * mm))
+
+        # Overall credibility score — large display
+        cred_score = sv.overall_credibility
+        if cred_score >= 80:
+            cred_color = colors.HexColor("#1e3a5f")  # dark blue
+        elif cred_score >= 60:
+            cred_color = colors.HexColor("#4a5568")  # dark gray
+        elif cred_score >= 40:
+            cred_color = colors.HexColor("#9ca3af")  # medium gray
+        else:
+            cred_color = colors.HexColor("#6b2a2a")  # muted dark red
+
+        cred_text = (
+            f'<font color="{cred_color.hexval()}" size="36">{cred_score:.0f}</font>'
+            f'<font color="{COLOR_TEXT_DIM.hexval()}" size="14"> / 100</font>'
+        )
+        elements.append(Paragraph(cred_text, s["score_large"]))
+        elements.append(
+            Paragraph(t["overall_credibility"], s["center"])
+        )
+        elements.append(Spacer(1, 8 * mm))
+
+        # --- Horizontal bar chart for verification items ---
+        confidence_badge = {
+            "high": t.get("confidence_high", "H"),
+            "medium": t.get("confidence_medium", "M"),
+            "low": t.get("confidence_low", "L"),
+        }
+
+        bar_max_w = 240
+        row_h = 44
+        label_w = 160
+        chart_w = label_w + bar_max_w + 80
+        chart_h = len(sv.items) * row_h + 10
+
+        d = Drawing(chart_w, chart_h)
+
+        for i, item in enumerate(sv.items):
+            y = chart_h - (i + 1) * row_h + 14
+
+            # Item name (bold)
+            item_name = item.item_name_ja if self._lang == "ja" and item.item_name_ja else item.item_name
+            font_bold = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            d.add(String(0, y + 4, item_name, fontName=font_bold, fontSize=8.5,
+                         fillColor=COLOR_TEXT))
+
+            # Confidence label (small gray below name)
+            conf_label = confidence_badge.get(item.confidence, "M")
+            conf_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+            conf_text = f"Confidence: {conf_label}"
+            d.add(String(0, y - 8, conf_text, fontName=conf_font, fontSize=6.5,
+                         fillColor=COLOR_TEXT_DIM))
+
+            # Gray track bar
+            d.add(Rect(label_w, y, bar_max_w, 16,
+                        fillColor=colors.HexColor("#e2e8f0"),
+                        strokeColor=None, strokeWidth=0))
+
+            # Score bar (color by score range — same as dashboard)
+            score = item.score
+            bar_w = max(2, (score / 100) * bar_max_w)
+            if score >= 80:
+                bar_color = colors.HexColor("#1e3a5f")
+            elif score >= 60:
+                bar_color = colors.HexColor("#4a5568")
+            elif score >= 40:
+                bar_color = colors.HexColor("#9ca3af")
+            else:
+                bar_color = colors.HexColor("#6b2a2a")
+            d.add(Rect(label_w, y, bar_w, 16,
+                        fillColor=bar_color,
+                        strokeColor=None, strokeWidth=0))
+
+            # Score number (right of bar)
+            score_str = f"{score:.0f}"
+            d.add(String(label_w + bar_max_w + 6, y + 3, score_str,
+                         fontName="Helvetica", fontSize=9,
+                         fillColor=COLOR_TEXT_DIM))
+
+        elements.append(d)
+        elements.append(Spacer(1, 8 * mm))
+
+        # Summary text
+        if sv.summary:
+            elements.append(Paragraph(f"<b>{t['sv_summary']}</b>", s["body"]))
+            elements.append(Paragraph(sv.summary, s["body"]))
+
+        return elements
+
+    # ------------------------------------------------------------------
+    # Competitive Analysis charts
+    # ------------------------------------------------------------------
+
+    def _draw_quadrant_chart(self, chart, quadrant_labels: list[str]) -> Drawing:
+        """Shared quadrant chart for Magic Quadrant, BCG Matrix, Tech Moat.
+
+        Args:
+            chart: MarketChart with data_points, axis labels.
+            quadrant_labels: 4 labels [top-left, top-right, bottom-left, bottom-right].
+
+        Returns:
+            A Drawing object with axes, cross lines, quadrant labels, and data points.
+        """
+        d = Drawing(440, 340)
+
+        # Plot area boundaries
+        left = 60
+        bottom = 40
+        right = 400
+        top = 300
+        plot_w = right - left
+        plot_h = top - bottom
+
+        # X and Y axes
+        d.add(Line(left, bottom, right, bottom,
+                   strokeColor=COLOR_TEXT, strokeWidth=1))
+        d.add(Line(left, bottom, left, top,
+                   strokeColor=COLOR_TEXT, strokeWidth=1))
+
+        # Center cross lines (dashed, light gray)
+        mid_x = left + plot_w / 2
+        mid_y = bottom + plot_h / 2
+        center_v = Line(mid_x, bottom, mid_x, top,
+                        strokeColor=COLOR_BORDER, strokeWidth=0.5,
+                        strokeDashArray=[4, 4])
+        center_h = Line(left, mid_y, right, mid_y,
+                        strokeColor=COLOR_BORDER, strokeWidth=0.5,
+                        strokeDashArray=[4, 4])
+        d.add(center_v)
+        d.add(center_h)
+
+        # Quadrant labels: [top-left, top-right, bottom-left, bottom-right]
+        label_font = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+        label_size = 7.5
+        label_color = COLOR_TEXT_DIM
+
+        # Top-left
+        d.add(String(left + 4, top - 14, quadrant_labels[0],
+                     fontName=label_font, fontSize=label_size, fillColor=label_color))
+        # Top-right
+        d.add(String(mid_x + 4, top - 14, quadrant_labels[1],
+                     fontName=label_font, fontSize=label_size, fillColor=label_color))
+        # Bottom-left
+        d.add(String(left + 4, bottom + 4, quadrant_labels[2],
+                     fontName=label_font, fontSize=label_size, fillColor=label_color))
+        # Bottom-right
+        d.add(String(mid_x + 4, bottom + 4, quadrant_labels[3],
+                     fontName=label_font, fontSize=label_size, fillColor=label_color))
+
+        # Axis labels
+        x_label = chart.x_axis_label_ja if self._lang == "ja" and chart.x_axis_label_ja else chart.x_axis_label
+        y_label = chart.y_axis_label_ja if self._lang == "ja" and chart.y_axis_label_ja else chart.y_axis_label
+        axis_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+
+        d.add(String(left + plot_w / 2 - 30, bottom - 28, x_label,
+                     fontName=axis_font, fontSize=8, fillColor=COLOR_TEXT))
+        d.add(String(left - 50, bottom + plot_h / 2, y_label,
+                     fontName=axis_font, fontSize=8, fillColor=COLOR_TEXT))
+
+        # Data points
+        for dp in chart.data_points:
+            cx = left + (dp.x / 100) * plot_w
+            cy = bottom + (dp.y / 100) * plot_h
+            fill = COLOR_ACCENT if dp.is_target else colors.HexColor("#9ca3af")
+            d.add(Circle(cx, cy, 8, fillColor=fill,
+                         strokeColor=None, strokeWidth=0))
+            # Name label
+            name_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+            d.add(String(cx + 10, cy - 3, dp.name,
+                         fontName=name_font, fontSize=7, fillColor=COLOR_TEXT))
+
+        return d
+
+    def _draw_risk_return_chart(self, chart) -> Drawing:
+        """GS Risk-Return chart with efficient frontier and sweet spot zone."""
+        d = Drawing(440, 340)
+
+        left = 60
+        bottom = 40
+        right = 400
+        top = 300
+        plot_w = right - left
+        plot_h = top - bottom
+
+        # X and Y axes
+        d.add(Line(left, bottom, right, bottom,
+                   strokeColor=COLOR_TEXT, strokeWidth=1))
+        d.add(Line(left, bottom, left, top,
+                   strokeColor=COLOR_TEXT, strokeWidth=1))
+
+        # Efficient frontier diagonal (bottom-left to top-right area)
+        d.add(Line(left + plot_w * 0.1, bottom + plot_h * 0.15,
+                   right - plot_w * 0.1, top - plot_h * 0.1,
+                   strokeColor=COLOR_ACCENT, strokeWidth=1.5,
+                   strokeDashArray=[6, 3]))
+
+        # "Sweet Spot" zone — light rect in upper-right quadrant
+        sweet_x = left + plot_w * 0.55
+        sweet_y = bottom + plot_h * 0.55
+        sweet_w = plot_w * 0.35
+        sweet_h = plot_h * 0.35
+        d.add(Rect(sweet_x, sweet_y, sweet_w, sweet_h,
+                    fillColor=colors.HexColor("#e8f4f8"),
+                    strokeColor=COLOR_BORDER, strokeWidth=0.5))
+
+        # "Sweet Spot" label
+        label_font = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+        t = self._t
+        d.add(String(sweet_x + 4, sweet_y + sweet_h - 12,
+                     t.get("sweet_spot", "Sweet Spot"),
+                     fontName=label_font, fontSize=7, fillColor=COLOR_ACCENT))
+
+        # "Avoid" label — bottom-left
+        d.add(String(left + 4, bottom + 4,
+                     t.get("avoid", "Avoid"),
+                     fontName=label_font, fontSize=7, fillColor=COLOR_TEXT_DIM))
+
+        # Axis labels
+        x_label = chart.x_axis_label_ja if self._lang == "ja" and chart.x_axis_label_ja else chart.x_axis_label
+        y_label = chart.y_axis_label_ja if self._lang == "ja" and chart.y_axis_label_ja else chart.y_axis_label
+        axis_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+
+        d.add(String(left + plot_w / 2 - 30, bottom - 28, x_label,
+                     fontName=axis_font, fontSize=8, fillColor=COLOR_TEXT))
+        d.add(String(left - 50, bottom + plot_h / 2, y_label,
+                     fontName=axis_font, fontSize=8, fillColor=COLOR_TEXT))
+
+        # Data points
+        for dp in chart.data_points:
+            cx = left + (dp.x / 100) * plot_w
+            cy = bottom + (dp.y / 100) * plot_h
+            fill = COLOR_ACCENT if dp.is_target else colors.HexColor("#9ca3af")
+            d.add(Circle(cx, cy, 8, fillColor=fill,
+                         strokeColor=None, strokeWidth=0))
+            name_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+            d.add(String(cx + 10, cy - 3, dp.name,
+                         fontName=name_font, fontSize=7, fillColor=COLOR_TEXT))
+
+        return d
+
+    def _draw_bubble_chart(self, chart) -> Drawing:
+        """3D Bubble chart with radius proportional to z value."""
+        d = Drawing(440, 340)
+
+        left = 60
+        bottom = 40
+        right = 400
+        top = 300
+        plot_w = right - left
+        plot_h = top - bottom
+
+        # X and Y axes
+        d.add(Line(left, bottom, right, bottom,
+                   strokeColor=COLOR_TEXT, strokeWidth=1))
+        d.add(Line(left, bottom, left, top,
+                   strokeColor=COLOR_TEXT, strokeWidth=1))
+
+        # Axis labels
+        x_label = chart.x_axis_label_ja if self._lang == "ja" and chart.x_axis_label_ja else chart.x_axis_label
+        y_label = chart.y_axis_label_ja if self._lang == "ja" and chart.y_axis_label_ja else chart.y_axis_label
+        axis_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+
+        d.add(String(left + plot_w / 2 - 30, bottom - 28, x_label,
+                     fontName=axis_font, fontSize=8, fillColor=COLOR_TEXT))
+        d.add(String(left - 50, bottom + plot_h / 2, y_label,
+                     fontName=axis_font, fontSize=8, fillColor=COLOR_TEXT))
+
+        # Data points — radius proportional to z
+        for dp in chart.data_points:
+            cx = left + (dp.x / 100) * plot_w
+            cy = bottom + (dp.y / 100) * plot_h
+            r = max(6, min(30, dp.z * 0.3))
+            if dp.is_target:
+                fill = COLOR_ACCENT
+            else:
+                fill = colors.HexColor("#d1d5db")  # light gray
+            d.add(Circle(cx, cy, r, fillColor=fill,
+                         strokeColor=None, strokeWidth=0))
+            name_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+            d.add(String(cx + r + 3, cy - 3, dp.name,
+                         fontName=name_font, fontSize=7, fillColor=COLOR_TEXT))
+
+        return d
+
+    def _build_competitive_analysis_pages(self, cr) -> list:
+        """Competitive analysis pages — one page per market with charts."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        ca = cr.competitive_analysis
+        if not ca or not ca.markets:
+            return elements
+
+        # Chart type → quadrant labels mapping
+        quadrant_map = {
+            "magic_quadrant": ["challengers", "leaders", "niche_players", "visionaries"],
+            "bcg_matrix": ["question_marks", "stars", "dogs", "cash_cows"],
+            "mckinsey_moat": ["innovator", "fortress", "fast_follower", "commodity"],
+        }
+        chart_title_map = {
+            "magic_quadrant": "chart_magic_quadrant",
+            "bcg_matrix": "chart_bcg_matrix",
+            "mckinsey_moat": "chart_mckinsey_moat",
+            "gs_risk_return": "chart_gs_risk_return",
+            "bubble_3d": "chart_bubble_3d",
+        }
+
+        for market in ca.markets:
+            elements.append(PageBreak())
+
+            # Market name heading
+            market_name = (
+                market.market_name_ja
+                if self._lang == "ja" and market.market_name_ja
+                else market.market_name
+            )
+            elements.append(
+                Paragraph(
+                    f"{t['competitive_analysis']} — {market_name}",
+                    s["heading1"],
+                )
+            )
+            elements.append(
+                HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=4 * mm)
+            )
+            elements.append(Paragraph(t["competitive_subtitle"], s["body_dim"]))
+            elements.append(Spacer(1, 4 * mm))
+
+            for chart in market.charts:
+                # Chart title
+                chart_title_key = chart_title_map.get(chart.chart_type, "")
+                chart_title = t.get(chart_title_key, chart.chart_type)
+                chart_display = (
+                    chart.title_ja
+                    if self._lang == "ja" and chart.title_ja
+                    else chart.title
+                ) or chart_title
+                elements.append(
+                    Paragraph(f"<b>{chart_display}</b>", s["heading2"])
+                )
+                elements.append(Spacer(1, 2 * mm))
+
+                # Dispatch to appropriate draw method
+                drawing = None
+                ctype = chart.chart_type
+                if ctype in quadrant_map:
+                    qlabels = [t.get(k, k) for k in quadrant_map[ctype]]
+                    drawing = self._draw_quadrant_chart(chart, qlabels)
+                elif ctype == "gs_risk_return":
+                    drawing = self._draw_risk_return_chart(chart)
+                elif ctype == "bubble_3d":
+                    drawing = self._draw_bubble_chart(chart)
+
+                if drawing is not None:
+                    elements.append(drawing)
+                    elements.append(Spacer(1, 8 * mm))
 
         return elements

@@ -82,6 +82,8 @@ dde prompt owner/repo --pdf --lang ja
 | **Plain-Language Glossary** | All technical terms annotated for non-technical investors ("Translation Device" mode) |
 | **Match Rate Visualization** | Claims vs. code reality — status bar shows how honest the team is |
 | **GitHub Private Repo Access** | PAT-based access — startups grant temporary read-only access |
+| **Site Verification (10 items)** | Feature Claim Match, Tech Stack Consistency, Security Claims, Performance Claims, Scale Claims, Team Size, Launch Date, Pricing Feasibility, Compliance Display, AI-Washing Index |
+| **Competitive Analysis Charts** | Gartner Magic Quadrant, BCG Growth-Share Matrix, McKinsey Tech Moat, GS Risk-Return, 3D Bubble — across 6 global markets (Global, Home Country, US, EMEA, SEA, LATAM) |
 | **AI-Washing Detection** | Detect thin API wrappers disguised as "proprietary AI" |
 | **Git Forensics** | Analyze commit history for suspicious patterns (rush commits before DD) |
 | **10-Level Tech Rating** | Each dimension rated Lv.1–10 with clear criteria |
@@ -317,7 +319,9 @@ No API keys. Language selection prompted first (1/2). Then tool-consent prompts 
 | 8 | **Strategic Advice** | Immediate actions, medium-term priorities, long-term vision |
 | 9 | **Investment Thesis** | Recommendation with risks, upside potential, and comparable companies |
 | 10 | **Red Flags** | Severity-rated issues with business impact |
-| 11 | **Glossary** | All technical terms annotated for non-technical readers |
+| 11 | **Site Verification** | 10-item credibility check against product/service URLs (when URLs provided) |
+| 12 | **Competitive Analysis** | Gartner Magic Quadrant, BCG Matrix, McKinsey Tech Moat, GS Risk-Return, 3D Bubble — across 6 markets |
+| 13 | **Glossary** | All technical terms annotated for non-technical readers |
 
 ### Prompt-Only Mode (no PDF)
 
@@ -419,6 +423,11 @@ For private repos, provide a **GitHub Personal Access Token**:
 - [x] Match rate visualization (claims vs. code)
 - [x] Stage-aware evaluation (seed / series_a / series_b / growth)
 - [x] Investor question auto-generation
+- [x] Site verification — 10-item credibility audit against product/service URLs (up to 3)
+- [x] Competitive analysis charts — 5 consulting-firm-grade chart types × 6 global markets
+- [x] AI model attribution on PDF cover page
+- [x] Dark theme cover page with Atlas Associates branding
+- [x] 17 automated tests (EN/JA PDF + site verification + competitive analysis)
 - [ ] Technical Debt + Maintainability axes
 - [ ] Batch analysis mode (portfolio-wide DD)
 - [ ] Historical tracking (re-analyze over time)

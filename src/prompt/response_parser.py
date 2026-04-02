@@ -13,10 +13,16 @@ from pathlib import Path
 from typing import Any
 
 from src.models import (
+    CompetitiveAnalysis,
+    CompetitorDataPoint,
     ConsultingReport,
     EnhancedDimensionScore,
     FutureOutlook,
     InvestmentThesis,
+    MarketChart,
+    MarketPosition,
+    SiteVerificationItem,
+    SiteVerificationReport,
     StrategicAction,
     StrategicAdvice,
     SWOTAnalysis,
@@ -152,6 +158,73 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
         suggested_valuation_factors=str(raw_thesis.get("suggested_valuation_factors", "")),
     )
 
+    # --- Site verification ---
+    site_verification: SiteVerificationReport | None = None
+    raw_sv = data.get("site_verification")
+    if isinstance(raw_sv, dict):
+        sv_items: list[SiteVerificationItem] = []
+        for item in raw_sv.get("items", []):
+            if isinstance(item, dict):
+                sv_items.append(SiteVerificationItem(
+                    item_key=str(item.get("item_key", "")),
+                    item_name=str(item.get("item_name", "")),
+                    item_name_ja=str(item.get("item_name_ja", "")),
+                    score=_clamp(float(item.get("score", 0)), 0, 100),
+                    confidence=str(item.get("confidence", "medium")),
+                    rationale=str(item.get("rationale", "")),
+                    evidence=_ensure_str_list(item.get("evidence", [])),
+                ))
+        site_verification = SiteVerificationReport(
+            urls_analyzed=_ensure_str_list(raw_sv.get("urls_analyzed", [])),
+            items=sv_items,
+            overall_credibility=_clamp(float(raw_sv.get("overall_credibility", 0)), 0, 100),
+            summary=str(raw_sv.get("summary", "")),
+        )
+
+    # --- Competitive analysis ---
+    competitive_analysis: CompetitiveAnalysis | None = None
+    raw_ca = data.get("competitive_analysis")
+    if isinstance(raw_ca, dict):
+        markets: list[MarketPosition] = []
+        for mkt in raw_ca.get("markets", []):
+            if not isinstance(mkt, dict):
+                continue
+            charts: list[MarketChart] = []
+            for ch in mkt.get("charts", []):
+                if not isinstance(ch, dict):
+                    continue
+                data_points: list[CompetitorDataPoint] = []
+                for dp in ch.get("data_points", []):
+                    if not isinstance(dp, dict):
+                        continue
+                    data_points.append(CompetitorDataPoint(
+                        name=str(dp.get("name", "")),
+                        x=_clamp(float(dp.get("x", 0)), 0, 100),
+                        y=_clamp(float(dp.get("y", 0)), 0, 100),
+                        z=_clamp(float(dp.get("z", 0)), 0, 100),
+                        is_target=bool(dp.get("is_target", False)),
+                    ))
+                charts.append(MarketChart(
+                    chart_type=str(ch.get("chart_type", "")),
+                    title=str(ch.get("title", "")),
+                    title_ja=str(ch.get("title_ja", "")),
+                    x_axis_label=str(ch.get("x_axis_label", "")),
+                    x_axis_label_ja=str(ch.get("x_axis_label_ja", "")),
+                    y_axis_label=str(ch.get("y_axis_label", "")),
+                    y_axis_label_ja=str(ch.get("y_axis_label_ja", "")),
+                    data_points=data_points,
+                ))
+            markets.append(MarketPosition(
+                market_name=str(mkt.get("market_name", "")),
+                market_name_ja=str(mkt.get("market_name_ja", "")),
+                charts=charts,
+            ))
+        competitive_analysis = CompetitiveAnalysis(
+            target_company=str(raw_ca.get("target_company", "")),
+            home_country=str(raw_ca.get("home_country", "")),
+            markets=markets,
+        )
+
     return ConsultingReport(
         executive_summary=str(data.get("executive_summary", "")),
         executive_summary_business=str(data.get("executive_summary_business", "")),
@@ -168,6 +241,8 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
         ai_model_used=str(data.get("ai_model_used", "")),
         analysis_id=str(data.get("analysis_id", "")),
         project_name=str(data.get("project_name", "")),
+        site_verification=site_verification,
+        competitive_analysis=competitive_analysis,
     )
 
 

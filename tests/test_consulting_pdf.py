@@ -17,10 +17,16 @@ import pytest
 
 from src.models import (
     AnalysisResult,
+    CompetitiveAnalysis,
+    CompetitorDataPoint,
     ConsultingReport,
     EnhancedDimensionScore,
     FutureOutlook,
     InvestmentThesis,
+    MarketChart,
+    MarketPosition,
+    SiteVerificationItem,
+    SiteVerificationReport,
     SWOTAnalysis,
     SWOTItem,
     StrategicAction,
@@ -200,6 +206,106 @@ def _make_consulting_report() -> ConsultingReport:
         ai_model_used="Claude Opus 4 (test)",
         analysis_id="test_20260402",
         project_name="NeuralPay",
+        site_verification=SiteVerificationReport(
+            urls_analyzed=[
+                "https://neuralpay.io",
+                "https://neuralpay.io/docs",
+                "https://neuralpay.io/pricing",
+            ],
+            items=[
+                SiteVerificationItem(item_key="feature_claim_match", item_name="Feature Claim Match", item_name_ja="機能主張一致度", score=72, confidence="high", rationale="Most features match."),
+                SiteVerificationItem(item_key="tech_stack_consistency", item_name="Tech Stack Consistency", item_name_ja="技術スタック整合性", score=85, confidence="high", rationale="Stack matches documentation."),
+                SiteVerificationItem(item_key="security_claim_verification", item_name="Security Claim Verification", item_name_ja="セキュリティ主張検証", score=45, confidence="medium", rationale="No pen-test evidence."),
+                SiteVerificationItem(item_key="performance_claim_plausibility", item_name="Performance Claim Plausibility", item_name_ja="パフォーマンス主張妥当性", score=60, confidence="medium", rationale="Benchmarks not reproducible."),
+                SiteVerificationItem(item_key="scale_claim_consistency", item_name="Scale Claim Consistency", item_name_ja="規模主張一貫性", score=55, confidence="low", rationale="User counts inconsistent."),
+                SiteVerificationItem(item_key="team_size_estimation", item_name="Team Size Estimation", item_name_ja="チーム規模推定", score=90, confidence="high", rationale="LinkedIn confirms team size."),
+                SiteVerificationItem(item_key="launch_date_verification", item_name="Launch Date Verification", item_name_ja="ローンチ日検証", score=95, confidence="high", rationale="Wayback Machine confirms."),
+                SiteVerificationItem(item_key="pricing_feasibility", item_name="Pricing Model Feasibility", item_name_ja="料金モデル実現性", score=68, confidence="medium", rationale="Unit economics are tight."),
+                SiteVerificationItem(item_key="compliance_display", item_name="Compliance Display Audit", item_name_ja="コンプライアンス表示監査", score=30, confidence="low", rationale="No GDPR badge found."),
+                SiteVerificationItem(item_key="ai_washing_index", item_name="AI-Washing Index", item_name_ja="AIウォッシュ指数", score=40, confidence="medium", rationale="Excessive AI claims."),
+            ],
+            overall_credibility=64.0,
+            summary="The site mostly reflects the codebase but overstates security and AI capabilities.",
+        ),
+        competitive_analysis=CompetitiveAnalysis(
+            target_company="NeuralPay",
+            home_country="US",
+            markets=[
+                MarketPosition(
+                    market_name="Global",
+                    market_name_ja="グローバル",
+                    charts=[
+                        MarketChart(
+                            chart_type="magic_quadrant",
+                            title="Global Magic Quadrant",
+                            title_ja="グローバル マジック・クアドラント",
+                            x_axis_label="Completeness of Vision",
+                            x_axis_label_ja="ビジョンの完全性",
+                            y_axis_label="Ability to Execute",
+                            y_axis_label_ja="実行力",
+                            data_points=[
+                                CompetitorDataPoint(name="NeuralPay", x=65, y=55, is_target=True),
+                                CompetitorDataPoint(name="Stripe", x=90, y=85),
+                                CompetitorDataPoint(name="Adyen", x=75, y=80),
+                                CompetitorDataPoint(name="Square", x=70, y=70),
+                                CompetitorDataPoint(name="Payoneer", x=40, y=45),
+                            ],
+                        ),
+                        MarketChart(
+                            chart_type="gs_risk_return",
+                            title="Global Risk-Return",
+                            title_ja="グローバル リスク・リターン",
+                            x_axis_label="Risk",
+                            x_axis_label_ja="リスク",
+                            y_axis_label="Expected Return",
+                            y_axis_label_ja="期待リターン",
+                            data_points=[
+                                CompetitorDataPoint(name="NeuralPay", x=60, y=72, is_target=True),
+                                CompetitorDataPoint(name="Stripe", x=30, y=80),
+                                CompetitorDataPoint(name="Adyen", x=35, y=75),
+                                CompetitorDataPoint(name="Square", x=45, y=65),
+                            ],
+                        ),
+                    ],
+                ),
+                MarketPosition(
+                    market_name="US",
+                    market_name_ja="米国",
+                    charts=[
+                        MarketChart(
+                            chart_type="bcg_matrix",
+                            title="US BCG Matrix",
+                            title_ja="米国 BCGマトリックス",
+                            x_axis_label="Relative Market Share",
+                            x_axis_label_ja="相対市場シェア",
+                            y_axis_label="Market Growth Rate",
+                            y_axis_label_ja="市場成長率",
+                            data_points=[
+                                CompetitorDataPoint(name="NeuralPay", x=30, y=75, is_target=True),
+                                CompetitorDataPoint(name="Stripe", x=85, y=60),
+                                CompetitorDataPoint(name="Plaid", x=55, y=80),
+                                CompetitorDataPoint(name="Marqeta", x=40, y=70),
+                            ],
+                        ),
+                        MarketChart(
+                            chart_type="bubble_3d",
+                            title="US 3D Bubble",
+                            title_ja="米国 3Dバブル",
+                            x_axis_label="Technology Score",
+                            x_axis_label_ja="技術スコア",
+                            y_axis_label="Market Traction",
+                            y_axis_label_ja="市場トラクション",
+                            data_points=[
+                                CompetitorDataPoint(name="NeuralPay", x=65, y=50, z=40, is_target=True),
+                                CompetitorDataPoint(name="Stripe", x=85, y=90, z=95),
+                                CompetitorDataPoint(name="Plaid", x=70, y=70, z=60),
+                                CompetitorDataPoint(name="Marqeta", x=55, y=55, z=30),
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        ),
     )
 
 
@@ -351,3 +457,43 @@ class TestConsultingPdfGeneration:
         assert page_count >= 5, (
             f"Expected 5+ pages (cover, dashboard, summary, SWOT, ...), got {page_count}"
         )
+
+    # ── Site Verification tests ─────────────────────────────
+
+    def test_site_verification_renders(self, pdf_gen, analysis_result, tmp_path):
+        """PDF with site_verification data generates successfully."""
+        for lang in ("en", "ja"):
+            pdf_path = tmp_path / f"test_sv_{lang}.pdf"
+            pdf_gen.generate_to_file(analysis_result, pdf_path, lang=lang)
+            assert pdf_path.exists(), f"Site verification PDF ({lang}) was not created"
+            assert pdf_path.stat().st_size > 0, f"Site verification PDF ({lang}) is empty"
+
+    def test_no_sv_when_empty(self, pdf_gen, tmp_path):
+        """PDF generates without error when site_verification is None."""
+        cr = _make_consulting_report()
+        cr.site_verification = None
+        result = _make_analysis_result(cr)
+        pdf_path = tmp_path / "test_no_sv.pdf"
+        pdf_gen.generate_to_file(result, pdf_path, lang="en")
+        assert pdf_path.exists(), "PDF without site_verification was not created"
+        assert pdf_path.stat().st_size > 1000, "PDF without site_verification is too small"
+
+    # ── Competitive Analysis tests ──────────────────────────
+
+    def test_competitive_charts_render(self, pdf_gen, analysis_result, tmp_path):
+        """PDF with competitive_analysis data generates successfully."""
+        for lang in ("en", "ja"):
+            pdf_path = tmp_path / f"test_comp_{lang}.pdf"
+            pdf_gen.generate_to_file(analysis_result, pdf_path, lang=lang)
+            assert pdf_path.exists(), f"Competitive analysis PDF ({lang}) was not created"
+            assert pdf_path.stat().st_size > 0, f"Competitive analysis PDF ({lang}) is empty"
+
+    def test_no_competitive_when_empty(self, pdf_gen, tmp_path):
+        """PDF generates without error when competitive_analysis is None."""
+        cr = _make_consulting_report()
+        cr.competitive_analysis = None
+        result = _make_analysis_result(cr)
+        pdf_path = tmp_path / "test_no_comp.pdf"
+        pdf_gen.generate_to_file(result, pdf_path, lang="en")
+        assert pdf_path.exists(), "PDF without competitive_analysis was not created"
+        assert pdf_path.stat().st_size > 1000, "PDF without competitive_analysis is too small"
