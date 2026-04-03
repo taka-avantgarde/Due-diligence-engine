@@ -66,21 +66,21 @@ def _make_competitive_analysis() -> CompetitiveAnalysis:
         ("LATAM", "中南米"), ("Japan", "日本"), ("SEA", "東南アジア"),
     ]
     chart_defs = [
-        ("magic_quadrant", "Magic Quadrant", "マジック・クアドラント",
-         "Product Completeness", "プロダクト完成度",
-         "GTM Execution", "GTM実行力"),
+        ("magic_quadrant", "Forrester Wave", "Forrester Wave",
+         "Current Offering", "現行プロダクト力",
+         "Strategy", "戦略性"),
         ("bcg_matrix", "BCG Matrix", "BCGマトリックス",
          "Relative Market Share", "相対市場シェア",
-         "Revenue Growth CAGR", "収益成長CAGR"),
+         "Market Growth Rate", "市場成長率"),
         ("mckinsey_moat", "Tech Moat Matrix", "技術モートマトリックス",
-         "Switching Cost", "スイッチングコスト",
-         "Core Tech Differentiation", "コア技術差別化"),
-        ("gs_risk_return", "Risk-Return", "リスク・リターン",
-         "Investment Risk", "投資リスク",
-         "Return Potential", "リターンポテンシャル"),
-        ("bubble_3d", "Innovation Bubble", "イノベーションバブル",
-         "R&D Intensity", "R&D投資強度",
-         "Time-to-Market", "市場投入速度"),
+         "Competitive Position", "競争ポジション",
+         "Technical Moat Depth", "技術モート深度"),
+        ("gs_risk_return", "Risk-Return", "リスク調整リターン",
+         "Downside Risk", "下振れリスク",
+         "Upside Potential", "上振れポテンシャル"),
+        ("bubble_3d", "Innovation vs Commercial", "イノベーション vs 商業化",
+         "Innovation Velocity", "イノベーション速度",
+         "Commercial Traction", "商業トラクション"),
     ]
     markets = []
     for m_name, m_name_ja in markets_def:

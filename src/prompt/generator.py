@@ -1132,30 +1132,30 @@ Each chart page renders a 2×3 grid: [Global | US] [EMEA | LATAM] [Japan | SEA].
 
 ### 5 Chart Types (each rendered as a 2×3 grid page)
 
-1. **magic_quadrant** — Gartner Magic Quadrant
-   - X: "Product Completeness" — Feature breadth × API/SDK maturity × Documentation depth (0-100)
-   - Y: "Go-to-Market Execution" — Revenue trajectory × Enterprise wins × Channel partnerships (0-100)
-   - Quadrants: Leaders / Challengers / Visionaries / Niche Players
+1. **magic_quadrant** — Forrester Wave / Gartner Magic Quadrant
+   - X: "Current Offering" — Feature breadth × API coverage × Documentation quality × Enterprise readiness (0-100)
+   - Y: "Strategy" — Vision clarity × Roadmap ambition × Ecosystem play × Funding runway (0-100)
+   - Quadrants: Leaders (high X, high Y) / Strong Performers (high X, low Y) / Contenders (low X, high Y) / Challengers (low X, low Y)
 
 2. **bcg_matrix** — BCG Growth-Share Matrix
-   - X: "Relative Market Share" — Active user base × Revenue vs. #1 player × Brand share-of-voice (0-100)
-   - Y: "Revenue Growth CAGR" — YoY growth × New-customer acquisition × Geographic expansion rate (0-100)
-   - Quadrants: Stars / Question Marks / Cash Cows / Dogs
+   - X: "Relative Market Share (log scale)" — Revenue vs #1 player × Install base × Developer mindshare (0-100, right = dominant)
+   - Y: "Market Growth Rate" — TAM CAGR × New-segment creation × Geographic expansion velocity (0-100)
+   - Quadrants: Stars (high-high) / Question Marks (low X, high Y) / Cash Cows (high X, low Y) / Dogs (low-low)
 
-3. **mckinsey_moat** — McKinsey Tech Moat Matrix
-   - X: "Switching Cost & Lock-in" — Data gravity × Integration depth × Ecosystem stickiness (0-100)
-   - Y: "Core Tech Differentiation" — Algorithm originality × Latency advantage × Accuracy delta vs. competitors (0-100)
-   - Quadrants: Fortress / Innovator / Commodity / Fast Follower
+3. **mckinsey_moat** — McKinsey 9-Box / Tech Moat Matrix
+   - X: "Competitive Position" — Switching cost × Data network effects × Integration lock-in × Brand premium (0-100)
+   - Y: "Technical Moat Depth" — Patent density × Algorithm uniqueness × Proprietary data × Latency edge (0-100)
+   - Quadrants: Fortress (high-high) / Innovator (low X, high Y) / Entrenched (high X, low Y) / Commodity (low-low)
 
-4. **gs_risk_return** — Goldman Sachs Risk-Return Positioning
-   - X: "Investment Risk" — Burn multiple × Regulatory exposure × Customer concentration HHI (0-100, higher = riskier)
-   - Y: "Return Potential" — Revenue multiple × TAM penetration upside × Margin expansion trajectory (0-100)
-   - Zones: Sweet Spot (low risk, high return) / Avoid (high risk, low return)
+4. **gs_risk_return** — Risk-Adjusted Return Analysis
+   - X: "Downside Risk" — Burn multiple × Single-customer dependency × Regulatory cliff × Tech debt ratio (0-100, right = riskier)
+   - Y: "Upside Potential" — Revenue multiple × Margin expansion room × TAM whitespace × Optionality value (0-100)
+   - Zones: Sweet Spot (low risk, high return — top-left) / Avoid zone (high risk, low return — bottom-right)
 
-5. **bubble_3d** — Innovation-Maturity Bubble Chart
-   - X: "R&D Intensity" — R&D spend ratio × Open-source contribution × Patent filing velocity (0-100)
-   - Y: "Time-to-Market Speed" — Release cadence × CI/CD maturity × Feature deployment frequency (0-100)
-   - Z (bubble size): "IP & Data Moat" — Patent portfolio × Proprietary dataset scale × Regulatory certifications (0-100)
+5. **bubble_3d** — Innovation vs. Commercialization Bubble
+   - X: "Innovation Velocity" — R&D-to-revenue ratio × Patent filing rate × OSS contribution × Research publication (0-100)
+   - Y: "Commercial Traction" — ARR growth × Net retention × Logo acquisition × Expansion revenue % (0-100)
+   - Z (bubble size): "Market Presence" — Total funding raised × Enterprise logos × Geographic reach × Brand awareness (0-100)
 
 ### Data Structure
 For EACH of the 6 markets, generate data for ALL 5 chart types.
@@ -1187,30 +1187,30 @@ _COMPETITIVE_ANALYSIS_INSTRUCTIONS_JA = """## 競合分析タスク
 
 ### 5つのチャートタイプ（各タイプが2×3グリッドで1ページ）
 
-1. **magic_quadrant** — Gartner マジック・クアドラント
-   - X: 「プロダクト完成度」— 機能網羅性 × API/SDK成熟度 × ドキュメント充実度 (0-100)
-   - Y: 「GTM実行力」— 収益成長軌道 × エンタープライズ獲得数 × チャネルパートナーシップ (0-100)
-   - 象限: リーダー / チャレンジャー / ビジョナリー / ニッチプレイヤー
+1. **magic_quadrant** — Forrester Wave / Gartner マジック・クアドラント
+   - X: 「現行プロダクト力」— 機能網羅性 × API充実度 × ドキュメント品質 × エンタープライズ対応度 (0-100)
+   - Y: 「戦略性」— ビジョン明確度 × ロードマップ野心度 × エコシステム構想 × 資金余力 (0-100)
+   - 象限: リーダー(右上) / ストロングパフォーマー(右下) / コンテンダー(左上) / チャレンジャー(左下)
 
 2. **bcg_matrix** — BCG 成長・シェアマトリックス
-   - X: 「相対市場シェア」— アクティブユーザー数 × 対#1プレイヤー収益比 × ブランド認知度 (0-100)
-   - Y: 「収益成長CAGR」— 前年比成長率 × 新規顧客獲得速度 × 地域拡大率 (0-100)
-   - 象限: スター / 問題児 / 金のなる木 / 負け犬
+   - X: 「相対市場シェア(対数)」— 対#1収益比 × インストールベース × 開発者マインドシェア (0-100, 右=支配的)
+   - Y: 「市場成長率」— TAM CAGR × 新セグメント創出力 × 地域拡大速度 (0-100)
+   - 象限: スター(右上) / 問題児(左上) / 金のなる木(右下) / 負け犬(左下)
 
-3. **mckinsey_moat** — McKinsey 技術モートマトリックス
-   - X: 「スイッチングコスト」— データ重力 × 統合深度 × エコシステム粘着性 (0-100)
-   - Y: 「コア技術差別化」— アルゴリズム独自性 × レイテンシ優位性 × 精度差（対競合） (0-100)
-   - 象限: フォートレス / イノベーター / コモディティ / ファストフォロワー
+3. **mckinsey_moat** — McKinsey 9ボックス / 技術モートマトリックス
+   - X: 「競争ポジション」— スイッチングコスト × データネットワーク効果 × 統合ロックイン × ブランドプレミアム (0-100)
+   - Y: 「技術モート深度」— 特許密度 × アルゴリズム独自性 × 独自データ × レイテンシ優位性 (0-100)
+   - 象限: フォートレス(右上) / イノベーター(左上) / 既得権(右下) / コモディティ(左下)
 
-4. **gs_risk_return** — Goldman Sachs リスク・リターン分析
-   - X: 「投資リスク」— バーンマルチプル × 規制リスク × 顧客集中度HHI (0-100, 高い=リスク大)
-   - Y: 「リターンポテンシャル」— レベニューマルチプル × TAM浸透余地 × マージン拡大軌道 (0-100)
-   - ゾーン: スイートスポット（低リスク・高リターン）/ 回避（高リスク・低リターン）
+4. **gs_risk_return** — リスク調整リターン分析
+   - X: 「下振れリスク」— バーンマルチプル × 単一顧客依存度 × 規制クリフ × 技術的負債比率 (0-100, 右=リスク大)
+   - Y: 「上振れポテンシャル」— レベニューマルチプル × マージン拡大余地 × TAM空白地帯 × オプション価値 (0-100)
+   - ゾーン: スイートスポット（低リスク・高リターン＝左上）/ 回避ゾーン（高リスク・低リターン＝右下）
 
-5. **bubble_3d** — イノベーション・成熟度バブルチャート
-   - X: 「R&D投資強度」— R&D支出比率 × OSS貢献度 × 特許出願速度 (0-100)
-   - Y: 「市場投入速度」— リリース頻度 × CI/CD成熟度 × 機能デプロイ頻度 (0-100)
-   - Z (バブルサイズ): 「IP・データモート」— 特許ポートフォリオ × 独自データ規模 × 規制認証数 (0-100)
+5. **bubble_3d** — イノベーション vs 商業化バブルチャート
+   - X: 「イノベーション速度」— R&D対売上比率 × 特許出願率 × OSS貢献度 × 研究発表数 (0-100)
+   - Y: 「商業トラクション」— ARR成長率 × ネットリテンション率 × ロゴ獲得数 × 拡張収益比率 (0-100)
+   - Z (バブルサイズ): 「市場プレゼンス」— 累計調達額 × エンタープライズロゴ数 × 地域展開数 × ブランド認知度 (0-100)
 
 ### データ構造
 6市場それぞれについて、5つのチャートタイプ全てのデータを生成すること。

@@ -2401,203 +2401,179 @@ class PDFReportGenerator:
         return elements
 
     # ------------------------------------------------------------------
-    # Competitive Analysis charts
+    # Competitive Analysis — Forrester Wave-style 2×3 grid
     # ------------------------------------------------------------------
 
-    # ------------------------------------------------------------------
-    # Mini-chart drawing for 2×3 grid (compact versions)
-    # ------------------------------------------------------------------
-
-    # Fixed market order for 2×3 grid layout
-    _MARKET_ORDER = ["Global", "US", "EMEA", "LATAM", "Japan", "SEA"]
     _MARKET_ORDER_JA = {
         "Global": "グローバル", "US": "米国", "EMEA": "EMEA",
         "LATAM": "中南米", "Japan": "日本", "SEA": "東南アジア",
     }
 
-    def _draw_mini_quadrant(self, chart, quadrant_labels: list[str],
-                            w: float, h: float) -> Drawing:
-        """Compact quadrant chart for 2×3 grid cell."""
+    # Cell size for mini charts (fits 2 per row within A4 margins)
+    _CELL_W = 235
+    _CELL_H = 180
+
+    def _mini_chart(self, chart, ctype: str, quadrant_labels: list[str] | None = None) -> Drawing:
+        """Render a single Forrester-style mini chart as a standalone Drawing."""
+        w, h = self._CELL_W, self._CELL_H
         d = Drawing(w, h)
-        pad_l, pad_b, pad_r, pad_t = 6, 18, 6, 4
-        plot_l = pad_l
-        plot_b = pad_b
-        plot_r = w - pad_r
-        plot_t = h - pad_t
-        pw = plot_r - plot_l
-        ph = plot_t - plot_b
 
-        # Background
-        d.add(Rect(0, 0, w, h, fillColor=colors.HexColor("#fafafa"),
-                   strokeColor=COLOR_BORDER, strokeWidth=0.3))
+        # Paddings: left for Y-axis label, bottom for X-axis label, top/right margins
+        pl, pb, pr, pt = 32, 22, 8, 8
+        pw = w - pl - pr  # plot width
+        ph = h - pb - pt  # plot height
 
-        # Axes
-        d.add(Line(plot_l, plot_b, plot_r, plot_b,
-                   strokeColor=COLOR_TEXT_DIM, strokeWidth=0.5))
-        d.add(Line(plot_l, plot_b, plot_l, plot_t,
-                   strokeColor=COLOR_TEXT_DIM, strokeWidth=0.5))
+        # --- Background & border ---
+        d.add(Rect(0, 0, w, h,
+                   fillColor=colors.HexColor("#f8f9fa"),
+                   strokeColor=COLOR_BORDER, strokeWidth=0.4))
 
-        # Center cross
-        mx = plot_l + pw / 2
-        my = plot_b + ph / 2
-        d.add(Line(mx, plot_b, mx, plot_t,
-                   strokeColor=COLOR_BORDER, strokeWidth=0.3,
-                   strokeDashArray=[2, 2]))
-        d.add(Line(plot_l, my, plot_r, my,
-                   strokeColor=COLOR_BORDER, strokeWidth=0.3,
-                   strokeDashArray=[2, 2]))
+        # --- Grid lines (Forrester style: light horizontal/vertical bands) ---
+        for frac in (0.25, 0.5, 0.75):
+            gx = pl + pw * frac
+            gy = pb + ph * frac
+            d.add(Line(gx, pb, gx, pb + ph,
+                       strokeColor=colors.HexColor("#e5e7eb"), strokeWidth=0.3))
+            d.add(Line(pl, gy, pl + pw, gy,
+                       strokeColor=colors.HexColor("#e5e7eb"), strokeWidth=0.3))
 
-        # Quadrant labels (tiny)
-        lf = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica"
-        ls = 4.5
-        lc = colors.HexColor("#b0b0b0")
-        d.add(String(plot_l + 2, plot_t - 8, quadrant_labels[0],
-                     fontName=lf, fontSize=ls, fillColor=lc))
-        d.add(String(mx + 2, plot_t - 8, quadrant_labels[1],
-                     fontName=lf, fontSize=ls, fillColor=lc))
-        d.add(String(plot_l + 2, plot_b + 2, quadrant_labels[2],
-                     fontName=lf, fontSize=ls, fillColor=lc))
-        d.add(String(mx + 2, plot_b + 2, quadrant_labels[3],
-                     fontName=lf, fontSize=ls, fillColor=lc))
+        # --- Axes (solid) ---
+        d.add(Line(pl, pb, pl + pw, pb,
+                   strokeColor=COLOR_TEXT_DIM, strokeWidth=0.6))
+        d.add(Line(pl, pb, pl, pb + ph,
+                   strokeColor=COLOR_TEXT_DIM, strokeWidth=0.6))
 
-        # Axis labels (short)
+        # --- Axis scale ticks: 0, 25, 50, 75, 100 ---
         af = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        for val in (0, 50, 100):
+            # X ticks
+            tx = pl + pw * (val / 100)
+            d.add(Line(tx, pb, tx, pb - 3,
+                       strokeColor=COLOR_TEXT_DIM, strokeWidth=0.3))
+            d.add(String(tx - 4, pb - 11, str(val),
+                         fontName=af, fontSize=5, fillColor=COLOR_TEXT_DIM))
+            # Y ticks
+            ty = pb + ph * (val / 100)
+            d.add(Line(pl, ty, pl - 3, ty,
+                       strokeColor=COLOR_TEXT_DIM, strokeWidth=0.3))
+            d.add(String(pl - 14, ty - 2, str(val),
+                         fontName=af, fontSize=5, fillColor=COLOR_TEXT_DIM))
+
+        # --- Quadrant labels (for quadrant-type charts) ---
+        if quadrant_labels and len(quadrant_labels) == 4:
+            lf = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            lc = colors.HexColor("#c0c4cc")
+            ls = 5.5
+            mx = pl + pw / 2
+            my = pb + ph / 2
+            # [top-left, top-right, bottom-left, bottom-right]
+            d.add(String(pl + 3, pb + ph - 10, quadrant_labels[0],
+                         fontName=lf, fontSize=ls, fillColor=lc))
+            d.add(String(mx + 3, pb + ph - 10, quadrant_labels[1],
+                         fontName=lf, fontSize=ls, fillColor=lc))
+            d.add(String(pl + 3, pb + 3, quadrant_labels[2],
+                         fontName=lf, fontSize=ls, fillColor=lc))
+            d.add(String(mx + 3, pb + 3, quadrant_labels[3],
+                         fontName=lf, fontSize=ls, fillColor=lc))
+            # Center cross (dashed)
+            d.add(Line(mx, pb, mx, pb + ph,
+                       strokeColor=colors.HexColor("#d1d5db"), strokeWidth=0.4,
+                       strokeDashArray=[3, 3]))
+            d.add(Line(pl, my, pl + pw, my,
+                       strokeColor=colors.HexColor("#d1d5db"), strokeWidth=0.4,
+                       strokeDashArray=[3, 3]))
+
+        # --- Risk-return special: sweet spot zone + efficient frontier ---
+        if ctype == "gs_risk_return":
+            # Sweet spot = low risk, high return (left-top)
+            sx, sy = pl + pw * 0.02, pb + ph * 0.58
+            sw, sh = pw * 0.38, ph * 0.38
+            d.add(Rect(sx, sy, sw, sh,
+                       fillColor=colors.HexColor("#e8f4f8"),
+                       strokeColor=colors.HexColor("#b8d8e8"), strokeWidth=0.3))
+            lf = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            d.add(String(sx + 2, sy + sh - 9,
+                         self._t.get("sweet_spot", "Sweet Spot"),
+                         fontName=lf, fontSize=5, fillColor=COLOR_ACCENT))
+            # Efficient frontier diagonal
+            d.add(Line(pl + pw * 0.05, pb + ph * 0.1,
+                       pl + pw * 0.95, pb + ph * 0.9,
+                       strokeColor=COLOR_ACCENT, strokeWidth=0.7,
+                       strokeDashArray=[4, 2]))
+
+        # --- Axis labels ---
         x_lab = chart.x_axis_label_ja if self._lang == "ja" and chart.x_axis_label_ja else chart.x_axis_label
         y_lab = chart.y_axis_label_ja if self._lang == "ja" and chart.y_axis_label_ja else chart.y_axis_label
-        # Truncate long labels
-        x_lab = x_lab[:20] + "..." if len(x_lab) > 23 else x_lab
-        y_lab = y_lab[:12] + "..." if len(y_lab) > 15 else y_lab
-        d.add(String(plot_l + pw / 2 - 20, 2, x_lab,
+        # Truncate
+        x_lab = (x_lab[:22] + "…") if len(x_lab) > 24 else x_lab
+        y_lab = (y_lab[:14] + "…") if len(y_lab) > 16 else y_lab
+        d.add(String(pl + pw / 2 - len(x_lab) * 1.5, 2, x_lab,
+                     fontName=af, fontSize=5.5, fillColor=COLOR_TEXT_DIM))
+        # Y-axis label (rotated text not supported in ReportLab String,
+        # so place vertically at left edge)
+        d.add(String(1, pb + ph / 2 - len(y_lab) * 1.2, y_lab,
                      fontName=af, fontSize=5, fillColor=COLOR_TEXT_DIM))
-        d.add(String(1, plot_b + ph / 2, y_lab,
-                     fontName=af, fontSize=4.5, fillColor=COLOR_TEXT_DIM))
 
-        # Data points
-        self._draw_mini_points(d, chart.data_points, plot_l, plot_b, pw, ph)
-        return d
-
-    def _draw_mini_risk_return(self, chart, w: float, h: float) -> Drawing:
-        """Compact risk-return chart for 2×3 grid cell."""
-        d = Drawing(w, h)
-        pad_l, pad_b, pad_r, pad_t = 6, 18, 6, 4
-        plot_l = pad_l
-        plot_b = pad_b
-        plot_r = w - pad_r
-        plot_t = h - pad_t
-        pw = plot_r - plot_l
-        ph = plot_t - plot_b
-
-        d.add(Rect(0, 0, w, h, fillColor=colors.HexColor("#fafafa"),
-                   strokeColor=COLOR_BORDER, strokeWidth=0.3))
-        d.add(Line(plot_l, plot_b, plot_r, plot_b,
-                   strokeColor=COLOR_TEXT_DIM, strokeWidth=0.5))
-        d.add(Line(plot_l, plot_b, plot_l, plot_t,
-                   strokeColor=COLOR_TEXT_DIM, strokeWidth=0.5))
-
-        # Efficient frontier
-        d.add(Line(plot_l + pw * 0.08, plot_b + ph * 0.12,
-                   plot_r - pw * 0.08, plot_t - ph * 0.08,
-                   strokeColor=COLOR_ACCENT, strokeWidth=0.8,
-                   strokeDashArray=[3, 2]))
-
-        # Sweet spot zone
-        sx = plot_l + pw * 0.05
-        sy = plot_b + ph * 0.55
-        sw = pw * 0.35
-        sh = ph * 0.38
-        d.add(Rect(sx, sy, sw, sh,
-                   fillColor=colors.HexColor("#e8f4f8"),
-                   strokeColor=COLOR_BORDER, strokeWidth=0.3))
-        lf = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica"
-        d.add(String(sx + 2, sy + sh - 7,
-                     self._t.get("sweet_spot", "Sweet Spot"),
-                     fontName=lf, fontSize=4, fillColor=COLOR_ACCENT))
-
-        # Axis labels
-        af = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
-        x_lab = chart.x_axis_label_ja if self._lang == "ja" and chart.x_axis_label_ja else chart.x_axis_label
-        y_lab = chart.y_axis_label_ja if self._lang == "ja" and chart.y_axis_label_ja else chart.y_axis_label
-        x_lab = x_lab[:20] + "..." if len(x_lab) > 23 else x_lab
-        y_lab = y_lab[:12] + "..." if len(y_lab) > 15 else y_lab
-        d.add(String(plot_l + pw / 2 - 20, 2, x_lab,
-                     fontName=af, fontSize=5, fillColor=COLOR_TEXT_DIM))
-        d.add(String(1, plot_b + ph / 2, y_lab,
-                     fontName=af, fontSize=4.5, fillColor=COLOR_TEXT_DIM))
-
-        self._draw_mini_points(d, chart.data_points, plot_l, plot_b, pw, ph)
-        return d
-
-    def _draw_mini_bubble(self, chart, w: float, h: float) -> Drawing:
-        """Compact bubble chart for 2×3 grid cell."""
-        d = Drawing(w, h)
-        pad_l, pad_b, pad_r, pad_t = 6, 18, 6, 4
-        plot_l = pad_l
-        plot_b = pad_b
-        plot_r = w - pad_r
-        plot_t = h - pad_t
-        pw = plot_r - plot_l
-        ph = plot_t - plot_b
-
-        d.add(Rect(0, 0, w, h, fillColor=colors.HexColor("#fafafa"),
-                   strokeColor=COLOR_BORDER, strokeWidth=0.3))
-        d.add(Line(plot_l, plot_b, plot_r, plot_b,
-                   strokeColor=COLOR_TEXT_DIM, strokeWidth=0.5))
-        d.add(Line(plot_l, plot_b, plot_l, plot_t,
-                   strokeColor=COLOR_TEXT_DIM, strokeWidth=0.5))
-
-        af = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
-        x_lab = chart.x_axis_label_ja if self._lang == "ja" and chart.x_axis_label_ja else chart.x_axis_label
-        y_lab = chart.y_axis_label_ja if self._lang == "ja" and chart.y_axis_label_ja else chart.y_axis_label
-        x_lab = x_lab[:20] + "..." if len(x_lab) > 23 else x_lab
-        y_lab = y_lab[:12] + "..." if len(y_lab) > 15 else y_lab
-        d.add(String(plot_l + pw / 2 - 20, 2, x_lab,
-                     fontName=af, fontSize=5, fillColor=COLOR_TEXT_DIM))
-        d.add(String(1, plot_b + ph / 2, y_lab,
-                     fontName=af, fontSize=4.5, fillColor=COLOR_TEXT_DIM))
-
+        # --- Data points ---
+        is_bubble = (ctype == "bubble_3d")
         nf = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
-        for dp in chart.data_points:
-            cx = plot_l + (dp.x / 100) * pw
-            cy = plot_b + (dp.y / 100) * ph
-            r = max(3, min(16, dp.z * 0.16))
-            fill = COLOR_ACCENT if dp.is_target else colors.HexColor("#d1d5db")
-            d.add(Circle(cx, cy, r, fillColor=fill,
-                         strokeColor=None, strokeWidth=0))
-            # Label: offset to avoid overlap with bubble
-            lx = cx + r + 1
-            # If label would go off right edge, place it to the left
-            if lx + 30 > w:
-                lx = cx - r - 25
-            d.add(String(lx, cy - 2, dp.name[:10],
-                         fontName=nf, fontSize=4.5, fillColor=COLOR_TEXT))
-        return d
+        # Sort: non-target first, target on top
+        sorted_pts = sorted(chart.data_points, key=lambda dp: dp.is_target)
+        label_positions: list[tuple[float, float]] = []
 
-    def _draw_mini_points(self, d: Drawing, data_points, plot_l, plot_b, pw, ph):
-        """Shared helper: draw data point circles + labels on a mini-chart."""
-        nf = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
-        # Sort so target draws last (on top)
-        sorted_pts = sorted(data_points, key=lambda dp: dp.is_target)
         for dp in sorted_pts:
-            cx = plot_l + (dp.x / 100) * pw
-            cy = plot_b + (dp.y / 100) * ph
-            r = 5 if dp.is_target else 4
-            fill = COLOR_ACCENT if dp.is_target else colors.HexColor("#9ca3af")
-            stroke = colors.white if dp.is_target else None
-            sw = 0.8 if dp.is_target else 0
+            cx = pl + (dp.x / 100) * pw
+            cy = pb + (dp.y / 100) * ph
+
+            if is_bubble:
+                r = max(4, min(18, dp.z * 0.18))
+                fill = COLOR_ACCENT if dp.is_target else colors.HexColor("#d1d5db")
+                alpha = 0.85
+            else:
+                r = 5.5 if dp.is_target else 4
+                fill = COLOR_ACCENT if dp.is_target else colors.HexColor("#9ca3af")
+                alpha = 1.0
+
+            stroke_c = colors.white if dp.is_target else colors.HexColor("#ffffff")
+            stroke_w = 1.0 if dp.is_target else 0.3
             d.add(Circle(cx, cy, r, fillColor=fill,
-                         strokeColor=stroke, strokeWidth=sw))
-            # Label with smart positioning to reduce overlap
-            lx = cx + r + 1
+                         strokeColor=stroke_c, strokeWidth=stroke_w))
+
+            # Smart label placement to avoid overlaps
+            name = dp.name[:12]
+            lx = cx + r + 2
             ly = cy - 2
-            name = dp.name[:10]  # Truncate long names
-            # If label would overflow right edge, place left
-            if lx + 28 > plot_l + pw + 6:
-                lx = cx - r - 28
+            # If off right edge, place left
+            if lx + len(name) * 3 > w - 2:
+                lx = cx - r - len(name) * 3 - 1
+            # If off top, shift down
+            if ly + 6 > h - 2:
+                ly = cy - 8
+            # Check overlap with previous labels (simple)
+            for plx, ply in label_positions:
+                if abs(lx - plx) < 25 and abs(ly - ply) < 7:
+                    ly -= 7
+                    break
+            label_positions.append((lx, ly))
+
+            fs = 5.5 if dp.is_target else 5
+            fc = COLOR_TEXT if dp.is_target else COLOR_TEXT_DIM
             d.add(String(lx, ly, name,
-                         fontName=nf, fontSize=4.5, fillColor=COLOR_TEXT))
+                         fontName=nf, fontSize=fs, fillColor=fc))
+
+        return d
 
     def _build_competitive_analysis_pages(self, cr) -> list:
-        """Competitive analysis: 5 chart types × 2×3 grid (6 markets per page)."""
+        """Competitive analysis: 5 chart types × 2×3 Table grid (6 markets).
+
+        Uses ReportLab Table layout (not Drawing.shift) for reliable positioning.
+        Each page: heading + 3-row × 2-col Table of mini-chart Drawings.
+        Row 1: Global | US
+        Row 2: EMEA  | LATAM
+        Row 3: Japan  | SEA
+        """
+        from reportlab.platypus import Table as RLTable, TableStyle as RLTableStyle
+
         t = self._t
         s = self._styles
         elements: list = []
@@ -2606,20 +2582,13 @@ class PDFReportGenerator:
         if not ca or not ca.markets:
             return elements
 
-        # Build lookup: market_name → {chart_type → chart}
+        # Lookup: market_name → {chart_type → MarketChart}
         market_charts: dict[str, dict[str, object]] = {}
         for market in ca.markets:
-            key = market.market_name  # English name as key
-            market_charts[key] = {}
-            for chart in market.charts:
-                market_charts[key][chart.chart_type] = chart
+            market_charts[market.market_name] = {
+                c.chart_type: c for c in market.charts
+            }
 
-        # Also build JA name lookup
-        market_ja: dict[str, str] = {}
-        for market in ca.markets:
-            market_ja[market.market_name] = market.market_name_ja or market.market_name
-
-        # Chart types to render (one page per type)
         chart_types = [
             "magic_quadrant", "bcg_matrix", "mckinsey_moat",
             "gs_risk_return", "bubble_3d",
@@ -2637,95 +2606,89 @@ class PDFReportGenerator:
             "mckinsey_moat": ["innovator", "fortress", "fast_follower", "commodity"],
         }
 
-        # Grid layout: 2 cols × 3 rows
-        # [Global, US] [EMEA, LATAM] [Japan, SEA]
-        grid_markets = [
+        # Grid: 3 rows × 2 cols
+        grid_rows = [
             ("Global", "US"),
             ("EMEA", "LATAM"),
             ("Japan", "SEA"),
         ]
 
-        # Cell dimensions (A4 = 595×842, margins ~20mm each = ~57pt)
-        cell_w = 230
-        cell_h = 185
-        gap_x = 14
-        gap_y = 6
+        cw = self._CELL_W
+        ch = self._CELL_H
+        label_h = 14  # height for market name label row
 
         for ctype in chart_types:
-            # Check if any market has this chart type
             has_data = any(
-                ctype in market_charts.get(mname, {})
-                for row in grid_markets for mname in row
+                ctype in market_charts.get(mn, {})
+                for row in grid_rows for mn in row
             )
             if not has_data:
                 continue
 
             elements.append(PageBreak())
 
-            # Page title
-            chart_title_key = chart_title_map.get(ctype, ctype)
-            page_title = t.get(chart_title_key, ctype)
+            # Page heading
+            title_key = chart_title_map.get(ctype, ctype)
+            page_title = t.get(title_key, ctype)
             elements.append(
-                Paragraph(
-                    f"{t['competitive_analysis']} — {page_title}",
-                    s["heading1"],
-                )
+                Paragraph(f"{t['competitive_analysis']} — {page_title}", s["heading1"])
             )
             elements.append(
                 HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=2 * mm)
             )
+
+            # Subtitle with axis description
             elements.append(Paragraph(t["competitive_subtitle"], s["body_dim"]))
-            elements.append(Spacer(1, 3 * mm))
+            elements.append(Spacer(1, 2 * mm))
 
-            # Build 2×3 grid as a single Drawing
-            total_w = cell_w * 2 + gap_x
-            total_h = (cell_h + gap_y) * 3 + 30  # +30 for market labels
-            grid = Drawing(total_w, total_h)
+            # Build Table data: alternating label-row + chart-row
+            table_data = []
+            body_font = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
 
-            for row_idx, (m_left, m_right) in enumerate(grid_markets):
-                for col_idx, mname in enumerate((m_left, m_right)):
-                    x_off = col_idx * (cell_w + gap_x)
-                    # Rows from top to bottom (Drawing y=0 is bottom)
-                    y_off = total_h - (row_idx + 1) * (cell_h + gap_y + 10)
+            for m_left, m_right in grid_rows:
+                # Label row
+                left_label = self._MARKET_ORDER_JA.get(m_left, m_left) if self._lang == "ja" else m_left
+                right_label = self._MARKET_ORDER_JA.get(m_right, m_right) if self._lang == "ja" else m_right
+                table_data.append([
+                    Paragraph(f'<font name="{body_font}" size="8" color="#1e3a5f">{left_label}</font>', s["body"]),
+                    Paragraph(f'<font name="{body_font}" size="8" color="#1e3a5f">{right_label}</font>', s["body"]),
+                ])
 
-                    # Market label above each cell
-                    if self._lang == "ja":
-                        label = self._MARKET_ORDER_JA.get(mname, mname)
-                    else:
-                        label = mname
-                    lf = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-                    grid.add(String(x_off + 2, y_off + cell_h + 2, label,
-                                    fontName=lf, fontSize=7, fillColor=COLOR_TEXT))
-
-                    # Get chart data for this market + type
+                # Chart row
+                row_charts = []
+                for mname in (m_left, m_right):
                     chart = market_charts.get(mname, {}).get(ctype)
                     if chart is None:
-                        # Empty placeholder
-                        grid.add(Rect(x_off, y_off, cell_w, cell_h,
-                                      fillColor=colors.HexColor("#f5f5f5"),
-                                      strokeColor=COLOR_BORDER, strokeWidth=0.3))
+                        # Empty placeholder drawing
+                        placeholder = Drawing(cw, ch)
+                        placeholder.add(Rect(0, 0, cw, ch,
+                                             fillColor=colors.HexColor("#f5f5f5"),
+                                             strokeColor=COLOR_BORDER, strokeWidth=0.3))
                         nf = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
-                        grid.add(String(x_off + cell_w / 2 - 15, y_off + cell_h / 2,
-                                        "No data",
-                                        fontName=nf, fontSize=7, fillColor=COLOR_TEXT_DIM))
-                        continue
-
-                    # Draw the appropriate mini-chart
-                    if ctype in quadrant_map:
-                        qlabels = [t.get(k, k) for k in quadrant_map[ctype]]
-                        mini = self._draw_mini_quadrant(chart, qlabels, cell_w, cell_h)
-                    elif ctype == "gs_risk_return":
-                        mini = self._draw_mini_risk_return(chart, cell_w, cell_h)
-                    elif ctype == "bubble_3d":
-                        mini = self._draw_mini_bubble(chart, cell_w, cell_h)
+                        placeholder.add(String(cw / 2 - 12, ch / 2, "No data",
+                                               fontName=nf, fontSize=7, fillColor=COLOR_TEXT_DIM))
+                        row_charts.append(placeholder)
                     else:
-                        continue
+                        qlabels = None
+                        if ctype in quadrant_map:
+                            qlabels = [t.get(k, k) for k in quadrant_map[ctype]]
+                        row_charts.append(self._mini_chart(chart, ctype, qlabels))
+                table_data.append(row_charts)
 
-                    # Embed mini-chart at grid position
-                    mini.shift(x_off, y_off)
-                    for item in mini.contents:
-                        grid.add(item)
+            # Create Table with 6 rows (3 label + 3 chart), 2 cols
+            row_heights = []
+            for _ in grid_rows:
+                row_heights.append(label_h)
+                row_heights.append(ch)
 
-            elements.append(grid)
+            tbl = RLTable(table_data, colWidths=[cw, cw], rowHeights=row_heights)
+            tbl.setStyle(RLTableStyle([
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
+            ]))
+            elements.append(tbl)
 
         return elements
