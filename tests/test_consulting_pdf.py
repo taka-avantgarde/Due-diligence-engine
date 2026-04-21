@@ -258,10 +258,10 @@ def _make_consulting_report() -> ConsultingReport:
                 "business_impact": "Could delay enterprise deals by 6+ months.",
             },
             {
-                "title": "Rush commits before DD",
+                "title": "Missing penetration-test documentation",
                 "severity": "low",
-                "description": "40% of commits in final 2 weeks.",
-                "business_impact": "May indicate code quality concerns under pressure.",
+                "description": "Security claims made but no third-party pen-test evidence.",
+                "business_impact": "May slow enterprise procurement reviews.",
             },
         ],
         tech_level_summary={

@@ -115,7 +115,12 @@ class GitForensicsAnalyzer:
         dates: list[datetime],
         result: GitForensicsResult,
     ) -> None:
-        """Detect unusually dense commit clusters suggesting last-minute work."""
+        """Measure high-velocity commit windows (informational only, NOT a red flag).
+
+        AIDD (AI-Driven Development) era: high-frequency commits are NORMAL and
+        typically reflect rapid iteration enabled by AI. Commit density/frequency
+        is measured for completeness but MUST NOT affect scoring or produce red flags.
+        """
         if len(dates) < 5:
             return
 
@@ -135,30 +140,14 @@ class GitForensicsAnalyzer:
                     count += 1
                 else:
                     break
-            if count >= 20:  # More than 20 commits in 24h is suspicious
+            if count >= 20:
                 rush_windows.append((start, sorted_dates[min(i + count - 1, len(sorted_dates) - 1)], count))
 
         if rush_windows:
+            # Record metric but DO NOT flag as red — AIDD high-velocity is expected
             result.rush_commit_ratio = len(rush_windows) / max(len(dates), 1)
-            result.suspicious_patterns.append(
-                f"Found {len(rush_windows)} rush commit window(s) with 20+ commits in 24h"
-            )
-            result.red_flags.append(
-                RedFlag(
-                    category="git",
-                    title="Rush commit pattern detected",
-                    description=(
-                        f"Detected {len(rush_windows)} time windows with extremely dense "
-                        f"commit activity (20+ commits in 24 hours), suggesting last-minute "
-                        f"cramming or artificial history creation."
-                    ),
-                    severity=Severity.HIGH,
-                    evidence=[
-                        f"{w[0].isoformat()} - {w[1].isoformat()}: {w[2]} commits"
-                        for w in rush_windows[:5]
-                    ],
-                )
-            )
+            # No red flag: commit velocity is not a quality signal in the AI era.
+            # No suspicious_patterns entry either — it's just high-velocity development.
 
     def _detect_fake_history(
         self,

@@ -34,6 +34,7 @@ from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
     HRFlowable,
+    KeepTogether,
     NextPageTemplate,
     PageBreak,
     PageTemplate,
@@ -770,28 +771,22 @@ class PDFReportGenerator:
             story.append(PageBreak())
             story.extend(self._build_swot_page(cr))
 
-            # Score breakdown (from consulting report)
+            # Score breakdown + Tech level (combined — they belong together visually)
             story.append(PageBreak())
             story.extend(self._build_consulting_scores(cr))
-
-            # Tech level
+            # Tech level flows naturally after scores; PDF engine will page-break if needed
             story.extend(self._build_tech_level_page(cr))
 
-            # Future outlook
+            # Future outlook + Strategic advice + Investment thesis flow together
+            # (removed forced PageBreaks between — let PDF engine handle overflow naturally
+            #  to avoid sparse half-empty pages)
             story.append(PageBreak())
             story.extend(self._build_future_outlook_page(cr))
-
-            # Strategic advice
-            story.append(PageBreak())
             story.extend(self._build_strategic_advice_page(cr))
-
-            # Investment thesis
-            story.append(PageBreak())
             story.extend(self._build_investment_thesis_page(cr))
 
-            # Red flags from consulting
+            # Red flags — allowed to flow with investment thesis if space permits
             if cr.red_flags:
-                story.append(PageBreak())
                 story.extend(self._build_consulting_red_flags(cr))
 
             # Site Verification
@@ -2134,7 +2129,8 @@ class PDFReportGenerator:
             elements.append(table)
             elements.append(Spacer(1, 6 * mm))
 
-        # Detailed rationale and business explanation per dimension
+        # Detailed rationale per dimension — wrapped in KeepTogether to prevent
+        # orphans (e.g., heading at bottom of page with body on next page).
         for key in dim_name_map:
             dim = cr.dimension_scores.get(key)
             if not dim or not dim.rationale:
@@ -2143,22 +2139,16 @@ class PDFReportGenerator:
             if self._lang == "ja":
                 name = _DIM_NAME_JA.get(name, name)
 
-            elements.append(
-                Paragraph(f"<b>{name}</b> — Lv.{dim.level} {dim.label}", s["body"])
-            )
-            elements.append(Paragraph(dim.rationale, s["body"]))
+            block: list = [
+                Paragraph(f"<b>{name}</b> — Lv.{dim.level} {dim.label}", s["body"]),
+                Paragraph(dim.rationale, s["body"]),
+            ]
             if dim.business_explanation:
-                elements.append(
-                    Paragraph(f"<i>{dim.business_explanation}</i>", s["body_dim"])
-                )
+                block.append(Paragraph(f"<i>{dim.business_explanation}</i>", s["body_dim"]))
             if dim.enables:
-                elements.append(
-                    Paragraph(
-                        f"{t['enables']}: {dim.enables}",
-                        s["body_dim"],
-                    )
-                )
-            elements.append(Spacer(1, 4 * mm))
+                block.append(Paragraph(f"{t['enables']}: {dim.enables}", s["body_dim"]))
+            block.append(Spacer(1, 4 * mm))
+            elements.append(KeepTogether(block))
 
         return elements
 
