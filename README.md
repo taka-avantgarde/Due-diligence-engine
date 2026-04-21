@@ -55,6 +55,33 @@ and writes a 22-page PDF to `~/Downloads/`. **No API keys. No cloud. No extra co
 
 ---
 
+## 💭 How to Get the Best Results
+
+> **TL;DR**: Launch the highest-tier AI you have access to in your IDE terminal,
+> paste the command, and wait 10-20 minutes. That's it.
+
+**Recommended setup:**
+
+- **Spin up the most capable model available** in your IDE (Claude Opus 4.x, GPT-5, Gemini 2.5 Pro, etc.)
+- **Paste `dde prompt --pdf`** into the terminal
+- **Go grab a coffee** ☕ — the AI will read hundreds of files, evaluate across
+  9+ dimensions, research 5-10 competitors globally, and build a 22-page consulting PDF
+- **Expected time**: **10-20 minutes** (longer for large codebases or deeper models)
+
+**Why this approach?**
+
+| Concern | Answer |
+|---------|--------|
+| 🔐 **Data leakage?** | None. Everything runs inside your IDE's AI sandbox — no 3rd-party servers, no telemetry. DDE itself is 100% local Python |
+| 💰 **Cost?** | $0 extra. Uses your existing IDE AI subscription |
+| 🔑 **API keys?** | Not needed. Your IDE already handles AI auth |
+| ⚙️ **Setup?** | Just `pip install`. No config, no accounts |
+| 🎁 **Catch?** | There isn't one. DDE is a **hobby project** — built and open-sourced for fun. Use it freely |
+
+> **Made by a solo dev as a hobby.** If it helps you, that's enough reward. Star the repo if you like it ⭐
+
+---
+
 ## 👥 Who Is This For?
 
 | User | Use Case | Time Saved |
