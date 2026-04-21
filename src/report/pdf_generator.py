@@ -52,15 +52,17 @@ logger = logging.getLogger(__name__)
 pdfmetrics.registerFont(UnicodeCIDFont("HeiseiMin-W3"))
 pdfmetrics.registerFont(UnicodeCIDFont("HeiseiKakuGo-W5"))
 
-# Color palette — professional gray / dark blue tone
-COLOR_BG_DARK = colors.HexColor("#1a1a2e")
-COLOR_SURFACE = colors.HexColor("#2d2d44")
-COLOR_ACCENT = colors.HexColor("#1e3a5f")       # dark blue
-COLOR_GREEN = colors.HexColor("#4a6741")         # muted green
-COLOR_YELLOW = colors.HexColor("#8a7a3a")        # muted gold
-COLOR_ORANGE = colors.HexColor("#7a5a3a")        # muted brown
-COLOR_RED = colors.HexColor("#8b3a3a")           # muted dark red
-COLOR_TEXT = colors.HexColor("#1a1a2e")          # near-black
+# Color palette — Arc brand: black + sky blue (#5271FF)
+COLOR_BG_DARK = colors.HexColor("#000000")       # pure black (cover)
+COLOR_SURFACE = colors.HexColor("#0a0a14")       # near-black surface
+COLOR_ACCENT = colors.HexColor("#5271FF")        # Arc sky — primary brand
+COLOR_ACCENT_DARK = colors.HexColor("#3854CC")   # Arc sky darker (hover/pressed)
+COLOR_ACCENT_LIGHT = colors.HexColor("#E8EDFF")  # Arc sky tint (backgrounds)
+COLOR_GREEN = colors.HexColor("#4a6741")         # muted green (retained for SWOT only)
+COLOR_YELLOW = colors.HexColor("#8a7a3a")        # muted gold (severity)
+COLOR_ORANGE = colors.HexColor("#7a5a3a")        # muted brown (severity)
+COLOR_RED = colors.HexColor("#8b3a3a")           # muted dark red (severity)
+COLOR_TEXT = colors.HexColor("#000000")          # pure black
 COLOR_TEXT_DIM = colors.HexColor("#6b7280")      # gray-500
 COLOR_BORDER = colors.HexColor("#d1d5db")        # gray-300
 COLOR_WHITE = colors.white
@@ -78,7 +80,7 @@ SEVERITY_COLORS = {
 # Grade color mapping
 GRADE_COLORS = {
     "A": colors.HexColor("#2d5a3d"),     # dark green
-    "B": colors.HexColor("#1e3a5f"),     # dark blue
+    "B": colors.HexColor("#5271FF"),     # dark blue
     "C": colors.HexColor("#5a5a3a"),     # dark gold
     "D": colors.HexColor("#6b4a2a"),     # dark brown
     "F": colors.HexColor("#6b2a2a"),     # dark red
@@ -837,7 +839,7 @@ class PDFReportGenerator:
         # Title prefix
         elements.append(
             Paragraph(
-                f'<font color="#38bdf8" size="12">{t["title_prefix"]}</font>',
+                f'<font color="#5271FF" size="12">{t["title_prefix"]}</font>',
                 cover_center,
             )
         )
@@ -855,7 +857,7 @@ class PDFReportGenerator:
         elements.append(
             HRFlowable(
                 width="30%", thickness=0.5,
-                color=colors.HexColor("#38bdf8"),
+                color=colors.HexColor("#5271FF"),
                 spaceAfter=8 * mm,
                 hAlign="CENTER",
             )
@@ -874,7 +876,7 @@ class PDFReportGenerator:
             recommendation = rec.get(grade, "")
             elements.append(
                 Paragraph(
-                    f'<font color="#38bdf8" size="14"><b>{grade_label}</b></font>'
+                    f'<font color="#5271FF" size="14"><b>{grade_label}</b></font>'
                     f'  <font color="#9ca3af" size="10">{recommendation}</font>',
                     cover_center,
                 )
@@ -900,7 +902,7 @@ class PDFReportGenerator:
             grade_text = f'{t["grade_prefix"]}: {score.grade}'
             elements.append(
                 Paragraph(
-                    f'<font color="#38bdf8" size="14"><b>{grade_text}</b></font>',
+                    f'<font color="#5271FF" size="14"><b>{grade_text}</b></font>',
                     cover_center,
                 )
             )
@@ -921,7 +923,7 @@ class PDFReportGenerator:
         if cr and cr.ai_model_used:
             elements.append(
                 Paragraph(
-                    f'<font color="#38bdf8" size="11">'
+                    f'<font color="#5271FF" size="11">'
                     f'<b>{t["ai_model"]}: {cr.ai_model_used}</b></font>',
                     cover_center,
                 )
@@ -1717,16 +1719,16 @@ class PDFReportGenerator:
                         fillColor=colors.HexColor("#e2e8f0"),
                         strokeColor=None, strokeWidth=0))
 
-            # Score bar (gray/dark blue tone by score range)
+            # Score bar (Arc brand: black + sky blue dominant)
             bar_w = max(2, (score / 100) * bar_max_w)
-            if score >= 80:
-                bar_color = colors.HexColor("#1e3a5f")    # dark blue
-            elif score >= 60:
-                bar_color = colors.HexColor("#4a5568")    # dark gray
-            elif score >= 40:
-                bar_color = colors.HexColor("#9ca3af")    # medium gray
+            if score >= 75:
+                bar_color = COLOR_ACCENT                  # Arc sky #5271FF
+            elif score >= 50:
+                bar_color = COLOR_ACCENT_DARK             # Arc sky darker
+            elif score >= 30:
+                bar_color = colors.HexColor("#000000")    # pure black
             else:
-                bar_color = colors.HexColor("#6b2a2a")    # muted dark red
+                bar_color = colors.HexColor("#6b2a2a")    # muted red (warning)
             d.add(Rect(label_w, y, bar_w, 16,
                         fillColor=bar_color,
                         strokeColor=None, strokeWidth=0))
@@ -1755,13 +1757,13 @@ class PDFReportGenerator:
         barometer.add(Rect(label_w, 15, bar_max_w, 10,
                            fillColor=colors.HexColor("#e2e8f0"),
                            strokeColor=None, strokeWidth=0))
-        # Colored segments  (F: 0-40, D: 40-60, C: 60-75, B: 75-90, A: 90-100)
+        # Colored segments (Arc brand: black→sky blue gradient, red for fail)
         segments = [
-            (0, 40, colors.HexColor("#6b2a2a")),      # dark red
-            (40, 60, colors.HexColor("#7a5a3a")),      # dark brown
-            (60, 75, colors.HexColor("#9ca3af")),      # medium gray
-            (75, 90, colors.HexColor("#4a5568")),      # dark gray
-            (90, 100, colors.HexColor("#1e3a5f")),     # dark blue
+            (0, 40, colors.HexColor("#6b2a2a")),       # muted red (F)
+            (40, 60, colors.HexColor("#000000")),      # black (D)
+            (60, 75, colors.HexColor("#1a1a2e")),      # near-black (C)
+            (75, 90, COLOR_ACCENT_DARK),               # Arc sky darker (B)
+            (90, 100, COLOR_ACCENT),                   # Arc sky (A)
         ]
         for lo, hi, clr in segments:
             x = label_w + (lo / 100) * bar_max_w
@@ -1851,7 +1853,7 @@ class PDFReportGenerator:
         quadrants = [
             (t["strengths"], swot.strengths, colors.HexColor("#2d5a3d"), colors.HexColor("#f3f4f6")),
             (t["weaknesses"], swot.weaknesses, colors.HexColor("#4a4a4a"), colors.HexColor("#f3f4f6")),
-            (t["opportunities"], swot.opportunities, colors.HexColor("#1e3a5f"), colors.HexColor("#f3f4f6")),
+            (t["opportunities"], swot.opportunities, colors.HexColor("#5271FF"), colors.HexColor("#f3f4f6")),
             (t["threats"], swot.threats, colors.HexColor("#6b2a2a"), colors.HexColor("#f3f4f6")),
         ]
 
@@ -2363,16 +2365,16 @@ class PDFReportGenerator:
                 elements.append(Paragraph(f"  {url}", s["body_small"]))
             elements.append(Spacer(1, 4 * mm))
 
-        # Overall credibility score — large display
+        # Overall credibility score — Arc brand coloring
         cred_score = sv.overall_credibility
-        if cred_score >= 80:
-            cred_color = colors.HexColor("#1e3a5f")  # dark blue
-        elif cred_score >= 60:
-            cred_color = colors.HexColor("#4a5568")  # dark gray
-        elif cred_score >= 40:
-            cred_color = colors.HexColor("#9ca3af")  # medium gray
+        if cred_score >= 75:
+            cred_color = COLOR_ACCENT                # Arc sky
+        elif cred_score >= 50:
+            cred_color = COLOR_ACCENT_DARK           # Arc sky darker
+        elif cred_score >= 30:
+            cred_color = colors.HexColor("#000000")  # black
         else:
-            cred_color = colors.HexColor("#6b2a2a")  # muted dark red
+            cred_color = colors.HexColor("#6b2a2a")  # muted red
 
         cred_text = (
             f'<font color="{cred_color.hexval()}" size="36">{cred_score:.0f}</font>'
@@ -2420,17 +2422,17 @@ class PDFReportGenerator:
                         fillColor=colors.HexColor("#e2e8f0"),
                         strokeColor=None, strokeWidth=0))
 
-            # Score bar (color by score range — same as dashboard)
+            # Score bar (Arc brand: black + sky blue)
             score = item.score
             bar_w = max(2, (score / 100) * bar_max_w)
-            if score >= 80:
-                bar_color = colors.HexColor("#1e3a5f")
-            elif score >= 60:
-                bar_color = colors.HexColor("#4a5568")
-            elif score >= 40:
-                bar_color = colors.HexColor("#9ca3af")
+            if score >= 75:
+                bar_color = COLOR_ACCENT                  # Arc sky
+            elif score >= 50:
+                bar_color = COLOR_ACCENT_DARK             # Arc sky darker
+            elif score >= 30:
+                bar_color = colors.HexColor("#000000")    # black
             else:
-                bar_color = colors.HexColor("#6b2a2a")
+                bar_color = colors.HexColor("#6b2a2a")    # muted red
             d.add(Rect(label_w, y, bar_w, 16,
                         fillColor=bar_color,
                         strokeColor=None, strokeWidth=0))
@@ -2719,12 +2721,12 @@ class PDFReportGenerator:
                     cap_parts = []
                     if x_label and x_rat:
                         cap_parts.append(
-                            f'<font name="{cap_bold}" size="7" color="#1e3a5f">X: {x_label}</font>'
+                            f'<font name="{cap_bold}" size="7" color="#5271FF">X: {x_label}</font>'
                             f'<font name="{cap_font}" size="7" color="#6b7280"> — {x_rat}</font>'
                         )
                     if y_label and y_rat:
                         cap_parts.append(
-                            f'<font name="{cap_bold}" size="7" color="#1e3a5f">Y: {y_label}</font>'
+                            f'<font name="{cap_bold}" size="7" color="#5271FF">Y: {y_label}</font>'
                             f'<font name="{cap_font}" size="7" color="#6b7280"> — {y_rat}</font>'
                         )
                     for cap in cap_parts:
@@ -2744,8 +2746,8 @@ class PDFReportGenerator:
                 left_label = self._MARKET_ORDER_JA.get(m_left, m_left) if self._lang == "ja" else m_left
                 right_label = self._MARKET_ORDER_JA.get(m_right, m_right) if self._lang == "ja" else m_right
                 table_data.append([
-                    Paragraph(f'<font name="{body_font}" size="8" color="#1e3a5f">{left_label}</font>', s["body"]),
-                    Paragraph(f'<font name="{body_font}" size="8" color="#1e3a5f">{right_label}</font>', s["body"]),
+                    Paragraph(f'<font name="{body_font}" size="8" color="#5271FF">{left_label}</font>', s["body"]),
+                    Paragraph(f'<font name="{body_font}" size="8" color="#5271FF">{right_label}</font>', s["body"]),
                 ])
 
                 # Chart row
