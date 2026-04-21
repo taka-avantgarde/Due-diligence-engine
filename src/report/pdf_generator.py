@@ -2160,7 +2160,9 @@ class PDFReportGenerator:
 
         elements.append(Spacer(1, 6 * mm))
         elements.append(Paragraph(t["tech_level"], s["heading1"]))
-        elements.append(Spacer(1, 6 * mm))
+        elements.append(
+            HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=4 * mm)
+        )
 
         tls = cr.tech_level_summary
         if not tls:
@@ -2170,34 +2172,90 @@ class PDFReportGenerator:
         label = tls.get("overall_label", "")
         explanation = tls.get("plain_explanation", "")
 
-        # Visual gauge using Drawing rectangles (avoids CID font issues with █░)
-        gauge_w = 360
-        gauge_h = 28
-        seg_w = 30   # width per segment
-        seg_h = 18
+        # ── Per-dimension tech levels (6 dimensions) ──
+        # This replaces the previous single-bar gauge that left the page half-empty.
+        # Shows a compact horizontal bar per dimension for visual richness.
+        dim_name_map = {
+            "technical_originality": "Technical Originality",
+            "technology_advancement": "Technology Advancement",
+            "implementation_depth": "Implementation Depth",
+            "architecture_quality": "Architecture Quality",
+            "claim_consistency": "Claim Consistency",
+            "security_posture": "Security Posture",
+        }
+        dim_levels: list[tuple[str, int, str]] = []
+        for key, en_name in dim_name_map.items():
+            dim = cr.dimension_scores.get(key)
+            if not dim:
+                continue
+            display_name = _DIM_NAME_JA.get(en_name, en_name) if self._lang == "ja" else en_name
+            dim_levels.append((display_name, int(dim.level or 0), dim.label or ""))
+
+        if dim_levels:
+            label_font = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            val_font = "Helvetica-Bold"
+            label_w = 150
+            seg_w = 24
+            gap = 2
+            row_h = 26
+            chart_w = label_w + 10 * (seg_w + gap) + 80
+            chart_h = len(dim_levels) * row_h + 6
+
+            dgrid = Drawing(chart_w, chart_h)
+            for i, (name, lv, lbl) in enumerate(dim_levels):
+                y = chart_h - (i + 1) * row_h + 6
+                # Dimension name (left)
+                dgrid.add(String(0, y + 4, name, fontName=label_font, fontSize=8.5,
+                                 fillColor=COLOR_TEXT))
+                # 10-segment gauge
+                for j in range(10):
+                    x = label_w + j * (seg_w + gap)
+                    if j < lv:
+                        fill = COLOR_ACCENT if lv >= 7 else (
+                            COLOR_ACCENT_DARK if lv >= 5 else colors.HexColor("#000000")
+                        )
+                    else:
+                        fill = colors.HexColor("#e2e8f0")
+                    dgrid.add(Rect(x, y, seg_w, 14,
+                                   fillColor=fill, strokeColor=None, strokeWidth=0))
+                # Lv.X/10 text right
+                text_x = label_w + 10 * (seg_w + gap) + 6
+                dgrid.add(String(text_x, y + 3, f"Lv.{lv}/10",
+                                 fontName=val_font, fontSize=8.5,
+                                 fillColor=COLOR_TEXT_DIM))
+            elements.append(dgrid)
+            elements.append(Spacer(1, 6 * mm))
+
+        # ── Overall tech level gauge (larger, summary) ──
+        overall_label = t.get("overall_label", "Overall Tech Level") if self._lang == "en" else "総合テックレベル"
+        elements.append(Paragraph(f"<b>{overall_label}</b>", s["heading2"]))
+
+        gauge_w = 380
+        gauge_h = 30
+        seg_w = 32
+        seg_h = 20
         gap = 3
 
         d = Drawing(gauge_w, gauge_h)
         for i in range(10):
             x = i * (seg_w + gap)
             if i < level:
-                fill = COLOR_ACCENT  # dark blue for filled
+                fill = COLOR_ACCENT
             else:
-                fill = colors.HexColor("#e2e8f0")  # gray for empty
+                fill = colors.HexColor("#e2e8f0")
             d.add(Rect(x, 4, seg_w, seg_h,
                         fillColor=fill, strokeColor=None, strokeWidth=0))
 
-        # Level text to the right
         text_x = 10 * (seg_w + gap) + 8
         level_str = f"Lv.{level}/10"
         d.add(String(text_x, 10, level_str,
-                     fontName="Helvetica-Bold", fontSize=11,
+                     fontName="Helvetica-Bold", fontSize=12,
                      fillColor=COLOR_TEXT))
         elements.append(d)
+        elements.append(Spacer(1, 4 * mm))
 
         if label:
             elements.append(Paragraph(f"<b>{label}</b>", s["body"]))
-        elements.append(Spacer(1, 4 * mm))
 
         if explanation:
             elements.append(Paragraph(explanation, s["body"]))
