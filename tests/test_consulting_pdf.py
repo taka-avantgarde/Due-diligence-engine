@@ -298,6 +298,152 @@ def _make_consulting_report() -> ConsultingReport:
             summary="The site mostly reflects the codebase but overstates security and AI capabilities.",
         ),
         competitive_analysis=_make_competitive_analysis(),
+        atlas_four_axis=_make_atlas_four_axis(),
+        implementation_matrix=_make_implementation_matrix(),
+    )
+
+
+def _make_atlas_four_axis() -> "AtlasFourAxisEvaluation":
+    """Atlas 4-axis evaluation fixture (v2.0)."""
+    from src.models import AtlasAxisScore, AtlasAxisSubItem, AtlasFourAxisEvaluation
+
+    security_subs = [
+        AtlasAxisSubItem(
+            key="encryption", name_en="Cryptographic Sophistication",
+            name_ja="暗号化技術の高度さ",
+            score=88, level=9, weight_pct=30,
+            rationale="libsignal FFI + PQXDH + Double Ratchet, no self-rolled crypto",
+        ),
+        AtlasAxisSubItem(
+            key="privacy", name_en="Privacy Protection",
+            name_ja="プライバシー保護",
+            score=72, level=7, weight_pct=8,
+            rationale="GDPR/CCPA implemented, data minimization in place",
+        ),
+        AtlasAxisSubItem(
+            key="posture", name_en="General Security Posture",
+            name_ja="一般セキュリティ態勢",
+            score=60, level=6, weight_pct=2,
+            rationale="MFA + WebAuthn enabled, SOC2 in progress",
+        ),
+        AtlasAxisSubItem(
+            key="comms", name_en="Communication Safety",
+            name_ja="通信の安全",
+            score=80, level=8, weight_pct=7,
+            rationale="TLS 1.3 + Cert Pinning + Sealed Sender",
+        ),
+        AtlasAxisSubItem(
+            key="layers", name_en="Layer Composition",
+            name_ja="レイヤー構成",
+            score=70, level=7, weight_pct=3,
+            rationale="VPC isolation + IAM + client-side E2EE",
+        ),
+    ]
+    axes = [
+        AtlasAxisScore(
+            axis_key="performance", name_en="Performance", name_ja="高速化",
+            weight_pct=25, score=72, level=7,
+            rationale="Multi-region deploy, edge cache, async I/O",
+        ),
+        AtlasAxisScore(
+            axis_key="stability", name_en="Stability", name_ja="安定化",
+            weight_pct=20, score=68, level=7,
+            rationale="Circuit breakers + tracing, chaos tests partial",
+        ),
+        AtlasAxisScore(
+            axis_key="lightweight", name_en="Lightweight", name_ja="軽量化",
+            weight_pct=5, score=78, level=8,
+            rationale="Tree-shaking, minimal deps, small container",
+        ),
+        AtlasAxisScore(
+            axis_key="security", name_en="Ultra-High Security",
+            name_ja="超高度セキュリティ",
+            weight_pct=50, score=82, level=8,
+            rationale="Encryption-led security, posture is minimum hygiene only",
+            sub_items=security_subs,
+        ),
+    ]
+    return AtlasFourAxisEvaluation(
+        axes=axes,
+        overall_score=77.5,
+        industry_context="messaging",
+        summary="Strong cryptographic foundation aligned with Atlas philosophy.",
+        summary_ja="Atlas 哲学に整合する強固な暗号基盤。",
+    )
+
+
+def _make_implementation_matrix() -> "ImplementationMatrix":
+    """Implementation Capability Matrix fixture (v2.0)."""
+    from src.models import (
+        CompanyImplementationStatus,
+        ImplementationMatrix,
+        ImplementationStatus,
+        MatrixItem,
+    )
+
+    target = "NeuralPay"
+    competitors = ["Signal", "WhatsApp", "Telegram", "iMessage", "Wire"]
+    all_companies = [target] + competitors
+
+    def _statuses(values: list[str]) -> list[CompanyImplementationStatus]:
+        """Build statuses for all companies in order."""
+        out = []
+        for name, val in zip(all_companies, values):
+            try:
+                status_enum = ImplementationStatus(val)
+            except ValueError:
+                status_enum = ImplementationStatus.UNKNOWN
+            out.append(CompanyImplementationStatus(
+                company_name=name, status=status_enum, evidence=f"src/{val}",
+            ))
+        return out
+
+    items = [
+        MatrixItem(category="performance", item_key="edge_caching",
+                   item_en="Edge caching / CDN", item_ja="エッジキャッシュ / CDN",
+                   statuses=_statuses(["verified", "verified", "verified", "claimed", "verified", "unknown"])),
+        MatrixItem(category="performance", item_key="async_parallel",
+                   item_en="Async / parallel execution", item_ja="非同期・並列実行",
+                   statuses=_statuses(["verified", "verified", "verified", "verified", "verified", "claimed"])),
+        MatrixItem(category="stability", item_key="circuit_breakers",
+                   item_en="Circuit breakers", item_ja="サーキットブレーカー",
+                   statuses=_statuses(["verified", "claimed", "unknown", "unknown", "claimed", "unknown"])),
+        MatrixItem(category="stability", item_key="distributed_tracing",
+                   item_en="Distributed tracing", item_ja="分散トレーシング",
+                   statuses=_statuses(["verified", "claimed", "unknown", "unknown", "verified", "unknown"])),
+        MatrixItem(category="lightweight", item_key="minimal_deps",
+                   item_en="Minimal dependencies", item_ja="最小依存関係",
+                   statuses=_statuses(["verified", "verified", "claimed", "claimed", "verified", "claimed"])),
+        # Encryption — core differentiator
+        MatrixItem(category="encryption", item_key="e2e_signal_protocol",
+                   item_en="E2E (Signal Protocol)", item_ja="E2E（Signal Protocol）",
+                   statuses=_statuses(["verified", "verified", "verified", "claimed", "verified", "verified"])),
+        MatrixItem(category="encryption", item_key="pqxdh_ml_kem",
+                   item_en="PQXDH / ML-KEM-1024", item_ja="PQXDH / ML-KEM-1024",
+                   statuses=_statuses(["verified", "verified", "not_implemented", "not_implemented", "verified", "unknown"])),
+        MatrixItem(category="encryption", item_key="libsignal_boringssl_ffi",
+                   item_en="libsignal / BoringSSL FFI", item_ja="libsignal / BoringSSL FFI",
+                   statuses=_statuses(["verified", "verified", "not_implemented", "not_implemented", "verified", "claimed"])),
+        MatrixItem(category="encryption", item_key="no_self_rolled_crypto",
+                   item_en="No self-rolled crypto", item_ja="自前crypto実装なし",
+                   statuses=_statuses(["verified", "verified", "claimed", "not_implemented", "verified", "claimed"])),
+        MatrixItem(category="privacy", item_key="data_minimization",
+                   item_en="Data minimization", item_ja="データ最小化",
+                   statuses=_statuses(["verified", "verified", "claimed", "not_implemented", "verified", "claimed"])),
+        MatrixItem(category="posture", item_key="soc2_iso27001",
+                   item_en="SOC2 / ISO 27001", item_ja="SOC2 / ISO 27001",
+                   statuses=_statuses(["claimed", "verified", "verified", "verified", "verified", "claimed"])),
+        MatrixItem(category="comms", item_key="sealed_sender",
+                   item_en="Sealed Sender / metadata min.", item_ja="Sealed Sender / メタデータ最小化",
+                   statuses=_statuses(["verified", "verified", "not_implemented", "not_implemented", "claimed", "claimed"])),
+        MatrixItem(category="layers", item_key="defense_in_depth",
+                   item_en="Defense-in-depth", item_ja="多層防御",
+                   statuses=_statuses(["verified", "verified", "claimed", "claimed", "verified", "claimed"])),
+    ]
+    return ImplementationMatrix(
+        target_company=target,
+        competitors=competitors,
+        items=items,
     )
 
 
@@ -489,3 +635,46 @@ class TestConsultingPdfGeneration:
         pdf_gen.generate_to_file(result, pdf_path, lang="en")
         assert pdf_path.exists(), "PDF without competitive_analysis was not created"
         assert pdf_path.stat().st_size > 1000, "PDF without competitive_analysis is too small"
+
+    # ── Atlas 4-axis tests (v2.0) ───────────────────────────
+
+    def test_atlas_four_axis_renders(self, pdf_gen, analysis_result, tmp_path):
+        """PDF with Atlas 4-axis evaluation generates successfully (EN + JA)."""
+        for lang in ("en", "ja"):
+            pdf_path = tmp_path / f"test_atlas_{lang}.pdf"
+            pdf_gen.generate_to_file(analysis_result, pdf_path, lang=lang)
+            assert pdf_path.exists(), f"Atlas 4-axis PDF ({lang}) was not created"
+            # 4-axis page + security breakdown page = at least 2 extra pages
+            assert pdf_path.stat().st_size > 5000, (
+                f"Atlas PDF ({lang}) is suspiciously small (likely missing pages)"
+            )
+
+    def test_no_atlas_when_empty(self, pdf_gen, tmp_path):
+        """PDF generates without error when atlas_four_axis is None."""
+        cr = _make_consulting_report()
+        cr.atlas_four_axis = None
+        result = _make_analysis_result(cr)
+        pdf_path = tmp_path / "test_no_atlas.pdf"
+        pdf_gen.generate_to_file(result, pdf_path, lang="ja")
+        assert pdf_path.exists(), "PDF without atlas_four_axis was not created"
+        assert pdf_path.stat().st_size > 1000
+
+    # ── Implementation Capability Matrix tests (v2.0) ──────
+
+    def test_implementation_matrix_renders(self, pdf_gen, analysis_result, tmp_path):
+        """PDF with Implementation Capability Matrix generates successfully."""
+        for lang in ("en", "ja"):
+            pdf_path = tmp_path / f"test_matrix_{lang}.pdf"
+            pdf_gen.generate_to_file(analysis_result, pdf_path, lang=lang)
+            assert pdf_path.exists(), f"Implementation Matrix PDF ({lang}) was not created"
+            assert pdf_path.stat().st_size > 5000
+
+    def test_no_matrix_when_empty(self, pdf_gen, tmp_path):
+        """PDF generates without error when implementation_matrix is None."""
+        cr = _make_consulting_report()
+        cr.implementation_matrix = None
+        result = _make_analysis_result(cr)
+        pdf_path = tmp_path / "test_no_matrix.pdf"
+        pdf_gen.generate_to_file(result, pdf_path, lang="en")
+        assert pdf_path.exists()
+        assert pdf_path.stat().st_size > 1000

@@ -442,3 +442,90 @@ class ConsultingReport(BaseModel):
     project_name: str = ""
     site_verification: SiteVerificationReport | None = None
     competitive_analysis: CompetitiveAnalysis | None = None
+    atlas_four_axis: "AtlasFourAxisEvaluation | None" = None
+    implementation_matrix: "ImplementationMatrix | None" = None
+
+
+# ─────────────────────────────────────────────────────────────
+# Task C: Atlas 最適化評価（4軸並列評価）
+# 既存6次元スコアは完全保持、その上に「Arc エンジニアリング哲学」による
+# 並列評価軸を追加。合計スコアは従来6次元のみで算出（後方互換性100%）。
+# ─────────────────────────────────────────────────────────────
+
+
+class AtlasAxisSubItem(BaseModel):
+    """Ultra-High Security 軸のサブ項目（非公開重み、業界別動的調整）."""
+
+    key: str = ""  # "encryption" | "privacy" | "posture" | "comms" | "layers"
+    name_en: str = ""
+    name_ja: str = ""
+    score: float = Field(default=0.0, ge=0, le=100)
+    level: int = Field(default=1, ge=1, le=10)
+    weight_pct: float = 0.0  # 非公開、PDFバー比率としてのみ使用
+    rationale: str = ""
+
+
+class AtlasAxisScore(BaseModel):
+    """Atlas 4軸のうちの1軸."""
+
+    axis_key: str = ""  # "performance" | "stability" | "lightweight" | "security"
+    name_en: str = ""
+    name_ja: str = ""
+    weight_pct: float = 0.0  # 25 / 20 / 5 / 50
+    score: float = Field(default=0.0, ge=0, le=100)
+    level: int = Field(default=1, ge=1, le=10)
+    rationale: str = ""
+    # security 軸のみサブ項目を持つ（暗号化30% / プライバシー8% / 態勢2% / 通信7% / レイヤー3%）
+    sub_items: list[AtlasAxisSubItem] = Field(default_factory=list)
+
+
+class AtlasFourAxisEvaluation(BaseModel):
+    """Atlas 4軸最適化評価の全体構造."""
+
+    axes: list[AtlasAxisScore] = Field(default_factory=list)
+    overall_score: float = 0.0  # 4軸加重合計（並列参考値、既存スコアとは独立）
+    industry_context: str = ""  # "messaging" | "fintech" | "medical" | "saas" | "gaming" | "other"
+    summary: str = ""
+    summary_ja: str = ""
+
+
+# ─────────────────────────────────────────────────────────────
+# Task D: Implementation Capability Matrix（第8競合チャート）
+# 約30項目 × 5-10社の実装有無チェック表。4状態 (✓ / △ / ✗ / ?)。
+# 暗号化カテゴリに11項目を集中させ、Arc の技術的優位性を可視化。
+# ─────────────────────────────────────────────────────────────
+
+
+class ImplementationStatus(str, Enum):
+    """実装状況の4状態."""
+
+    VERIFIED = "verified"              # ✓ 公開資料で実装確認済み
+    CLAIMED = "claimed"                # △ 主張あり・検証未完
+    NOT_IMPLEMENTED = "not_implemented"  # ✗ 明示的に未対応
+    UNKNOWN = "unknown"                # ? 公開情報で判定不能
+
+
+class CompanyImplementationStatus(BaseModel):
+    """1社 × 1項目の実装状況."""
+
+    company_name: str = ""
+    status: ImplementationStatus = ImplementationStatus.UNKNOWN
+    evidence: str = ""  # URL / citation / reasoning
+
+
+class MatrixItem(BaseModel):
+    """マトリックスの1行（1評価項目）."""
+
+    category: str = ""  # "performance" | "stability" | "lightweight" | "encryption" | "privacy" | "posture" | "comms" | "layers"
+    item_key: str = ""
+    item_en: str = ""
+    item_ja: str = ""
+    statuses: list[CompanyImplementationStatus] = Field(default_factory=list)
+
+
+class ImplementationMatrix(BaseModel):
+    """実装能力マトリックス全体."""
+
+    target_company: str = ""
+    competitors: list[str] = Field(default_factory=list)  # 5-10社
+    items: list[MatrixItem] = Field(default_factory=list)  # 約30項目

@@ -13,14 +13,21 @@ from pathlib import Path
 from typing import Any
 
 from src.models import (
+    AtlasAxisScore,
+    AtlasAxisSubItem,
+    AtlasFourAxisEvaluation,
+    CompanyImplementationStatus,
     CompetitiveAnalysis,
     CompetitorDataPoint,
     ConsultingReport,
     EnhancedDimensionScore,
     FutureOutlook,
+    ImplementationMatrix,
+    ImplementationStatus,
     InvestmentThesis,
     MarketChart,
     MarketPosition,
+    MatrixItem,
     SiteVerificationItem,
     SiteVerificationReport,
     StrategicAction,
@@ -225,6 +232,9 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
             markets=markets,
         )
 
+    atlas_four_axis = _parse_atlas_four_axis(data.get("atlas_four_axis"))
+    implementation_matrix = _parse_implementation_matrix(data.get("implementation_matrix"))
+
     return ConsultingReport(
         executive_summary=str(data.get("executive_summary", "")),
         executive_summary_business=str(data.get("executive_summary_business", "")),
@@ -243,6 +253,97 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
         project_name=str(data.get("project_name", "")),
         site_verification=site_verification,
         competitive_analysis=competitive_analysis,
+        atlas_four_axis=atlas_four_axis,
+        implementation_matrix=implementation_matrix,
+    )
+
+
+def _parse_atlas_four_axis(data: Any) -> AtlasFourAxisEvaluation | None:
+    """Parse Atlas 4-axis evaluation block (Task C)."""
+    if not isinstance(data, dict):
+        return None
+
+    axes: list[AtlasAxisScore] = []
+    for axis_data in data.get("axes", []) or []:
+        if not isinstance(axis_data, dict):
+            continue
+        sub_items: list[AtlasAxisSubItem] = []
+        for si in axis_data.get("sub_items", []) or []:
+            if not isinstance(si, dict):
+                continue
+            sub_items.append(
+                AtlasAxisSubItem(
+                    key=str(si.get("key", "")),
+                    name_en=str(si.get("name_en", "")),
+                    name_ja=str(si.get("name_ja", "")),
+                    score=_clamp(float(si.get("score", 0)), 0, 100),
+                    level=int(_clamp(float(si.get("level", 1)), 1, 10)),
+                    weight_pct=float(si.get("weight_pct", 0)),
+                    rationale=str(si.get("rationale", "")),
+                )
+            )
+        axes.append(
+            AtlasAxisScore(
+                axis_key=str(axis_data.get("axis_key", "")),
+                name_en=str(axis_data.get("name_en", "")),
+                name_ja=str(axis_data.get("name_ja", "")),
+                weight_pct=float(axis_data.get("weight_pct", 0)),
+                score=_clamp(float(axis_data.get("score", 0)), 0, 100),
+                level=int(_clamp(float(axis_data.get("level", 1)), 1, 10)),
+                rationale=str(axis_data.get("rationale", "")),
+                sub_items=sub_items,
+            )
+        )
+
+    return AtlasFourAxisEvaluation(
+        axes=axes,
+        overall_score=_clamp(float(data.get("overall_score", 0)), 0, 100),
+        industry_context=str(data.get("industry_context", "")),
+        summary=str(data.get("summary", "")),
+        summary_ja=str(data.get("summary_ja", "")),
+    )
+
+
+def _parse_implementation_matrix(data: Any) -> ImplementationMatrix | None:
+    """Parse Implementation Capability Matrix (Task D)."""
+    if not isinstance(data, dict):
+        return None
+
+    items: list[MatrixItem] = []
+    for item_data in data.get("items", []) or []:
+        if not isinstance(item_data, dict):
+            continue
+        statuses: list[CompanyImplementationStatus] = []
+        for s in item_data.get("statuses", []) or []:
+            if not isinstance(s, dict):
+                continue
+            # Parse status enum with safe fallback to UNKNOWN
+            raw_status = str(s.get("status", "unknown")).lower()
+            try:
+                status_enum = ImplementationStatus(raw_status)
+            except ValueError:
+                status_enum = ImplementationStatus.UNKNOWN
+            statuses.append(
+                CompanyImplementationStatus(
+                    company_name=str(s.get("company_name", "")),
+                    status=status_enum,
+                    evidence=str(s.get("evidence", "")),
+                )
+            )
+        items.append(
+            MatrixItem(
+                category=str(item_data.get("category", "")),
+                item_key=str(item_data.get("item_key", "")),
+                item_en=str(item_data.get("item_en", "")),
+                item_ja=str(item_data.get("item_ja", "")),
+                statuses=statuses,
+            )
+        )
+
+    return ImplementationMatrix(
+        target_company=str(data.get("target_company", "")),
+        competitors=[str(c) for c in (data.get("competitors", []) or [])],
+        items=items,
     )
 
 

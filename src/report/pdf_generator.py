@@ -256,6 +256,39 @@ _PDF_I18N = {
         "confidence_high": "H",
         "confidence_medium": "M",
         "confidence_low": "L",
+        # Atlas Optimization Assessment (v2.0)
+        "atlas_four_axis": "Atlas Optimization Assessment",
+        "atlas_subtitle": "Arc engineering philosophy — 4-axis evaluation (parallel to 6-dimension scoring)",
+        "atlas_overall": "Atlas Composite Score",
+        "atlas_industry_context": "Industry Context",
+        "axis_performance": "Performance",
+        "axis_stability": "Stability",
+        "axis_lightweight": "Lightweight",
+        "axis_security": "Ultra-High Security",
+        # Security sub-breakdown
+        "security_breakdown": "Ultra-High Security — Sub-Breakdown",
+        "security_breakdown_subtitle": "Encryption sophistication is the core differentiator (30% of 50%)",
+        "subitem_encryption": "Cryptographic Sophistication",
+        "subitem_privacy": "Privacy Protection",
+        "subitem_posture": "General Posture (minimal weight)",
+        "subitem_comms": "Communication Safety",
+        "subitem_layers": "Layer Composition",
+        # Implementation Capability Matrix (v2.0)
+        "impl_matrix": "Implementation Capability Matrix",
+        "impl_matrix_subtitle": "30 items × top global competitors — verified / claimed / not implemented / unknown",
+        "impl_legend_verified": "Verified",
+        "impl_legend_claimed": "Claimed",
+        "impl_legend_not_impl": "Not Implemented",
+        "impl_legend_unknown": "Unknown",
+        # Matrix categories
+        "matcat_performance": "Performance",
+        "matcat_stability": "Stability",
+        "matcat_lightweight": "Lightweight",
+        "matcat_encryption": "Encryption (Core Differentiator)",
+        "matcat_privacy": "Privacy",
+        "matcat_posture": "General Posture",
+        "matcat_comms": "Communication Safety",
+        "matcat_layers": "Layer Composition",
     },
     "ja": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -422,6 +455,39 @@ _PDF_I18N = {
         "confidence_high": "H",
         "confidence_medium": "M",
         "confidence_low": "L",
+        # Atlas 最適化評価 (v2.0)
+        "atlas_four_axis": "Atlas 最適化評価",
+        "atlas_subtitle": "Arc エンジニアリング哲学 — 4軸並列評価（既存6次元と並列）",
+        "atlas_overall": "Atlas 総合スコア",
+        "atlas_industry_context": "業界コンテキスト",
+        "axis_performance": "高速化",
+        "axis_stability": "安定化",
+        "axis_lightweight": "軽量化",
+        "axis_security": "超高度セキュリティ",
+        # セキュリティ内訳
+        "security_breakdown": "超高度セキュリティ — サブ内訳",
+        "security_breakdown_subtitle": "暗号化技術の高度さが核心差別化（50%中30%）",
+        "subitem_encryption": "暗号化技術の高度さ",
+        "subitem_privacy": "プライバシー保護",
+        "subitem_posture": "一般態勢（最小重み）",
+        "subitem_comms": "通信の安全",
+        "subitem_layers": "レイヤー構成",
+        # 実装能力マトリックス (v2.0)
+        "impl_matrix": "実装能力マトリックス",
+        "impl_matrix_subtitle": "30項目 × グローバルトップ競合 — 実装確認済 / 主張あり / 未実装 / 不明",
+        "impl_legend_verified": "実装確認済",
+        "impl_legend_claimed": "主張あり",
+        "impl_legend_not_impl": "未実装",
+        "impl_legend_unknown": "不明",
+        # マトリックスカテゴリ
+        "matcat_performance": "高速化",
+        "matcat_stability": "安定化",
+        "matcat_lightweight": "軽量化",
+        "matcat_encryption": "暗号化（核心差別化）",
+        "matcat_privacy": "プライバシー",
+        "matcat_posture": "一般態勢",
+        "matcat_comms": "通信の安全",
+        "matcat_layers": "レイヤー構成",
     },
 }
 
@@ -702,6 +768,23 @@ class PDFReportGenerator:
             # Competitive Analysis
             if cr.competitive_analysis and cr.competitive_analysis.markets:
                 story.extend(self._build_competitive_analysis_pages(cr))
+
+            # Atlas Optimization Assessment (v2.0)
+            if cr.atlas_four_axis and cr.atlas_four_axis.axes:
+                story.append(PageBreak())
+                story.extend(self._build_atlas_four_axis_page(cr))
+                # Security sub-breakdown only if security axis has sub_items
+                security_axis = next(
+                    (a for a in cr.atlas_four_axis.axes if a.axis_key == "security"),
+                    None,
+                )
+                if security_axis and security_axis.sub_items:
+                    story.append(PageBreak())
+                    story.extend(self._build_atlas_security_breakdown_page(cr, security_axis))
+
+            # Implementation Capability Matrix (v2.0)
+            if cr.implementation_matrix and cr.implementation_matrix.items:
+                story.extend(self._build_implementation_matrix_page(cr))
 
         else:
             # Standard report flow (no consulting data)
@@ -2615,6 +2698,404 @@ class PDFReportGenerator:
                          fontName=nf, fontSize=fs, fillColor=fc))
 
         return d
+
+    # ────────────────────────────────────────────────────────
+    # Task C: Atlas Optimization Assessment (4-axis parallel evaluation)
+    # ────────────────────────────────────────────────────────
+
+    def _build_atlas_four_axis_page(self, cr) -> list:
+        """Atlas 4-axis dashboard — same visual language as 6-dim score dashboard.
+
+        Inviolable rules respected:
+        - Horizontal progress bars (filled vs empty contrast)
+        - Left label → bar → right monospaced score value
+        - Arc sky (#5271FF) + black brand colors
+        - F→A barometer at the bottom
+        """
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        afa = cr.atlas_four_axis
+        if afa is None or not afa.axes:
+            return elements
+
+        # Title
+        elements.append(Paragraph(t["atlas_four_axis"], s["heading1"]))
+        elements.append(
+            HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=4 * mm)
+        )
+        elements.append(Paragraph(t["atlas_subtitle"], s["body_dim"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        # Industry context badge
+        if afa.industry_context:
+            ind_text = (
+                f'<font color="{COLOR_TEXT_DIM.hexval()}" size="9">'
+                f'{t["atlas_industry_context"]}: <b>{afa.industry_context}</b></font>'
+            )
+            elements.append(Paragraph(ind_text, s["center"]))
+            elements.append(Spacer(1, 3 * mm))
+
+        # Atlas composite score (large display, accent color)
+        atlas_label = f'{t["atlas_overall"]}'
+        elements.append(
+            Paragraph(
+                f'<font color="{COLOR_ACCENT.hexval()}" size="13"><b>{atlas_label}</b></font>',
+                s["center"],
+            )
+        )
+        elements.append(Spacer(1, 2 * mm))
+
+        score_large_style = ParagraphStyle(
+            "AtlasScoreLarge", fontName="Helvetica-Bold", fontSize=48,
+            leading=56, alignment=1, textColor=COLOR_ACCENT,
+        )
+        overall_text = (
+            f'{afa.overall_score:.0f}'
+            f'<font color="{COLOR_TEXT_DIM.hexval()}" size="18"> / 100</font>'
+        )
+        elements.append(Paragraph(overall_text, score_large_style))
+        elements.append(Spacer(1, 8 * mm))
+
+        # 4-axis horizontal bar chart (same pattern as score dashboard)
+        # Order: performance(25), stability(20), lightweight(5), security(50)
+        axes_ordered = sorted(
+            afa.axes,
+            key=lambda a: {"performance": 0, "stability": 1, "lightweight": 2, "security": 3}.get(a.axis_key, 99),
+        )
+
+        bar_max_w = 280
+        row_h = 44
+        label_w = 140
+        chart_w = label_w + bar_max_w + 80
+        chart_h = len(axes_ordered) * row_h + 10
+
+        d = Drawing(chart_w, chart_h)
+
+        for i, axis in enumerate(axes_ordered):
+            y = chart_h - (i + 1) * row_h + 14
+            name = axis.name_ja if self._lang == "ja" and axis.name_ja else axis.name_en
+
+            # Axis label (left, bold)
+            font_name = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            d.add(String(0, y + 4, name, fontName=font_name, fontSize=9, fillColor=COLOR_TEXT))
+
+            # Rationale (below label, small dim text)
+            desc_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+            rationale_short = (axis.rationale or "")[:64]
+            if len(axis.rationale or "") > 64:
+                rationale_short += "…"
+            d.add(String(0, y - 8, rationale_short, fontName=desc_font, fontSize=6.5,
+                         fillColor=COLOR_TEXT_DIM))
+
+            # Background bar (gray track)
+            d.add(Rect(label_w, y, bar_max_w, 16,
+                       fillColor=colors.HexColor("#e2e8f0"),
+                       strokeColor=None, strokeWidth=0))
+
+            # Score bar (Arc brand colors)
+            bar_w = max(2, (axis.score / 100) * bar_max_w)
+            if axis.score >= 75:
+                bar_color = COLOR_ACCENT
+            elif axis.score >= 50:
+                bar_color = COLOR_ACCENT_DARK
+            elif axis.score >= 30:
+                bar_color = colors.HexColor("#000000")
+            else:
+                bar_color = colors.HexColor("#6b2a2a")
+            d.add(Rect(label_w, y, bar_w, 16,
+                       fillColor=bar_color, strokeColor=None, strokeWidth=0))
+
+            # Score text (right of bar) — monospaced format
+            score_str = f"{axis.score:.0f}  Lv.{axis.level}  ({axis.weight_pct:.0f}%)"
+            d.add(String(label_w + bar_max_w + 6, y + 3, score_str,
+                         fontName="Helvetica", fontSize=8, fillColor=COLOR_TEXT_DIM))
+
+        elements.append(d)
+        elements.append(Spacer(1, 8 * mm))
+
+        # Summary text
+        summary = afa.summary_ja if self._lang == "ja" and afa.summary_ja else afa.summary
+        if summary:
+            elements.append(Paragraph(summary, s["body"]))
+
+        return elements
+
+    def _build_atlas_security_breakdown_page(self, cr, security_axis) -> list:
+        """Ultra-High Security sub-breakdown — emphasizes encryption (30%) as core."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        elements.append(Paragraph(t["security_breakdown"], s["heading1"]))
+        elements.append(
+            HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=4 * mm)
+        )
+        elements.append(Paragraph(t["security_breakdown_subtitle"], s["body_dim"]))
+        elements.append(Spacer(1, 6 * mm))
+
+        # Sub-items in fixed order: encryption (largest) → privacy → comms → layers → posture (smallest)
+        order = {"encryption": 0, "privacy": 1, "comms": 2, "layers": 3, "posture": 4}
+        sub_items = sorted(security_axis.sub_items, key=lambda si: order.get(si.key, 99))
+
+        bar_max_w = 280
+        row_h = 44
+        label_w = 160
+        chart_w = label_w + bar_max_w + 80
+        chart_h = len(sub_items) * row_h + 10
+
+        d = Drawing(chart_w, chart_h)
+
+        # Map sub-item keys to short i18n labels (fallback to provided name)
+        subitem_labels = {
+            "encryption": t.get("subitem_encryption", "Encryption"),
+            "privacy": t.get("subitem_privacy", "Privacy"),
+            "posture": t.get("subitem_posture", "Posture"),
+            "comms": t.get("subitem_comms", "Comms"),
+            "layers": t.get("subitem_layers", "Layers"),
+        }
+
+        for i, si in enumerate(sub_items):
+            y = chart_h - (i + 1) * row_h + 14
+            name = subitem_labels.get(si.key, si.name_ja if self._lang == "ja" else si.name_en)
+
+            # Label
+            font_name = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            d.add(String(0, y + 4, name, fontName=font_name, fontSize=9, fillColor=COLOR_TEXT))
+
+            # Rationale
+            desc_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+            rationale_short = (si.rationale or "")[:60]
+            if len(si.rationale or "") > 60:
+                rationale_short += "…"
+            d.add(String(0, y - 8, rationale_short, fontName=desc_font, fontSize=6.5,
+                         fillColor=COLOR_TEXT_DIM))
+
+            # Background bar
+            d.add(Rect(label_w, y, bar_max_w, 16,
+                       fillColor=colors.HexColor("#e2e8f0"),
+                       strokeColor=None, strokeWidth=0))
+
+            # Score bar
+            bar_w = max(2, (si.score / 100) * bar_max_w)
+            if si.score >= 75:
+                bar_color = COLOR_ACCENT
+            elif si.score >= 50:
+                bar_color = COLOR_ACCENT_DARK
+            elif si.score >= 30:
+                bar_color = colors.HexColor("#000000")
+            else:
+                bar_color = colors.HexColor("#6b2a2a")
+            d.add(Rect(label_w, y, bar_w, 16,
+                       fillColor=bar_color, strokeColor=None, strokeWidth=0))
+
+            # Score text — show weight prominently for emphasis
+            score_str = f"{si.score:.0f}  Lv.{si.level}  ({si.weight_pct:.0f}%)"
+            d.add(String(label_w + bar_max_w + 6, y + 3, score_str,
+                         fontName="Helvetica", fontSize=8, fillColor=COLOR_TEXT_DIM))
+
+        elements.append(d)
+        elements.append(Spacer(1, 8 * mm))
+
+        # Weight philosophy callout
+        if self._lang == "ja":
+            philosophy = (
+                "<b>重み哲学:</b> 暗号化技術の高度さ（30%）が核心。"
+                "MFA・SOC2 等の「誰でもできる」項目は最小重み（2%）に抑制。"
+            )
+        else:
+            philosophy = (
+                "<b>Weight Philosophy:</b> Cryptographic sophistication (30%) is the core. "
+                "Checkbox compliance (MFA/SOC2 — \"anyone can do\") is minimum-weighted (2%)."
+            )
+        elements.append(Paragraph(philosophy, s["body"]))
+
+        return elements
+
+    # ────────────────────────────────────────────────────────
+    # Task D: Implementation Capability Matrix (8th competitive chart)
+    # ────────────────────────────────────────────────────────
+
+    def _build_implementation_matrix_page(self, cr) -> list:
+        """Implementation matrix — A4 portrait Table, ~30 items × 5-10 competitors.
+
+        Uses ASCII status symbols (✓ △ ✗ ?) per inviolable rule (no emoji icons).
+        Target company column highlighted with Arc sky (#5271FF) background.
+        """
+        from reportlab.platypus import Table as RLTable, TableStyle as RLTableStyle
+
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        im = cr.implementation_matrix
+        if im is None or not im.items:
+            return elements
+
+        elements.append(PageBreak())
+        elements.append(Paragraph(t["impl_matrix"], s["heading1"]))
+        elements.append(
+            HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=2 * mm)
+        )
+        elements.append(Paragraph(t["impl_matrix_subtitle"], s["body_dim"]))
+        elements.append(Spacer(1, 2 * mm))
+
+        # Legend — use ○△× (Japanese tech rating standard, universally rendered by CID fonts).
+        # ✓✗ are NOT in HeiseiKakuGo-W5, so we use ○△× (U+25EF/U+25B3/U+00D7) instead.
+        legend_text_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        legend_symbol_font = "HeiseiKakuGo-W5"  # has ○△× in both languages
+        legend_text = (
+            f'<font name="{legend_symbol_font}" size="10" color="{COLOR_ACCENT.hexval()}">○</font> '
+            f'<font name="{legend_text_font}" size="8">{t["impl_legend_verified"]}</font>'
+            f'   '
+            f'<font name="{legend_symbol_font}" size="10" color="{COLOR_TEXT.hexval()}">△</font> '
+            f'<font name="{legend_text_font}" size="8">{t["impl_legend_claimed"]}</font>'
+            f'   '
+            f'<font name="{legend_symbol_font}" size="10" color="#6b2a2a">×</font> '
+            f'<font name="{legend_text_font}" size="8">{t["impl_legend_not_impl"]}</font>'
+            f'   '
+            f'<font name="{legend_symbol_font}" size="10" color="{COLOR_TEXT_DIM.hexval()}">?</font> '
+            f'<font name="{legend_text_font}" size="8">{t["impl_legend_unknown"]}</font>'
+        )
+        elements.append(Paragraph(legend_text, s["center"]))
+        elements.append(Spacer(1, 3 * mm))
+
+        # Build column structure: [Item, Target, Comp1, Comp2, ...]
+        # Limit to 10 competitors (= 11 columns total) to fit A4 portrait
+        all_companies = [im.target_company] + im.competitors[:10]
+
+        # Header row
+        font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+        header_para_style = ParagraphStyle(
+            "MatHeader", fontName=font_header, fontSize=7,
+            textColor=COLOR_WHITE, alignment=1, leading=9,
+        )
+        target_header_style = ParagraphStyle(
+            "MatTargetHeader", fontName=font_header, fontSize=7,
+            textColor=COLOR_WHITE, alignment=1, leading=9,
+        )
+
+        header_row = [Paragraph("", header_para_style)]
+        for c in all_companies:
+            # Truncate long names
+            short_name = c[:14] + "…" if len(c) > 14 else c
+            header_row.append(Paragraph(short_name, header_para_style))
+
+        # Group items by category
+        category_order = [
+            "performance", "stability", "lightweight", "encryption",
+            "privacy", "posture", "comms", "layers",
+        ]
+        cat_label_map = {
+            "performance": t.get("matcat_performance", "Performance"),
+            "stability": t.get("matcat_stability", "Stability"),
+            "lightweight": t.get("matcat_lightweight", "Lightweight"),
+            "encryption": t.get("matcat_encryption", "Encryption"),
+            "privacy": t.get("matcat_privacy", "Privacy"),
+            "posture": t.get("matcat_posture", "Posture"),
+            "comms": t.get("matcat_comms", "Comms"),
+            "layers": t.get("matcat_layers", "Layers"),
+        }
+
+        items_by_cat: dict[str, list] = {}
+        for item in im.items:
+            items_by_cat.setdefault(item.category, []).append(item)
+
+        # Build table rows: header + (category-row + items)*N
+        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        item_para_style = ParagraphStyle(
+            "MatItem", fontName=font_body, fontSize=7,
+            textColor=COLOR_TEXT, alignment=0, leading=9,
+        )
+        cat_para_style = ParagraphStyle(
+            "MatCat", fontName=font_header, fontSize=8,
+            textColor=COLOR_ACCENT, alignment=0, leading=10,
+        )
+        # Cell symbols (✓ △ ✗ ?) need a font that has all 4.
+        # CID HeiseiKakuGo-W5 supports all of them; Helvetica-Bold doesn't have △.
+        cell_symbol_font = "HeiseiKakuGo-W5" if self._lang == "ja" else "HeiseiKakuGo-W5"
+        cell_style = ParagraphStyle(
+            "MatCell", fontName=cell_symbol_font, fontSize=10,
+            textColor=COLOR_TEXT, alignment=1, leading=11,
+        )
+
+        table_data = [header_row]
+        # Track which row indices are category rows (for styling)
+        cat_row_indices = []
+        # Build a map: company_name → position (column 1+)
+        company_col = {name: idx + 1 for idx, name in enumerate(all_companies)}
+
+        # Status → symbol + color (Japanese tech rating: ○△× — universally rendered)
+        status_glyph = {
+            "verified": ("○", COLOR_ACCENT),                           # 実装確認済
+            "claimed": ("△", COLOR_TEXT),                              # 主張あり
+            "not_implemented": ("×", colors.HexColor("#6b2a2a")),      # 未実装
+            "unknown": ("?", COLOR_TEXT_DIM),                          # 不明
+        }
+
+        for cat in category_order:
+            cat_items = items_by_cat.get(cat, [])
+            if not cat_items:
+                continue
+
+            # Category header row (full-width via merged-style: just put label in col 0)
+            cat_label = cat_label_map.get(cat, cat)
+            cat_row_index = len(table_data)
+            cat_row = [Paragraph(f"<b>{cat_label}</b>", cat_para_style)] + [""] * len(all_companies)
+            table_data.append(cat_row)
+            cat_row_indices.append(cat_row_index)
+
+            # Item rows
+            for item in cat_items:
+                item_label = item.item_ja if self._lang == "ja" and item.item_ja else item.item_en
+                row = [Paragraph(item_label, item_para_style)]
+                # Build status lookup for this item
+                status_by_company: dict[str, str] = {}
+                for st in item.statuses:
+                    status_by_company[st.company_name] = st.status.value if hasattr(st.status, "value") else str(st.status)
+
+                for company in all_companies:
+                    raw_status = status_by_company.get(company, "unknown")
+                    glyph, glyph_color = status_glyph.get(raw_status, ("?", COLOR_TEXT_DIM))
+                    cell_para = Paragraph(
+                        f'<font color="{glyph_color.hexval()}"><b>{glyph}</b></font>',
+                        cell_style,
+                    )
+                    row.append(cell_para)
+                table_data.append(row)
+
+        # Column widths: item column wider, company columns narrow
+        n_cols = 1 + len(all_companies)
+        item_col_w = 145
+        # Available width: A4 portrait usable = ~510pt
+        comp_col_w = max(28, min(45, (510 - item_col_w) / max(1, len(all_companies))))
+        col_widths = [item_col_w] + [comp_col_w] * len(all_companies)
+
+        tbl = RLTable(table_data, colWidths=col_widths, repeatRows=1)
+        style_cmds = [
+            # Header row
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_ACCENT),
+            ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
+            ("ALIGN", (1, 0), (-1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ("LEFTPADDING", (0, 0), (-1, -1), 3),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+            ("GRID", (0, 0), (-1, -1), 0.25, COLOR_BORDER),
+            # Highlight target column (column index 1)
+            ("BACKGROUND", (1, 1), (1, -1), colors.HexColor("#E8EDFF")),
+        ]
+        # Style category rows: span the row visually (background only, no merge to keep glyphs)
+        for idx in cat_row_indices:
+            style_cmds.append(("BACKGROUND", (0, idx), (-1, idx), colors.HexColor("#f3f4f6")))
+            style_cmds.append(("SPAN", (0, idx), (-1, idx)))
+
+        tbl.setStyle(RLTableStyle(style_cmds))
+        elements.append(tbl)
+
+        return elements
 
     def _build_competitive_analysis_pages(self, cr) -> list:
         """Competitive analysis: 5 chart types × 2×3 Table grid (6 markets).
