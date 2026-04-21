@@ -39,7 +39,9 @@ DDE turns your existing IDE AI subscription into a **technology due diligence an
 
 ## Features
 
+### Core (v1.x — available now)
 - **Zero API Cost** — Uses your IDE's existing AI subscription (no separate key)
+- **6-Dimension Scoring** — Technical Originality · Advancement · Implementation · Architecture · Claim Consistency · Security Posture
 - **7 Competitive Charts** — Forrester Wave · BCG Growth-Share · McKinsey Tech Moat · Security & Privacy Maturity · Data Governance & Transparency · GS Risk-Return · Innovation Bubble
 - **Deep Competitor Research** — 6-16 global competitors × 6 markets (Global / US / EMEA / Japan / SEA / LATAM)
 - **Axis Rationale Captions** — Every chart explains *why* each axis was chosen and what it measures
@@ -47,6 +49,19 @@ DDE turns your existing IDE AI subscription into a **technology due diligence an
 - **SWOT · Investment Thesis · Red Flags** — Everything an investment committee needs
 - **Bilingual** — EN / 日本語 PDFs with localized date stamps (`--lang ja`)
 - **Security-Audited** — OSS with CodeQL, Dependabot, pip-audit, gitleaks on every PR
+- **Tech Aesthetic** — Horizontal progress bars, high-contrast barometer, monospace numerics
+
+### Great Version Up (v2.0 — in development)
+> v2.0 **preserves 100% of v1.x content** and adds the following on top:
+- 🚧 **Atlas Optimization Assessment** — Additional 4-axis view aligned with Atlas's engineering philosophy
+  - Performance 25% · Stability 20% · Lightweight 5% · **Ultra-High Security 50%**
+  - Security dominated by **cryptographic sophistication 30%** (Signal Protocol, PQXDH, self-rolled-crypto absence), not checkbox compliance
+  - Non-public sub-item weights with industry-aware adjustment
+- 🚧 **Implementation Capability Matrix** — 8th competitive chart
+  - ~30 evaluation items × 6-10 top competitors
+  - 4-state marking: ✓ verified / △ claimed / ✗ not implemented / ? unknown
+  - Cryptographic items weighted heavily (libsignal, ML-KEM, E2E depth)
+- 🚧 **Arc Brand Typography** — Black + `#5271FF` sky blue, tech-first aesthetic preserved
 
 ---
 
@@ -107,12 +122,14 @@ Each dimension is also rated **Lv.1-10** with explicit criteria.
 
 ---
 
-## PDF Structure (13-15 pages)
+## PDF Structure
+
+### v1.x — 13-15 pages (current)
 
 | # | Section | Content |
 |---|---------|---------|
-| 1 | **Cover** | Dark theme + Arc sky accent, project name, score, grade |
-| 2 | **Score Dashboard** | 6-dimension bar chart + score barometer |
+| 1 | **Cover** | Black + Arc sky (#5271FF) accent, project name, score, grade |
+| 2 | **Score Dashboard** | 6-dimension horizontal bar chart + score barometer |
 | 3 | **Executive Summary** | Business + technical summary |
 | 4 | **SWOT Analysis** | Evidence-based with business analogies |
 | 5 | **Score Breakdown** | Per-dimension rationale & enablers |
@@ -124,6 +141,14 @@ Each dimension is also rated **Lv.1-10** with explicit criteria.
 | 11 | **Site Verification** | 10-item credibility check (if URLs given) |
 | 12-14 | **Competitive Analysis** | 7 chart types × 6 markets with axis rationale |
 | 15 | **Glossary** | All jargon annotated for non-engineers |
+
+### v2.0 — 19 pages (planned, all v1.x preserved)
+
+| # | Section | Content |
+|---|---------|---------|
+| 1-15 | **All v1.x sections** | Preserved in full — no deletion, no consolidation |
+| 16-17 | 🚧 **Atlas Optimization Assessment** | Performance/Stability/Lightweight/Ultra-Security (25/20/5/50) with encryption-dominant sub-breakdown |
+| 18-19 | 🚧 **Implementation Capability Matrix** | ~30 items × 6-10 competitors, 4-state (✓△✗?), organized by dimension |
 
 ---
 
