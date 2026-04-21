@@ -216,7 +216,7 @@ Encryption (core differentiator)
 | 8 | Strategic Advice | Immediate, medium, long-term |
 | 9 | Investment Thesis | Recommendation, risks, upside, comparables |
 | 10 | Red Flags | Severity-rated (Critical/High/Medium/Low) |
-| 11 | Site Verification | 10-item credibility check (if URLs given) |
+| 11 | Site Verification | 9-item credibility check (if URLs given) |
 | 12-14 | Competitive Analysis | 7 charts × 6 markets with axis rationale |
 | 15 | Glossary | All jargon annotated for non-engineers |
 

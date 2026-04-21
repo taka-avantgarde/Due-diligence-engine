@@ -226,8 +226,9 @@ class SiteAnalyzer:
         # 主張抽出
         result.claims = self._extract_claims(all_text, site_url)
 
-        # チーム情報抽出
-        result.team_info = self._extract_team_info(all_text)
+        # チーム情報抽出は AI 時代の「少数精鋭 + AI レバレッジ」哲学に従い廃止。
+        # 人数は品質シグナルにならない。
+        # result.team_info = self._extract_team_info(all_text)
 
         # トラクション（実績）抽出
         result.traction_claims = self._extract_traction(all_text)

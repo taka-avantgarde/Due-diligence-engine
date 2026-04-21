@@ -288,7 +288,6 @@ def _make_consulting_report() -> ConsultingReport:
                 SiteVerificationItem(item_key="security_claim_verification", item_name="Security Claim Verification", item_name_ja="セキュリティ主張検証", score=45, confidence="medium", rationale="No pen-test evidence."),
                 SiteVerificationItem(item_key="performance_claim_plausibility", item_name="Performance Claim Plausibility", item_name_ja="パフォーマンス主張妥当性", score=60, confidence="medium", rationale="Benchmarks not reproducible."),
                 SiteVerificationItem(item_key="scale_claim_consistency", item_name="Scale Claim Consistency", item_name_ja="規模主張一貫性", score=55, confidence="low", rationale="User counts inconsistent."),
-                SiteVerificationItem(item_key="team_size_estimation", item_name="Team Size Estimation", item_name_ja="チーム規模推定", score=90, confidence="high", rationale="LinkedIn confirms team size."),
                 SiteVerificationItem(item_key="launch_date_verification", item_name="Launch Date Verification", item_name_ja="ローンチ日検証", score=95, confidence="high", rationale="Wayback Machine confirms."),
                 SiteVerificationItem(item_key="pricing_feasibility", item_name="Pricing Model Feasibility", item_name_ja="料金モデル実現性", score=68, confidence="medium", rationale="Unit economics are tight."),
                 SiteVerificationItem(item_key="compliance_display", item_name="Compliance Display Audit", item_name_ja="コンプライアンス表示監査", score=30, confidence="low", rationale="No GDPR badge found."),

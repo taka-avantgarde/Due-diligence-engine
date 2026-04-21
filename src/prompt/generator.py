@@ -1069,7 +1069,7 @@ _SITE_VERIFICATION_INSTRUCTIONS_EN = """## Site Verification Task
 The user provided the following product/service URLs for cross-validation:
 {url_list}
 
-**Visit each URL** (using WebFetch or browser tool), read the content, and evaluate the following 10 credibility items by comparing site claims against the codebase:
+**Visit each URL** (using WebFetch or browser tool), read the content, and evaluate the following 9 credibility items by comparing site claims against the codebase:
 
 | # | Key | Item Name | What to Check |
 |---|-----|-----------|---------------|
@@ -1078,11 +1078,13 @@ The user provided the following product/service URLs for cross-validation:
 | 3 | security_claim_verification | Security Claim Verification | Are security claims (E2EE, encryption, etc.) implemented? |
 | 4 | performance_claim_plausibility | Performance Claim Plausibility | Are performance numbers (speed, uptime) plausible from the code? |
 | 5 | scale_claim_consistency | Scale Claim Consistency | Do scale claims (users, data volume) match infrastructure? |
-| 6 | team_size_estimation | Team Size Estimation | Does the implied team size match git contributor count? |
-| 7 | launch_date_verification | Launch Date Verification | Does the claimed launch timeline match git history? |
-| 8 | pricing_feasibility | Pricing Model Feasibility | Is the pricing model sustainable given the tech stack costs? |
-| 9 | compliance_display | Compliance Display Audit | Are required legal/compliance notices properly displayed? |
-| 10 | ai_washing_index | AI-Washing Index | Are AI claims genuine or just buzzword decoration? |
+| 6 | launch_date_verification | Launch Date Verification | Does the claimed launch timeline match git history? |
+| 7 | pricing_feasibility | Pricing Model Feasibility | Is the pricing model sustainable given the tech stack costs? |
+| 8 | compliance_display | Compliance Display Audit | Are required legal/compliance notices properly displayed? |
+| 9 | ai_washing_index | AI-Washing Index | Are AI claims genuine or just buzzword decoration? |
+
+**NOTE**: Team size / headcount evaluation is intentionally excluded. In the AI era,
+lean teams + AI leverage is the winning pattern — headcount is not a quality signal.
 
 For each item, assign:
 - **score**: 0-100 (100 = perfectly consistent, 0 = completely fabricated)
@@ -1090,7 +1092,7 @@ For each item, assign:
 - **rationale**: Evidence-based explanation
 - **evidence**: List of specific URLs, file paths, or code snippets
 
-Calculate **overall_credibility** as the weighted average of all 10 scores.
+Calculate **overall_credibility** as the weighted average of all 9 scores.
 Provide a **summary** paragraph explaining the overall site credibility.
 
 Include the results in the `site_verification` section of the JSON output.
@@ -1101,7 +1103,7 @@ _SITE_VERIFICATION_INSTRUCTIONS_JA = """## サイト検証タスク
 以下のプロダクト/サービスURLが検証用に提供されました:
 {url_list}
 
-**各URLにアクセス**（WebFetchまたはブラウザツール使用）し、サイトの内容を読み取り、コードベースと照合して以下の10項目の信頼性を評価してください:
+**各URLにアクセス**（WebFetchまたはブラウザツール使用）し、サイトの内容を読み取り、コードベースと照合して以下の9項目の信頼性を評価してください:
 
 | # | キー | 項目名 | チェック内容 |
 |---|------|--------|-------------|
@@ -1110,11 +1112,13 @@ _SITE_VERIFICATION_INSTRUCTIONS_JA = """## サイト検証タスク
 | 3 | security_claim_verification | セキュリティ主張検証 | セキュリティに関する主張（E2EE、暗号化等）が実装されているか |
 | 4 | performance_claim_plausibility | パフォーマンス主張妥当性 | パフォーマンス数値（速度、稼働率）がコードから見て妥当か |
 | 5 | scale_claim_consistency | 規模主張一貫性 | 規模に関する主張（ユーザー数、データ量）がインフラと整合するか |
-| 6 | team_size_estimation | チーム規模推定 | 示唆されるチーム規模がgitコントリビューター数と一致するか |
-| 7 | launch_date_verification | ローンチ日検証 | 主張するローンチ日がgit履歴と一致するか |
-| 8 | pricing_feasibility | 料金モデル実現性 | 料金モデルが技術スタックのコストに対して持続可能か |
-| 9 | compliance_display | コンプライアンス表示監査 | 法的・コンプライアンス表示が適切に行われているか |
-| 10 | ai_washing_index | AIウォッシュ指数 | AI関連の主張が本物か、バズワード装飾に過ぎないか |
+| 6 | launch_date_verification | ローンチ日検証 | 主張するローンチ日がgit履歴と一致するか |
+| 7 | pricing_feasibility | 料金モデル実現性 | 料金モデルが技術スタックのコストに対して持続可能か |
+| 8 | compliance_display | コンプライアンス表示監査 | 法的・コンプライアンス表示が適切に行われているか |
+| 9 | ai_washing_index | AIウォッシュ指数 | AI関連の主張が本物か、バズワード装飾に過ぎないか |
+
+**注**: チーム規模・人数評価は意図的に除外。AI 時代は「少数精鋭 + AI レバレッジ」が勝ちパターンであり、
+人数は品質シグナルにならない。
 
 各項目について以下を付与:
 - **score**: 0-100（100 = 完全に整合、0 = 完全に虚偽）
@@ -1806,7 +1810,7 @@ Do not add markdown formatting around it — output raw JSON only.
 - The `atlas_four_axis` section is **always required** (v2.0) — exactly 4 axes (performance/stability/lightweight/security), `security` axis must include 5 sub_items with the exact keys (encryption/privacy/posture/comms/layers)
 - The `implementation_matrix` section is **always required** (v2.0) — 5-10 competitors + target, ~30 items across 8 categories. Prefer `"unknown"` over guessing
 - For each chart, `x_axis_rationale` / `y_axis_rationale` (and their `_ja` variants) are **required** — explain why this axis was chosen and what the composite score captures. This helps cross-functional readers (non-engineers, legal, finance) understand the chart
-- For `site_verification.items`, include all 10 items (feature_claim_match, tech_stack_consistency, security_claim_verification, performance_claim_plausibility, scale_claim_consistency, team_size_estimation, launch_date_verification, pricing_feasibility, compliance_display, ai_washing_index)
+- For `site_verification.items`, include all 9 items (feature_claim_match, tech_stack_consistency, security_claim_verification, performance_claim_plausibility, scale_claim_consistency, launch_date_verification, pricing_feasibility, compliance_display, ai_washing_index). **Team size estimation is INTENTIONALLY excluded — AI era = lean teams + AI leverage, headcount is not a quality signal**
 - For `competitive_analysis.markets`, include all 6 markets (Global, Home Country, US, EMEA, SEA, LATAM) with all 7 chart types specified in the Competitive Analysis Task section
 """
 
