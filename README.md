@@ -349,16 +349,19 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 
 ## 🗺️ Roadmap
 
-**Recently shipped (v0.3.0)**
+**Recently shipped (v0.3.x)**
+- ✅ Atlas weights rebalanced to **20 / 20 / 5 / 55** (encryption core bumped to 35%)
+- ✅ **Source-code-only evaluation**: third-party certs (SOC2 / ISO / HIPAA) are reference-only, not scored
+- ✅ **Competitor 1:1 alignment** between matrix and rationales (estimated score per competitor + public-info disclaimer)
 - ✅ 5-dimension scoring (equal 20% weights, Security merged into Architecture)
 - ✅ Competitor Selection Rationales (3-5 line explanation per competitor)
 - ✅ Non-engineer glossary on Security Sub-Breakdown page (MFA/SOC2/libsignal/PQXDH)
 - ✅ AIDD-era stance: no penalty for AI usage or high-velocity commits
-- ✅ Visitor counter badges (komarev + hits.seeyoufarm)
-- ✅ PDF layout: KeepTogether, 6-dim tech bar chart, SWOT 2×2 grid
+- ✅ `python3 -m pip` guide + visitor counter badges
+- ✅ PDF layout fixes: KeepTogether, KeepInFrame (SWOT), 2-line wrapped descriptions
 
 **Previously shipped (v0.2.0)**
-- ✅ Atlas 4-axis Optimization Assessment ("Security Strength" 55%)
+- ✅ Atlas 4-axis Optimization Assessment (originally 25/20/5/50, now 20/20/5/55)
 - ✅ Implementation Capability Matrix (8th competitive chart)
 - ✅ Web dashboard fully removed (CLI + PDF only)
 - ✅ Black + Arc sky (#5271FF) brand identity
