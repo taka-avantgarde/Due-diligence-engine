@@ -1966,14 +1966,15 @@ class PDFReportGenerator:
         return elements
 
     def _build_swot_page(self, cr) -> list:
-        """SWOT analysis as visual 2×2 grid (v2.0 typography upgrade).
+        """SWOT analysis as visual 2×2 grid with overflow protection (v0.3.1 fix).
 
-        Uses ReportLab Table for true 2×2 layout. Each cell:
+        Uses ReportLab Table + KeepInFrame to ENFORCE cell boundaries:
         - Colored header bar (Strengths=green, Weaknesses=gray, Opportunities=Arc sky, Threats=red)
-        - White card body with bullet items
-        Cell padding & borders consistent with rest of the report.
+        - Cell body content is CLIPPED if it exceeds the fixed row height (no bleeding
+          into adjacent cells like in v0.3.0)
+        - Max 3 items per cell + 180-char truncation per item
         """
-        from reportlab.platypus import Table as RLTable, TableStyle as RLTableStyle
+        from reportlab.platypus import Table as RLTable, TableStyle as RLTableStyle, KeepInFrame
 
         t = self._t
         s = self._styles
@@ -1996,33 +1997,60 @@ class PDFReportGenerator:
         # Style for cell content
         font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
         font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        # Colored header — rendered as a separate "tag" row above body
         cell_header_style = ParagraphStyle(
-            "SWOTHeader", fontName=font_header, fontSize=12,
-            textColor=COLOR_WHITE, leading=15, alignment=TA_LEFT,
+            "SWOTHeader", fontName=font_header, fontSize=11,
+            textColor=COLOR_WHITE, leading=14, alignment=TA_LEFT,
+            leftIndent=0, rightIndent=0,
+            spaceBefore=0, spaceAfter=0,
         )
+        # Body items — smaller font than before (8pt) + tighter leading (11)
         cell_item_style = ParagraphStyle(
-            "SWOTItem", fontName=font_body, fontSize=8.5,
-            textColor=COLOR_TEXT, leading=12,
-            spaceAfter=2, leftIndent=4,
+            "SWOTItem", fontName=font_body, fontSize=8,
+            textColor=COLOR_TEXT, leading=11,
+            spaceAfter=3, leftIndent=2, rightIndent=2,
+        )
+        cell_extra_style = ParagraphStyle(
+            "SWOTExtra", fontName=font_body, fontSize=7.5,
+            textColor=COLOR_TEXT_DIM, leading=10,
+            spaceAfter=3, leftIndent=8, rightIndent=2,
         )
 
-        def _build_cell(title: str, items: list, color_hex) -> list:
-            """Build flowables for one quadrant cell."""
+        def _truncate(s: str, n: int = 180) -> str:
+            """Truncate long strings with ellipsis to prevent cell overflow."""
+            if not s:
+                return ""
+            s = s.strip()
+            return s if len(s) <= n else s[: n - 1] + "…"
+
+        def _build_cell(title: str, items: list, color_hex) -> "KeepInFrame":
+            """Build one SWOT quadrant cell wrapped in KeepInFrame (mode=shrink)."""
             cell_flow: list = []
-            # Header row inside cell
-            cell_flow.append(
-                Paragraph(
-                    f'<para backColor="{color_hex.hexval()}" leftIndent="6" rightIndent="6" '
-                    f'spaceBefore="4" spaceAfter="4"><b>{title}</b></para>',
-                    cell_header_style,
-                )
+            # Colored header strip (background via a small Table, not <para>)
+            header_row = RLTable(
+                [[Paragraph(f"<b>{title}</b>", cell_header_style)]],
+                colWidths=[82 * mm - 4],
             )
+            header_row.setStyle(RLTableStyle([
+                ("BACKGROUND", (0, 0), (-1, -1), color_hex),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]))
+            cell_flow.append(header_row)
+            cell_flow.append(Spacer(1, 2))
+
             if not items:
                 cell_flow.append(Paragraph("—", cell_item_style))
             else:
-                # Limit to 4 items per cell for visual balance, truncate long text
-                for item in items[:4]:
-                    bullet = f"<b>{item.point}</b>: {item.explanation}"
+                # Max 3 items per cell to fit within fixed row height
+                for item in items[:3]:
+                    point = _truncate(item.point, 80)
+                    explanation = _truncate(item.explanation, 180)
+                    bullet = f"<b>{point}</b>: {explanation}"
+                    cell_flow.append(Paragraph(f"• {bullet}", cell_item_style))
+
                     extra = (
                         item.business_analogy
                         or item.business_impact
@@ -2030,9 +2058,19 @@ class PDFReportGenerator:
                         or item.mitigation
                     )
                     if extra:
-                        bullet += f"<br/><font color=\"{COLOR_TEXT_DIM.hexval()}\"><i>{extra}</i></font>"
-                    cell_flow.append(Paragraph(f"• {bullet}", cell_item_style))
-            return cell_flow
+                        cell_flow.append(
+                            Paragraph(f"<i>{_truncate(extra, 140)}</i>", cell_extra_style)
+                        )
+
+            # KeepInFrame clips content to fit cell (mode="shrink" → auto-scale down if overflow)
+            return KeepInFrame(
+                maxWidth=82 * mm - 4,
+                maxHeight=110 * mm - 4,
+                content=cell_flow,
+                mode="shrink",  # shrink to fit, never overflow
+                hAlign="LEFT",
+                vAlign="TOP",
+            )
 
         # Build 2×2 table data
         cells = [_build_cell(title, items, color) for title, items, color in quadrants]
@@ -2041,9 +2079,8 @@ class PDFReportGenerator:
             [cells[2], cells[3]],   # Opportunities | Threats
         ]
 
-        # Available width on A4 portrait with default margins ~ 165mm = 467pt
-        col_w = 82 * mm  # 2 columns × 82mm = 164mm fits comfortably
-        row_h = 110 * mm  # half page height for each row
+        col_w = 82 * mm
+        row_h = 110 * mm
         tbl = RLTable(
             table_data,
             colWidths=[col_w, col_w],
