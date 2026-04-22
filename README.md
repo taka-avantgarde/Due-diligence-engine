@@ -34,7 +34,10 @@
 [![GitHub stars](https://img.shields.io/github/stars/taka-avantgarde/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/taka-avantgarde/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/taka-avantgarde/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/taka-avantgarde/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/taka-avantgarde/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/taka-avantgarde/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.2.0-000000?style=flat-square)](https://github.com/taka-avantgarde/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.3.0-000000?style=flat-square)](https://github.com/taka-avantgarde/Due-diligence-engine/releases)
+
+[![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/taka-avantgarde/Due-diligence-engine)
+[![Unique Visitors](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Ftaka-avantgarde%2FDue-diligence-engine&count_bg=%23000000&title_bg=%235271FF&icon=github.svg&icon_color=%23FFFFFF&title=Unique+Visitors&edge_flat=true)](https://github.com/taka-avantgarde/Due-diligence-engine)
 
 [**English**](README.md) · [日本語](README.ja.md)
 
@@ -150,16 +153,17 @@ A parallel evaluation system added on top of (not replacing) the standard 6-dime
 
 ---
 
-## 📊 6-Dimension Standard Scoring (v1.x — preserved)
+## 📊 5-Dimension Standard Scoring (v0.3 — balanced, equal weights)
 
 | Dimension | Weight | What It Detects |
 |-----------|-------:|-----------------|
-| Technical Originality | 25% | API wrapper vs. genuine IP |
+| Technical Originality | 20% | API wrapper vs. genuine IP |
 | Technology Advancement | 20% | Stack modernity |
 | Implementation Depth | 20% | PoC vs. production |
-| Architecture Quality | 15% | Structure quality |
-| Claim Consistency | 10% | Pitch vs. reality |
-| Security Posture | 10% | Security maturity |
+| Architecture Quality (incl. Security Posture) | 20% | Structure quality + security maturity |
+| Claim Consistency | 20% | Pitch vs. reality |
+
+> **v0.3 change**: Security Posture was merged into Architecture Quality. Security is now evaluated as an integral part of production-grade architecture, not a separate silo.
 
 ```
 Grade Bands:
@@ -203,27 +207,33 @@ For each of 6 global markets (Global / US / EMEA / Japan / SEA / LATAM):
 
 ## 🆕 Implementation Capability Matrix (v2.0)
 
-The 8th competitive chart — **30 items × 5-10 top global competitors**:
+The 8th competitive chart — **~30 items × 5-10 top global competitors**:
 
 ```
-                       Target  Signal  WhatsApp  Telegram  iMessage  Wire
+                        Target   Comp. A   Comp. B   Comp. C   Comp. D   ...
 Encryption (core differentiator)
-  E2E (Signal Protocol)  ○      ○       ○        △         ○         ○
-  PQXDH / ML-KEM-1024    ○      ○       ×        ×         ○         ?
-  Double Ratchet         ○      ○       ○        ×         ○         ○
-  libsignal / BoringSSL  ○      ○       ×        ×         ○         △
-  No self-rolled crypto  ○      ○       △        ×         ○         △
-  Forward Secrecy + PCS  ○      ○       ○        △         ○         ○
-  Zero-Knowledge proofs  △      ×       ×        ×         ×         ×
-  Crypto research pubs   ○      ×       ×        ×         △         ×
+  Feature 1              ○        ○         ×         △         ○
+  Feature 2              ○        ○         ×         ×         ○
+  Feature 3              ○        ○         ○         ×         ○
+  Feature 4              ○        ×         ×         △         △
+  ...
+Privacy & Compliance
+  Feature 1              ○        △         ○         ×         △
+  Feature 2              ○        ○         △         ×         ×
   ...
 ```
+
+Items and competitors are **chosen dynamically per target's industry**
+(messaging, fintech, medical, gaming, SaaS, IoT, etc.).
 
 4-state marking (Japanese tech rating standard):
 - **○ verified** (publicly documented implementation)
 - **△ claimed** (asserted, not verifiable)
 - **× not implemented** (explicitly absent)
 - **? unknown** (cannot determine — preferred over guessing)
+
+Plus **competitor selection rationales** — 3-5 lines each explaining why each
+specific competitor was chosen as a comparison target (HQ, market position, category).
 
 ---
 

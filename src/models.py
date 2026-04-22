@@ -444,6 +444,7 @@ class ConsultingReport(BaseModel):
     competitive_analysis: CompetitiveAnalysis | None = None
     atlas_four_axis: "AtlasFourAxisEvaluation | None" = None
     implementation_matrix: "ImplementationMatrix | None" = None
+    competitor_rationales: "list[CompetitorRationale]" = Field(default_factory=list)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -529,3 +530,23 @@ class ImplementationMatrix(BaseModel):
     target_company: str = ""
     competitors: list[str] = Field(default_factory=list)  # 5-10社
     items: list[MatrixItem] = Field(default_factory=list)  # 約30項目
+
+
+# ─────────────────────────────────────────────────────────────
+# 競合選定理由 (v0.3.1)
+# 各競合企業について「なぜこの比較対象に選ばれたか」を 3-5 行で説明。
+# Competitive Analysis + Implementation Matrix の両方の競合を対象。
+# ─────────────────────────────────────────────────────────────
+
+
+class CompetitorRationale(BaseModel):
+    """1 社の選定理由。3-5 行で「なぜこの競合を選んだか」。"""
+
+    name: str = ""
+    # 差別化カテゴリ（例: "Direct competitor" / "Adjacent market" /
+    # "Emerging disruptor" / "Industry benchmark"）
+    category: str = ""
+    rationale_en: str = ""       # 3-5 lines of prose in English
+    rationale_ja: str = ""       # 3-5 行の日本語散文
+    hq_country: str = ""         # 本社所在国（例: "United States", "日本"）
+    market_position: str = ""    # 市場でのポジション（1 行）

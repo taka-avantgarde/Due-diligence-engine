@@ -101,10 +101,10 @@ class TestTechLevelRatings:
     """10-level technology rating tests."""
 
     def test_tech_ratings_present(self, scorer: Scorer) -> None:
-        """All 6 tech level ratings should be present."""
+        """v0.3: 5 tech level ratings (Security merged into Architecture)."""
         result = _make_result()
         score = scorer.score(result)
-        assert len(score.tech_ratings) == 6
+        assert len(score.tech_ratings) == 5
 
     def test_ratings_have_levels_1_to_10(self, scorer: Scorer) -> None:
         """All ratings should have levels between 1 and 10."""
@@ -156,18 +156,23 @@ class TestNoTeamDimension:
         team_dims = [d for d in score.dimensions if "Team" in d.name]
         assert len(team_dims) == 0
 
-    def test_six_tech_dimensions(self, scorer: Scorer) -> None:
-        """Should have exactly 6 technology-focused dimensions."""
+    def test_five_tech_dimensions(self, scorer: Scorer) -> None:
+        """v0.3: Should have exactly 5 technology-focused dimensions.
+
+        Security Posture was merged into Architecture Quality.
+        """
         result = _make_result()
         score = scorer.score(result)
-        assert len(score.dimensions) == 6
+        assert len(score.dimensions) == 5
         dim_names = {d.name for d in score.dimensions}
         assert "Technical Originality" in dim_names
         assert "Technology Advancement" in dim_names
         assert "Implementation Depth" in dim_names
-        assert "Architecture Quality" in dim_names
+        # Architecture Quality now carries "(incl. Security Posture)" suffix
+        assert any("Architecture Quality" in n for n in dim_names)
         assert "Claim Consistency" in dim_names
-        assert "Security Posture" in dim_names
+        # Security Posture should NOT be a standalone dimension anymore
+        assert "Security Posture" not in dim_names
 
 
 class TestRedFlags:

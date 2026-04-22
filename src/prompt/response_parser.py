@@ -19,6 +19,7 @@ from src.models import (
     CompanyImplementationStatus,
     CompetitiveAnalysis,
     CompetitorDataPoint,
+    CompetitorRationale,
     ConsultingReport,
     EnhancedDimensionScore,
     FutureOutlook,
@@ -234,6 +235,7 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
 
     atlas_four_axis = _parse_atlas_four_axis(data.get("atlas_four_axis"))
     implementation_matrix = _parse_implementation_matrix(data.get("implementation_matrix"))
+    competitor_rationales = _parse_competitor_rationales(data.get("competitor_rationales"))
 
     return ConsultingReport(
         executive_summary=str(data.get("executive_summary", "")),
@@ -255,7 +257,29 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
         competitive_analysis=competitive_analysis,
         atlas_four_axis=atlas_four_axis,
         implementation_matrix=implementation_matrix,
+        competitor_rationales=competitor_rationales,
     )
+
+
+def _parse_competitor_rationales(data: Any) -> list[CompetitorRationale]:
+    """Parse competitor selection rationales (3-5 lines each) — v0.3.1."""
+    if not isinstance(data, list):
+        return []
+    out: list[CompetitorRationale] = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        out.append(
+            CompetitorRationale(
+                name=str(item.get("name", "")),
+                category=str(item.get("category", "")),
+                rationale_en=str(item.get("rationale_en", "")),
+                rationale_ja=str(item.get("rationale_ja", "")),
+                hq_country=str(item.get("hq_country", "")),
+                market_position=str(item.get("market_position", "")),
+            )
+        )
+    return out
 
 
 def _parse_atlas_four_axis(data: Any) -> AtlasFourAxisEvaluation | None:

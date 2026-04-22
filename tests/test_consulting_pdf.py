@@ -142,10 +142,10 @@ def _make_consulting_report() -> ConsultingReport:
             "architecture_quality": EnhancedDimensionScore(
                 score=70,
                 level=7,
-                label="Architecture Quality",
-                rationale="Clean separation of concerns.",
-                business_explanation="Well-organized code that new engineers can understand quickly.",
-                enables="Faster onboarding and reduced maintenance costs.",
+                label="Architecture Quality (incl. Security)",
+                rationale="Clean separation of concerns, TLS everywhere but no pen-test.",
+                business_explanation="Well-organized code with industry-standard security.",
+                enables="Faster onboarding + enterprise readiness with third-party audit.",
             ),
             "claim_consistency": EnhancedDimensionScore(
                 score=55,
@@ -155,14 +155,8 @@ def _make_consulting_report() -> ConsultingReport:
                 business_explanation="Marketing materials slightly overstate current capabilities.",
                 enables="Building trust with transparent communication.",
             ),
-            "security_posture": EnhancedDimensionScore(
-                score=60,
-                level=6,
-                label="Security Posture",
-                rationale="TLS everywhere but no pen-test documentation.",
-                business_explanation="Basic security is in place but hasn't been independently verified.",
-                enables="Enterprise readiness with third-party audit.",
-            ),
+            # v0.3: security_posture merged into architecture_quality
+            # (architecture_quality entry above absorbs it)
         },
         overall_score=72.0,
         grade="C",
@@ -299,7 +293,63 @@ def _make_consulting_report() -> ConsultingReport:
         competitive_analysis=_make_competitive_analysis(),
         atlas_four_axis=_make_atlas_four_axis(),
         implementation_matrix=_make_implementation_matrix(),
+        competitor_rationales=_make_competitor_rationales(),
     )
+
+
+def _make_competitor_rationales() -> "list":
+    """Competitor selection rationales fixture (v0.3.1)."""
+    from src.models import CompetitorRationale
+    return [
+        CompetitorRationale(
+            name="Stripe",
+            category="Industry benchmark",
+            hq_country="United States",
+            market_position="Global payments infrastructure leader",
+            rationale_en=(
+                "Stripe is the industry benchmark for developer-first payments. "
+                "Chosen to measure API ergonomics, documentation quality, and scale. "
+                "Differs from target in being a full-stack payments provider rather than "
+                "an ML-driven fraud layer."
+            ),
+            rationale_ja=(
+                "Stripe は開発者ファーストな決済基盤の業界ベンチマーク。API の使いやすさ・"
+                "ドキュメント品質・スケール規模を測る基準として採用。対象企業が ML 駆動の不正検知"
+                "レイヤーであるのに対し、Stripe はフルスタック決済プロバイダー。"
+            ),
+        ),
+        CompetitorRationale(
+            name="Adyen",
+            category="Direct competitor",
+            hq_country="Netherlands",
+            market_position="Enterprise unified payments platform",
+            rationale_en=(
+                "Adyen competes directly in enterprise payment processing with a unified "
+                "global platform. Relevant for comparing multi-region support, compliance "
+                "breadth (PSD2, licensing), and enterprise deal-size capability."
+            ),
+            rationale_ja=(
+                "Adyen はエンタープライズ決済処理の直接競合。統合グローバルプラットフォームを持つ。"
+                "マルチリージョン対応・コンプライアンス網羅性 (PSD2、各国ライセンス)・"
+                "大型エンタープライズ案件対応力の比較対象として重要。"
+            ),
+        ),
+        CompetitorRationale(
+            name="Payoneer",
+            category="Adjacent market",
+            hq_country="United States",
+            market_position="Cross-border payouts for freelancers & SMBs",
+            rationale_en=(
+                "Payoneer occupies an adjacent market — cross-border payouts focused on "
+                "freelancer and SMB segments. Included to illustrate the segment the target "
+                "company is NOT competing in, providing positioning contrast."
+            ),
+            rationale_ja=(
+                "Payoneer は隣接市場のクロスボーダー送金、フリーランサー・中小企業向け。"
+                "対象企業が競合していないセグメントとして含め、ポジショニングのコントラストを提示。"
+            ),
+        ),
+    ]
 
 
 def _make_atlas_four_axis() -> "AtlasFourAxisEvaluation":

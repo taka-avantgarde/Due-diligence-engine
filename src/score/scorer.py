@@ -103,12 +103,13 @@ TECH_LEVEL_CRITERIA: dict[str, list[TechLevel]] = {
 }
 
 
-# Dimension definitions with weights
+# Dimension definitions with weights (v0.3 — 5 dimensions, equal 20% each)
+# Security Posture was merged into Architecture Quality for a more balanced view.
 DIMENSIONS = {
     "technical_originality": {
         "name": "Technical Originality",
         "name_ja": "技術独自性",
-        "weight": 0.25,
+        "weight": 0.20,
     },
     "technology_advancement": {
         "name": "Technology Advancement",
@@ -121,19 +122,14 @@ DIMENSIONS = {
         "weight": 0.20,
     },
     "architecture_quality": {
-        "name": "Architecture Quality",
-        "name_ja": "アーキテクチャ品質",
-        "weight": 0.15,
+        "name": "Architecture Quality (incl. Security Posture)",
+        "name_ja": "アーキテクチャ品質（セキュリティ態勢を含む）",
+        "weight": 0.20,
     },
     "claim_consistency": {
         "name": "Claim Consistency",
         "name_ja": "主張整合性",
-        "weight": 0.10,
-    },
-    "security_posture": {
-        "name": "Security Posture",
-        "name_ja": "セキュリティ態勢",
-        "weight": 0.10,
+        "weight": 0.20,
     },
 }
 
@@ -151,13 +147,16 @@ class Scorer:
         AI結果がある場合: (heuristic * 0.3 + ai_avg * 0.7)
         AI結果がない場合: ヒューリスティック100%
         """
+        # Note: security_posture is MERGED into architecture_quality (v0.3).
+        # We still compute the security-posture signal internally, then fold it
+        # into architecture_quality's score via a weighted blend inside
+        # `_score_architecture_quality`.
         dimensions = [
             self._score_technical_originality(result),
             self._score_technology_advancement(result),
             self._score_implementation_depth(result),
-            self._score_architecture_quality(result),
+            self._score_architecture_quality(result),  # now includes security dimension
             self._score_claim_consistency(result),
-            self._score_security_posture(result),
         ]
 
         # マルチAI結果がある場合、各次元のスコアをAI平均と加重統合
@@ -191,13 +190,15 @@ class Scorer:
 
         各次元: 統合スコア = heuristic * 0.3 + ai_avg * 0.7
         """
+        # v0.3: security_posture merged into architecture_quality (no separate key).
+        # Accept both old display name and new one for backward compat with AI outputs.
         dim_key_map = {
             "Technical Originality": "technical_originality",
             "Technology Advancement": "technology_advancement",
             "Implementation Depth": "implementation_depth",
             "Architecture Quality": "architecture_quality",
+            "Architecture Quality (incl. Security Posture)": "architecture_quality",
             "Claim Consistency": "claim_consistency",
-            "Security Posture": "security_posture",
         }
 
         valid_ai = [
@@ -317,17 +318,10 @@ class Scorer:
             criteria=criteria,
         ))
 
-        # Security Posture
-        sec_level = self._determine_security_level(result)
-        criteria = TECH_LEVEL_CRITERIA["security_posture"]
-        ratings.append(TechLevelRating(
-            dimension="Security Posture",
-            dimension_ja="セキュリティ態勢",
-            level=sec_level,
-            label=criteria[sec_level - 1].label,
-            description=criteria[sec_level - 1].description,
-            criteria=criteria,
-        ))
+        # v0.3: Security Posture as a standalone tech rating is removed —
+        # it has been merged into Architecture Quality. Internal security
+        # level is still computed (via _determine_security_level) and factored
+        # into _score_architecture_quality's blended output.
 
         return ratings
 
@@ -531,22 +525,36 @@ class Scorer:
         )
 
     def _score_architecture_quality(self, result: AnalysisResult) -> ScoreDimension:
-        level = self._determine_architecture_level(result)
-        score = level * 10.0
+        """Architecture Quality (now includes Security Posture, v0.3).
+
+        Blends architecture signal + security signal 60/40 — architecture is
+        the primary axis but security maturity is an integral part of
+        production-grade architecture.
+        """
+        arch_level = self._determine_architecture_level(result)
+        sec_level = self._determine_security_level(result)
+        # Blended level — architecture 60%, security 40%
+        blended_level = (arch_level * 0.6) + (sec_level * 0.4)
+        score = blended_level * 10.0
         code = result.code_analysis
+        security_flags = [f for f in code.red_flags if "security" in f.category.lower()]
 
         return ScoreDimension(
             name=DIMENSIONS["architecture_quality"]["name"],
             score=score,
             weight=DIMENSIONS["architecture_quality"]["weight"],
             rationale=(
-                f"Tech Level {level}/10. "
-                f"{code.total_files} files, {code.dependency_count} dependencies."
+                f"Architecture Lv.{arch_level}/10, Security Lv.{sec_level}/10 → blended {blended_level:.1f}. "
+                f"{code.total_files} files, {code.dependency_count} deps, "
+                f"{len(security_flags)} security findings."
             ),
             sub_scores={
+                "architecture_level": arch_level * 10.0,
+                "security_level": sec_level * 10.0,
                 "file_structure": min(100, code.total_files * 2),
                 "dependency_health": max(0, 100 - max(0, code.dependency_count - 50)),
             },
+            flags=security_flags,
         )
 
     def _score_claim_consistency(self, result: AnalysisResult) -> ScoreDimension:
@@ -571,24 +579,7 @@ class Scorer:
             flags=consistency.red_flags,
         )
 
-    def _score_security_posture(self, result: AnalysisResult) -> ScoreDimension:
-        level = self._determine_security_level(result)
-        score = level * 10.0
-        code = result.code_analysis
-
-        security_flags = [f for f in code.red_flags if "security" in f.category.lower()]
-
-        return ScoreDimension(
-            name=DIMENSIONS["security_posture"]["name"],
-            score=score,
-            weight=DIMENSIONS["security_posture"]["weight"],
-            rationale=(
-                f"Tech Level {level}/10. "
-                f"{code.dependency_count} dependencies, "
-                f"{len(security_flags)} security findings."
-            ),
-            sub_scores={
-                "dependency_risk": max(0, 100 - code.dependency_count),
-                "security_flags": max(0, 100 - len(security_flags) * 25),
-            },
-        )
+    # NOTE: _score_security_posture was removed in v0.3.
+    # Security is now folded into _score_architecture_quality (60/40 blend).
+    # _determine_security_level() is kept — it's called by the new blended
+    # architecture scorer above.

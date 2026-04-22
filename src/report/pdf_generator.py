@@ -271,7 +271,7 @@ _PDF_I18N = {
         "security_breakdown_subtitle": "Encryption sophistication is the core differentiator (30% of 50%)",
         "subitem_encryption": "Cryptographic Sophistication",
         "subitem_privacy": "Privacy Protection",
-        "subitem_posture": "General Posture (minimal weight)",
+        "subitem_posture": "Basic Hygiene (MFA / SOC2 etc.)",
         "subitem_comms": "Communication Safety",
         "subitem_layers": "Layer Composition",
         # Implementation Capability Matrix (v2.0)
@@ -287,9 +287,15 @@ _PDF_I18N = {
         "matcat_lightweight": "Lightweight",
         "matcat_encryption": "Encryption (Core Differentiator)",
         "matcat_privacy": "Privacy",
-        "matcat_posture": "General Posture",
+        "matcat_posture": "Basic Hygiene",
         "matcat_comms": "Communication Safety",
         "matcat_layers": "Layer Composition",
+        # Competitor Selection Rationales (v0.3.1)
+        "competitor_rationales": "Competitor Selection Rationales",
+        "competitor_rationales_subtitle": "Why these specific competitors were chosen as comparison targets",
+        "rationale_category": "Category",
+        "rationale_hq": "HQ",
+        "rationale_position": "Market Position",
     },
     "ja": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -470,7 +476,7 @@ _PDF_I18N = {
         "security_breakdown_subtitle": "暗号化技術の高度さが核心差別化（50%中30%）",
         "subitem_encryption": "暗号化技術の高度さ",
         "subitem_privacy": "プライバシー保護",
-        "subitem_posture": "一般態勢（最小重み）",
+        "subitem_posture": "基本衛生（MFA・SOC2等）",
         "subitem_comms": "通信の安全",
         "subitem_layers": "レイヤー構成",
         # 実装能力マトリックス (v2.0)
@@ -486,9 +492,15 @@ _PDF_I18N = {
         "matcat_lightweight": "軽量化",
         "matcat_encryption": "暗号化（核心差別化）",
         "matcat_privacy": "プライバシー",
-        "matcat_posture": "一般態勢",
+        "matcat_posture": "基本衛生",
         "matcat_comms": "通信の安全",
         "matcat_layers": "レイヤー構成",
+        # 競合選定理由 (v0.3.1)
+        "competitor_rationales": "競合選定理由",
+        "competitor_rationales_subtitle": "なぜこの競合企業群を比較対象に選んだのか",
+        "rationale_category": "カテゴリ",
+        "rationale_hq": "本社",
+        "rationale_position": "市場ポジション",
     },
 }
 
@@ -512,12 +524,14 @@ _PDF_GRADE_REC = {
 
 # Dimension name translations
 _DIM_NAME_JA = {
-    "Technical Originality": "\u6280\u8853\u72ec\u81ea\u6027",
-    "Technology Advancement": "\u6280\u8853\u5148\u9032\u6027",
-    "Implementation Depth": "\u5b9f\u88c5\u6df1\u5ea6",
-    "Architecture Quality": "\u30a2\u30fc\u30ad\u30c6\u30af\u30c1\u30e3\u54c1\u8cea",
-    "Claim Consistency": "\u4e3b\u5f35\u6574\u5408\u6027",
-    "Security Posture": "\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3\u614b\u52e2",
+    "Technical Originality": "技術独自性",
+    "Technology Advancement": "技術先進性",
+    "Implementation Depth": "実装深度",
+    "Architecture Quality": "アーキテクチャ品質",
+    "Architecture Quality (incl. Security)": "アーキテクチャ品質（セキュリティ含む）",
+    "Claim Consistency": "主張整合性",
+    # v0.3: Security Posture was merged into Architecture Quality; kept here for backward compat
+    "Security Posture": "セキュリティ態勢",
 }
 
 
@@ -810,6 +824,11 @@ class PDFReportGenerator:
                 if security_axis and security_axis.sub_items:
                     story.append(PageBreak())
                     story.extend(self._build_atlas_security_breakdown_page(cr, security_axis))
+
+            # Competitor Selection Rationales (v0.3.1)
+            if cr.competitor_rationales:
+                story.append(PageBreak())
+                story.extend(self._build_competitor_rationales_page(cr))
 
             # Implementation Capability Matrix (v2.0)
             if cr.implementation_matrix and cr.implementation_matrix.items:
@@ -1220,26 +1239,25 @@ class PDFReportGenerator:
             comparison_title = "Provider Score Comparison" if self._lang == "en" else "プロバイダースコア比較"
             elements.append(Paragraph(comparison_title, s["heading2"]))
 
+            # v0.3: 5 dimensions (security_posture merged into architecture_quality)
             dim_keys = [
                 "technical_originality", "technology_advancement",
                 "implementation_depth", "architecture_quality",
-                "claim_consistency", "security_posture",
+                "claim_consistency",
             ]
             dim_labels_en = {
                 "technical_originality": "Originality",
                 "technology_advancement": "Advancement",
                 "implementation_depth": "Implementation",
-                "architecture_quality": "Architecture",
+                "architecture_quality": "Arch. + Security",
                 "claim_consistency": "Consistency",
-                "security_posture": "Security",
             }
             dim_labels_ja = {
                 "technical_originality": "独自性",
                 "technology_advancement": "先進性",
                 "implementation_depth": "実装深度",
-                "architecture_quality": "アーキテクチャ",
+                "architecture_quality": "設計+セキュリティ",
                 "claim_consistency": "整合性",
-                "security_posture": "セキュリティ",
             }
             dim_labels = dim_labels_ja if self._lang == "ja" else dim_labels_en
 
@@ -1755,39 +1773,34 @@ class PDFReportGenerator:
         elements.append(Paragraph(overall_text, score_large_style))
         elements.append(Spacer(1, 8 * mm))
 
-        # --- 6-Dimension bar chart ---
+        # --- 5-Dimension bar chart (v0.3: Security Posture merged into Architecture Quality) ---
         dim_name_map = {
             "technical_originality": "Technical Originality",
             "technology_advancement": "Technology Advancement",
             "implementation_depth": "Implementation Depth",
-            "architecture_quality": "Architecture Quality",
+            "architecture_quality": "Architecture Quality (incl. Security)",
             "claim_consistency": "Claim Consistency",
-            "security_posture": "Security Posture",
         }
-        # Short description of what each dimension evaluates
         _dim_desc_en = {
             "technical_originality": "Novelty of algorithms, patents, and proprietary tech",
             "technology_advancement": "Modernity of stack, frameworks, and tooling",
             "implementation_depth": "Test coverage, error handling, production readiness",
-            "architecture_quality": "Code structure, modularity, and maintainability",
+            "architecture_quality": "Code structure + security maturity (encryption, auth, vulns)",
             "claim_consistency": "Alignment between marketing claims and actual code",
-            "security_posture": "Encryption, auth, vulnerability management",
         }
         _dim_desc_ja = {
             "technical_originality": "アルゴリズム・特許・独自技術の新規性",
             "technology_advancement": "技術スタック・フレームワークの先進性",
             "implementation_depth": "テストカバレッジ・エラー処理・本番運用品質",
-            "architecture_quality": "コード構造・モジュール性・保守性",
+            "architecture_quality": "コード構造 + セキュリティ成熟度（暗号化・認証・脆弱性）",
             "claim_consistency": "マーケティング主張と実装コードの整合性",
-            "security_posture": "暗号化・認証・脆弱性管理の成熟度",
         }
         weights = {
-            "technical_originality": 0.25,
+            "technical_originality": 0.20,
             "technology_advancement": 0.20,
             "implementation_depth": 0.20,
-            "architecture_quality": 0.15,
-            "claim_consistency": 0.10,
-            "security_posture": 0.10,
+            "architecture_quality": 0.20,
+            "claim_consistency": 0.20,
         }
 
         # Collect dimension data
@@ -2059,22 +2072,21 @@ class PDFReportGenerator:
         elements.append(Paragraph(t["score_breakdown"], s["heading1"]))
         elements.append(Spacer(1, 6 * mm))
 
+        # v0.3: 5 dimensions, Security Posture merged into Architecture Quality
         dim_name_map = {
             "technical_originality": "Technical Originality",
             "technology_advancement": "Technology Advancement",
             "implementation_depth": "Implementation Depth",
-            "architecture_quality": "Architecture Quality",
+            "architecture_quality": "Architecture Quality (incl. Security)",
             "claim_consistency": "Claim Consistency",
-            "security_posture": "Security Posture",
         }
 
         weights = {
-            "technical_originality": 0.25,
+            "technical_originality": 0.20,
             "technology_advancement": 0.20,
             "implementation_depth": 0.20,
-            "architecture_quality": 0.15,
-            "claim_consistency": 0.10,
-            "security_posture": 0.10,
+            "architecture_quality": 0.20,
+            "claim_consistency": 0.20,
         }
 
         # Score table (use Paragraph cells for proper CID font rendering)
@@ -2172,16 +2184,14 @@ class PDFReportGenerator:
         label = tls.get("overall_label", "")
         explanation = tls.get("plain_explanation", "")
 
-        # ── Per-dimension tech levels (6 dimensions) ──
-        # This replaces the previous single-bar gauge that left the page half-empty.
+        # ── Per-dimension tech levels (v0.3: 5 dimensions) ──
         # Shows a compact horizontal bar per dimension for visual richness.
         dim_name_map = {
             "technical_originality": "Technical Originality",
             "technology_advancement": "Technology Advancement",
             "implementation_depth": "Implementation Depth",
-            "architecture_quality": "Architecture Quality",
+            "architecture_quality": "Architecture Quality (incl. Security)",
             "claim_consistency": "Claim Consistency",
-            "security_posture": "Security Posture",
         }
         dim_levels: list[tuple[str, int, str]] = []
         for key, en_name in dim_name_map.items():
@@ -3044,6 +3054,103 @@ class PDFReportGenerator:
                 "Checkbox compliance (MFA/SOC2 — \"anyone can do\") is minimum-weighted (2%)."
             )
         elements.append(Paragraph(philosophy, s["body"]))
+        elements.append(Spacer(1, 4 * mm))
+
+        # Plain-language glossary for non-engineers reading the report
+        elements.append(
+            Paragraph(
+                "<b>" + ("用語ミニ解説（非エンジニア向け）" if self._lang == "ja"
+                         else "Glossary for non-engineer readers") + "</b>",
+                s["heading3"],
+            )
+        )
+        if self._lang == "ja":
+            gloss_items = [
+                ("暗号化技術", "通信や保存データを、本人以外には読めない状態に変換する技術。"
+                              "Signal Protocol / PQXDH などが最先端。"),
+                ("E2E暗号化", "送信者と受信者だけが読める暗号化。サービス運営者でも中身は見られない。"),
+                ("MFA (多要素認証)", "パスワードに加え、SMS コードや認証アプリで本人確認する仕組み。"
+                                      "今や標準。導入していないと論外。"),
+                ("SOC2", "米国 AICPA が定めたセキュリティ監査基準。取得企業は多数あり、"
+                         "差別化要因ではなく衛生項目。"),
+                ("libsignal", "Signal Foundation が公開している、Signal Protocol の公式実装ライブラリ。"
+                              "使うと暗号の自前実装ミスを避けられる。"),
+                ("PQXDH / ML-KEM", "量子コンピュータでも破れない次世代暗号（ポスト量子暗号）。"
+                                    "Apple の iMessage (PQ3) や Signal が採用済み。"),
+            ]
+        else:
+            gloss_items = [
+                ("Cryptography", "The art of making data unreadable to anyone but the intended recipient. "
+                                 "Signal Protocol / PQXDH are state-of-the-art."),
+                ("E2E Encryption", "End-to-end: only sender & recipient can decrypt. Even the service provider cannot read it."),
+                ("MFA (Multi-Factor Auth)", "Password + second factor (SMS code / authenticator app). "
+                                             "Standard hygiene — missing it is a red flag, having it is not a differentiator."),
+                ("SOC2", "US AICPA security audit standard. Widely held; a hygiene item, not a differentiator."),
+                ("libsignal", "Official Signal Protocol implementation by Signal Foundation. "
+                              "Using it avoids self-rolled crypto mistakes."),
+                ("PQXDH / ML-KEM", "Post-quantum cryptography — safe even against future quantum computers. "
+                                    "Adopted by Apple iMessage (PQ3) and Signal."),
+            ]
+        for term, definition in gloss_items:
+            elements.append(
+                Paragraph(
+                    f'<b>{term}</b> — <font color="{COLOR_TEXT_DIM.hexval()}">{definition}</font>',
+                    s["body_small"],
+                )
+            )
+
+        return elements
+
+    # ────────────────────────────────────────────────────────
+    # v0.3.1: Competitor Selection Rationales
+    # For each competitor, 3-5 line explanation of why they were chosen.
+    # Placed AFTER competitive analysis charts, BEFORE the matrix —
+    # so readers understand who is being compared and why.
+    # ────────────────────────────────────────────────────────
+
+    def _build_competitor_rationales_page(self, cr) -> list:
+        """Competitor selection rationales (3-5 lines per competitor)."""
+        t = self._t
+        s = self._styles
+        elements: list = []
+
+        rationales = cr.competitor_rationales or []
+        if not rationales:
+            return elements
+
+        elements.append(Paragraph(t["competitor_rationales"], s["heading1"]))
+        elements.append(
+            HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=3 * mm)
+        )
+        elements.append(Paragraph(t["competitor_rationales_subtitle"], s["body_dim"]))
+        elements.append(Spacer(1, 4 * mm))
+
+        for r in rationales:
+            # Header: company name + category badge
+            header_bits: list[str] = [f'<b>{r.name}</b>']
+            if r.category:
+                header_bits.append(
+                    f'<font color="{COLOR_ACCENT.hexval()}" size="9">[{r.category}]</font>'
+                )
+            elements.append(Paragraph("  ".join(header_bits), s["heading3"]))
+
+            # Meta line: HQ + market position
+            meta_parts: list[str] = []
+            if r.hq_country:
+                meta_parts.append(f'{t["rationale_hq"]}: {r.hq_country}')
+            if r.market_position:
+                meta_parts.append(f'{t["rationale_position"]}: {r.market_position}')
+            if meta_parts:
+                elements.append(Paragraph(" · ".join(meta_parts), s["body_dim"]))
+
+            # Rationale (3-5 line prose, language-appropriate)
+            rationale_text = (r.rationale_ja if self._lang == "ja" and r.rationale_ja
+                              else r.rationale_en)
+            if rationale_text:
+                # Wrap each rationale + header in KeepTogether to prevent orphan headers
+                elements.append(Paragraph(rationale_text, s["body"]))
+
+            elements.append(Spacer(1, 4 * mm))
 
         return elements
 

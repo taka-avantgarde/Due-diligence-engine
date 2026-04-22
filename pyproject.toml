@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "due-diligence-engine"
-version = "0.2.0"
+version = "0.3.0"
 description = "AI-powered technical due diligence CLI — PDF-first, zero API keys required"
 readme = "README.md"
 requires-python = ">=3.11"
