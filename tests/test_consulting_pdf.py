@@ -402,7 +402,7 @@ def _make_atlas_four_axis() -> "AtlasFourAxisEvaluation":
         AtlasAxisSubItem(
             key="encryption", name_en="Cryptographic Sophistication",
             name_ja="暗号化技術の高度さ",
-            score=88, level=9, weight_pct=30,
+            score=88, level=9, weight_pct=35,
             rationale="libsignal FFI + PQXDH + Double Ratchet, no self-rolled crypto",
         ),
         AtlasAxisSubItem(
@@ -433,7 +433,7 @@ def _make_atlas_four_axis() -> "AtlasFourAxisEvaluation":
     axes = [
         AtlasAxisScore(
             axis_key="performance", name_en="Performance", name_ja="高速化",
-            weight_pct=25, score=72, level=7,
+            weight_pct=20, score=72, level=7,
             rationale="Multi-region deploy, edge cache, async I/O",
         ),
         AtlasAxisScore(
@@ -449,7 +449,7 @@ def _make_atlas_four_axis() -> "AtlasFourAxisEvaluation":
         AtlasAxisScore(
             axis_key="security", name_en="Security Strength",
             name_ja="セキュリティ強度",
-            weight_pct=50, score=82, level=8,
+            weight_pct=55, score=82, level=8,
             rationale="Encryption-led security, posture is minimum hygiene only",
             sub_items=security_subs,
         ),

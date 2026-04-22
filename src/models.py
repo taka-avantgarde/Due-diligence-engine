@@ -472,7 +472,7 @@ class AtlasAxisScore(BaseModel):
     axis_key: str = ""  # "performance" | "stability" | "lightweight" | "security"
     name_en: str = ""
     name_ja: str = ""
-    weight_pct: float = 0.0  # 25 / 20 / 5 / 50
+    weight_pct: float = 0.0  # 20 / 20 / 5 / 55
     score: float = Field(default=0.0, ge=0, le=100)
     level: int = Field(default=1, ge=1, le=10)
     rationale: str = ""

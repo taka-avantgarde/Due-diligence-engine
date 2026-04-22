@@ -268,7 +268,7 @@ _PDF_I18N = {
         "axis_security": "Security Strength",
         # Security sub-breakdown
         "security_breakdown": "Security Strength — Sub-Breakdown",
-        "security_breakdown_subtitle": "Encryption sophistication is the core differentiator (30% of 50%)",
+        "security_breakdown_subtitle": "Encryption sophistication is the core differentiator (35% of 55%)",
         "subitem_encryption": "Cryptographic Sophistication",
         "subitem_privacy": "Privacy Protection",
         "subitem_posture": "Basic Hygiene (MFA / SOC2 etc.)",
@@ -473,7 +473,7 @@ _PDF_I18N = {
         "axis_security": "セキュリティ強度",
         # セキュリティ内訳
         "security_breakdown": "セキュリティ強度 — サブ内訳",
-        "security_breakdown_subtitle": "暗号化技術の高度さが核心差別化（50%中30%）",
+        "security_breakdown_subtitle": "暗号化技術の高度さが核心差別化（55%中35%）",
         "subitem_encryption": "暗号化技術の高度さ",
         "subitem_privacy": "プライバシー保護",
         "subitem_posture": "基本衛生（MFA・SOC2等）",
@@ -3050,7 +3050,7 @@ class PDFReportGenerator:
         return elements
 
     def _build_atlas_security_breakdown_page(self, cr, security_axis) -> list:
-        """Security Strength sub-breakdown — emphasizes encryption (30%) as core."""
+        """Security Strength sub-breakdown — emphasizes encryption (35%) as core."""
         t = self._t
         s = self._styles
         elements: list = []
@@ -3130,14 +3130,14 @@ class PDFReportGenerator:
         # Weight philosophy callout + source-code-only disclaimer
         if self._lang == "ja":
             philosophy = (
-                "<b>重み哲学:</b> 暗号化技術の高度さ（30%）が核心。"
+                "<b>重み哲学:</b> 暗号化技術の高度さ（35%）が核心。"
                 "MFA・WebAuthn 等の「誰でもできる」項目は最小重み（2%）に抑制。<br/>"
                 "<b>第三者認証（SOC2・ISO 27001・HIPAA 等）は参考情報のみでスコア対象外。</b>"
                 "DDE は純粋にソースコードから評価する。認証バッジではなくコードを読む。"
             )
         else:
             philosophy = (
-                "<b>Weight Philosophy:</b> Cryptographic sophistication (30%) is the core. "
+                "<b>Weight Philosophy:</b> Cryptographic sophistication (35%) is the core. "
                 "Checkbox items (MFA/WebAuthn — \"anyone can do\") are minimum-weighted (2%).<br/>"
                 "<b>Third-party certifications (SOC2, ISO 27001, HIPAA, etc.) are REFERENCE ONLY — "
                 "not scored.</b> DDE judges the code, not the badge."

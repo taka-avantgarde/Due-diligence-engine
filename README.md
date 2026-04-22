@@ -147,17 +147,17 @@ A parallel evaluation system added alongside the standard 5-dimension scoring.
 ```
 4 axes — weights sum to 100%
 
-  Performance        25%  ████████████░░░░░░░░░░░░░░░░░░░░
+  Performance        20%  ██████████░░░░░░░░░░░░░░░░░░░░░░
   Stability          20%  ██████████░░░░░░░░░░░░░░░░░░░░░░
   Lightweight         5%  ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  Security Strength 50% █████████████████████████░░░░░░░  ← THE CORE
+  Security Strength 55%  ███████████████████████████░░░░░  ← THE CORE
 
-  Security sub-breakdown (within 50%):
-    Cryptographic Sophistication  30%  ← Signal Protocol, PQXDH, libsignal
+  Security sub-breakdown (within 55%):
+    Cryptographic Sophistication  35%  ← Signal Protocol, PQXDH, libsignal
     Privacy Protection             8%
     Communication Safety           7%
     Layer Composition              3%
-    General Posture                2%  ← MFA, SOC2, etc. — minimum hygiene
+    Basic Hygiene (MFA/WebAuthn)   2%  ← code-only; certs are reference-only
 ```
 
 ---
@@ -334,7 +334,7 @@ A: Charts are AI-researched from public sources (whitepapers, GitHub, blogs, SOC
 A: DDE is built by Atlas Associates, the company behind Arc Messenger (E2EE messaging with libsignal + PQXDH). The 4-axis evaluation reflects what we actually look for when evaluating tech.
 
 **Q: Can I customize the scoring weights?**
-A: The 5-dimension weights are equal 20% each (balanced, simple, interpretable). Atlas 4-axis weights (25/20/5/50) reflect Atlas philosophy and are also fixed. Sub-item weights within Security Strength adjust by industry context.
+A: The 5-dimension weights are equal 20% each (balanced, simple, interpretable). Atlas 4-axis weights (20/20/5/55) reflect Atlas philosophy and are also fixed. Sub-item weights within Security Strength adjust by industry context.
 
 **Q: What if my project isn't security-critical?**
 A: The 5-dimension score (Architecture Quality includes Security Posture at a balanced 20%) is your primary score. The Atlas 4-axis is a parallel reference view — both are shown.
@@ -358,7 +358,7 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 - ✅ PDF layout: KeepTogether, 6-dim tech bar chart, SWOT 2×2 grid
 
 **Previously shipped (v0.2.0)**
-- ✅ Atlas 4-axis Optimization Assessment ("Security Strength" 50%)
+- ✅ Atlas 4-axis Optimization Assessment ("Security Strength" 55%)
 - ✅ Implementation Capability Matrix (8th competitive chart)
 - ✅ Web dashboard fully removed (CLI + PDF only)
 - ✅ Black + Arc sky (#5271FF) brand identity
