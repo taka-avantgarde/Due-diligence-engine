@@ -360,6 +360,10 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 ## 🗺️ Roadmap
 
 **Recently shipped (v0.3.x)**
+- ✅ **Anti-self-bias guardrails**: explicit "the target is NOT DDE itself" warnings in prompt header (prevents AI confusion when DDE is run on another project)
+- ✅ **Red flags clarified**: shown as actionable items for code improvement (NOT factored into score)
+- ✅ **Quick Start simplified** in README (single install command + collapsible alternatives)
+- ✅ **Atlas philosophy reframed** as "cybersecurity defense overall" (not just encryption — encryption is the largest sub-weight at 35%)
 - ✅ **Site Verification refocused to pure technical capability** (10 items: 4 claim-vs-code + 6 code-measured — crypto depth, concurrency model, I/O pattern, caching, scalability, ML depth)
 - ✅ Atlas weights rebalanced to **20 / 20 / 5 / 55** (encryption core bumped to 35%)
 - ✅ **Source-code-only evaluation**: third-party certs (SOC2 / ISO / HIPAA) are reference-only, not scored
