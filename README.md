@@ -137,13 +137,14 @@ That's checkbox compliance. **DDE goes deeper:**
 > Is it built on libsignal/BoringSSL FFI, or self-rolled crypto?
 > Does the team publish cryptographic research?"*
 
-Built on the **Atlas Engineering Philosophy**: cryptographic sophistication and
-deep technical originality differentiate winners. Checkbox compliance
-(SOC2, MFA, WebAuthn) is hygiene, not differentiation.
+Built on the **Atlas Engineering Philosophy**: serious cybersecurity engineering
+across encryption, privacy, communications, and layered defense — read directly
+from the source code. Checkbox compliance (SOC2, MFA, WebAuthn certifications)
+is reference-only, never scored.
 
 ---
 
-## 🔒 Atlas Engineering Philosophy (encryption-dominant parallel view)
+## 🔒 Atlas Engineering Philosophy (cybersecurity-focused parallel view)
 
 A parallel evaluation system added alongside the standard 5-dimension scoring.
 
@@ -155,8 +156,8 @@ A parallel evaluation system added alongside the standard 5-dimension scoring.
   Lightweight         5%  ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
   Security Strength 55%  ███████████████████████████░░░░░  ← THE CORE
 
-  Security sub-breakdown (within 55%):
-    Cryptographic Sophistication  35%  ← Signal Protocol, PQXDH, libsignal
+  Cybersecurity sub-breakdown (within 55% — defense across all layers):
+    Cryptographic Sophistication  35%  ← largest: Signal Protocol, PQXDH, libsignal
     Privacy Protection             8%
     Communication Safety           7%
     Layer Composition              3%

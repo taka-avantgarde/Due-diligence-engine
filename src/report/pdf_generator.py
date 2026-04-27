@@ -268,7 +268,7 @@ _PDF_I18N = {
         "axis_security": "Security Strength",
         # Security sub-breakdown
         "security_breakdown": "Security Strength — Sub-Breakdown",
-        "security_breakdown_subtitle": "Encryption sophistication is the core differentiator (35% of 55%)",
+        "security_breakdown_subtitle": "Cybersecurity defense overall — 5 sub-categories within 55% (encryption is the largest at 35%)",
         "subitem_encryption": "Cryptographic Sophistication",
         "subitem_privacy": "Privacy Protection",
         "subitem_posture": "Basic Hygiene (MFA / SOC2 etc.)",
@@ -473,7 +473,7 @@ _PDF_I18N = {
         "axis_security": "セキュリティ強度",
         # セキュリティ内訳
         "security_breakdown": "セキュリティ強度 — サブ内訳",
-        "security_breakdown_subtitle": "暗号化技術の高度さが核心差別化（55%中35%）",
+        "security_breakdown_subtitle": "サイバーセキュリティ対策全般 — 55% 内訳 5 サブカテゴリ（暗号化が最大の 35%）",
         "subitem_encryption": "暗号化技術の高度さ",
         "subitem_privacy": "プライバシー保護",
         "subitem_posture": "基本衛生（MFA・SOC2等）",
@@ -2980,67 +2980,94 @@ class PDFReportGenerator:
         elements.append(Paragraph(overall_text, score_large_style))
         elements.append(Spacer(1, 8 * mm))
 
-        # 4-axis horizontal bar chart (same pattern as score dashboard)
-        # Order: performance(25), stability(20), lightweight(5), security(50)
+        # 4-axis horizontal bar chart — Table layout for full-text wrapping (v0.3.4)
+        # Each row: [Label + auto-wrap description (Paragraph)] | [Bar (Drawing)] | [Score]
+        # Row height auto-grows with content — no truncation, no orphan ellipsis.
+        from reportlab.platypus import Table as RLTable, TableStyle as RLTableStyle
+
         axes_ordered = sorted(
             afa.axes,
             key=lambda a: {"performance": 0, "stability": 1, "lightweight": 2, "security": 3}.get(a.axis_key, 99),
         )
 
-        bar_max_w = 280
-        # row_h increased from 44 → 56 to accommodate 2-line wrapped descriptions
-        row_h = 56
-        label_w = 140
-        chart_w = label_w + bar_max_w + 80
-        chart_h = len(axes_ordered) * row_h + 10
+        # Column widths (total ~165mm A4 portrait usable)
+        label_col_w = 50 * mm   # label + auto-wrap rationale
+        bar_col_w = 75 * mm     # bar drawing
+        score_col_w = 30 * mm   # score / Lv / weight%
+        bar_max_w = bar_col_w - 4   # actual drawing width
 
-        d = Drawing(chart_w, chart_h)
+        font_label = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
 
-        # Per-language max chars per description line at 6.5pt
-        # JA: ~46 (CJK chars wider) / EN: ~80 (ASCII narrower)
-        max_chars = 46 if self._lang == "ja" else 80
+        label_para_style = ParagraphStyle(
+            "AxisLabel", fontName=font_label, fontSize=10,
+            leading=13, textColor=COLOR_TEXT, spaceAfter=2,
+        )
+        rationale_para_style = ParagraphStyle(
+            "AxisRationale", fontName=font_body, fontSize=7.5,
+            leading=10, textColor=COLOR_TEXT_DIM, spaceAfter=0,
+        )
+        score_para_style = ParagraphStyle(
+            "AxisScore", fontName="Helvetica-Bold", fontSize=9,
+            leading=12, textColor=COLOR_TEXT_DIM, alignment=TA_RIGHT,
+        )
 
-        for i, axis in enumerate(axes_ordered):
-            y = chart_h - (i + 1) * row_h + 22
-            name = axis.name_ja if self._lang == "ja" and axis.name_ja else axis.name_en
-
-            # Axis label (left, bold)
-            font_name = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-            d.add(String(0, y + 4, name, fontName=font_name, fontSize=9, fillColor=COLOR_TEXT))
-
-            # Rationale wrapped into up to 2 lines
-            desc_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
-            desc_lines = _wrap_lines(axis.rationale or "", max_chars, max_lines=2)
-            for li, line in enumerate(desc_lines):
-                d.add(String(0, y - 8 - li * 9, line,
-                             fontName=desc_font, fontSize=6.5,
-                             fillColor=COLOR_TEXT_DIM))
-
-            # Background bar (gray track)
-            d.add(Rect(label_w, y, bar_max_w, 16,
+        def _bar_drawing(score_val: float) -> Drawing:
+            """Build a single horizontal bar drawing."""
+            d = Drawing(bar_max_w, 16)
+            # Background track
+            d.add(Rect(0, 0, bar_max_w, 16,
                        fillColor=colors.HexColor("#e2e8f0"),
                        strokeColor=None, strokeWidth=0))
-
-            # Score bar (Arc brand colors)
-            bar_w = max(2, (axis.score / 100) * bar_max_w)
-            if axis.score >= 75:
+            # Filled portion
+            bar_w = max(2, (score_val / 100) * bar_max_w)
+            if score_val >= 75:
                 bar_color = COLOR_ACCENT
-            elif axis.score >= 50:
+            elif score_val >= 50:
                 bar_color = COLOR_ACCENT_DARK
-            elif axis.score >= 30:
+            elif score_val >= 30:
                 bar_color = colors.HexColor("#000000")
             else:
                 bar_color = colors.HexColor("#6b2a2a")
-            d.add(Rect(label_w, y, bar_w, 16,
+            d.add(Rect(0, 0, bar_w, 16,
                        fillColor=bar_color, strokeColor=None, strokeWidth=0))
+            return d
 
-            # Score text (right of bar) — monospaced format
+        rows = []
+        for axis in axes_ordered:
+            name = axis.name_ja if self._lang == "ja" and axis.name_ja else axis.name_en
+            rationale = axis.rationale or ""
+
+            # Cell 1: label + full rationale (auto-wrap, NO truncation)
+            label_cell = [Paragraph(f"<b>{name}</b>", label_para_style)]
+            if rationale:
+                label_cell.append(Paragraph(rationale, rationale_para_style))
+
+            # Cell 2: bar drawing
+            bar_cell = _bar_drawing(axis.score)
+
+            # Cell 3: score text (right-aligned)
             score_str = f"{axis.score:.0f}  Lv.{axis.level}  ({axis.weight_pct:.0f}%)"
-            d.add(String(label_w + bar_max_w + 6, y + 3, score_str,
-                         fontName="Helvetica", fontSize=8, fillColor=COLOR_TEXT_DIM))
+            score_cell = Paragraph(score_str, score_para_style)
 
-        elements.append(d)
-        elements.append(Spacer(1, 8 * mm))
+            rows.append([label_cell, bar_cell, score_cell])
+
+        tbl = RLTable(
+            rows,
+            colWidths=[label_col_w, bar_col_w, score_col_w],
+            # rowHeights=None → auto-sizing
+        )
+        tbl.setStyle(RLTableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("VALIGN", (1, 0), (1, -1), "MIDDLE"),  # bar centered
+            ("VALIGN", (2, 0), (2, -1), "MIDDLE"),  # score centered
+            ("LEFTPADDING", (0, 0), (-1, -1), 2),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(tbl)
+        elements.append(Spacer(1, 6 * mm))
 
         # Summary text
         summary = afa.summary_ja if self._lang == "ja" and afa.summary_ja else afa.summary
@@ -3066,14 +3093,14 @@ class PDFReportGenerator:
         order = {"encryption": 0, "privacy": 1, "comms": 2, "layers": 3, "posture": 4}
         sub_items = sorted(security_axis.sub_items, key=lambda si: order.get(si.key, 99))
 
-        bar_max_w = 280
-        # row_h increased from 44 → 56 to fit 2-line wrapped descriptions
-        row_h = 56
-        label_w = 160
-        chart_w = label_w + bar_max_w + 80
-        chart_h = len(sub_items) * row_h + 10
+        # Sub-item rows — Table layout for full-text wrapping (v0.3.4)
+        from reportlab.platypus import Table as RLTable, TableStyle as RLTableStyle
 
-        d = Drawing(chart_w, chart_h)
+        # Column widths
+        label_col_w = 50 * mm
+        bar_col_w = 75 * mm
+        score_col_w = 30 * mm
+        bar_max_w = bar_col_w - 4
 
         # Map sub-item keys to short i18n labels (fallback to provided name)
         subitem_labels = {
@@ -3083,61 +3110,87 @@ class PDFReportGenerator:
             "comms": t.get("subitem_comms", "Comms"),
             "layers": t.get("subitem_layers", "Layers"),
         }
-        max_chars = 44 if self._lang == "ja" else 78  # label_w=160 leaves narrower text width
 
-        for i, si in enumerate(sub_items):
-            y = chart_h - (i + 1) * row_h + 22
-            name = subitem_labels.get(si.key, si.name_ja if self._lang == "ja" else si.name_en)
+        font_label = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
 
-            # Label
-            font_name = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-            d.add(String(0, y + 4, name, fontName=font_name, fontSize=9, fillColor=COLOR_TEXT))
+        sub_label_style = ParagraphStyle(
+            "SubLabel", fontName=font_label, fontSize=10,
+            leading=13, textColor=COLOR_TEXT, spaceAfter=2,
+        )
+        sub_rationale_style = ParagraphStyle(
+            "SubRationale", fontName=font_body, fontSize=7.5,
+            leading=10, textColor=COLOR_TEXT_DIM, spaceAfter=0,
+        )
+        sub_score_style = ParagraphStyle(
+            "SubScore", fontName="Helvetica-Bold", fontSize=9,
+            leading=12, textColor=COLOR_TEXT_DIM, alignment=TA_RIGHT,
+        )
 
-            # Rationale wrapped into up to 2 lines (no truncation that loses info)
-            desc_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
-            desc_lines = _wrap_lines(si.rationale or "", max_chars, max_lines=2)
-            for li, line in enumerate(desc_lines):
-                d.add(String(0, y - 8 - li * 9, line,
-                             fontName=desc_font, fontSize=6.5,
-                         fillColor=COLOR_TEXT_DIM))
-
-            # Background bar
-            d.add(Rect(label_w, y, bar_max_w, 16,
+        def _sub_bar(score_val: float) -> Drawing:
+            d = Drawing(bar_max_w, 16)
+            d.add(Rect(0, 0, bar_max_w, 16,
                        fillColor=colors.HexColor("#e2e8f0"),
                        strokeColor=None, strokeWidth=0))
-
-            # Score bar
-            bar_w = max(2, (si.score / 100) * bar_max_w)
-            if si.score >= 75:
-                bar_color = COLOR_ACCENT
-            elif si.score >= 50:
-                bar_color = COLOR_ACCENT_DARK
-            elif si.score >= 30:
-                bar_color = colors.HexColor("#000000")
+            bar_w = max(2, (score_val / 100) * bar_max_w)
+            if score_val >= 75:
+                bc = COLOR_ACCENT
+            elif score_val >= 50:
+                bc = COLOR_ACCENT_DARK
+            elif score_val >= 30:
+                bc = colors.HexColor("#000000")
             else:
-                bar_color = colors.HexColor("#6b2a2a")
-            d.add(Rect(label_w, y, bar_w, 16,
-                       fillColor=bar_color, strokeColor=None, strokeWidth=0))
+                bc = colors.HexColor("#6b2a2a")
+            d.add(Rect(0, 0, bar_w, 16,
+                       fillColor=bc, strokeColor=None, strokeWidth=0))
+            return d
 
-            # Score text — show weight prominently for emphasis
+        sub_rows = []
+        for si in sub_items:
+            name = subitem_labels.get(si.key, si.name_ja if self._lang == "ja" else si.name_en)
+            rationale = si.rationale or ""
+
+            label_cell = [Paragraph(f"<b>{name}</b>", sub_label_style)]
+            if rationale:
+                label_cell.append(Paragraph(rationale, sub_rationale_style))
+
+            bar_cell = _sub_bar(si.score)
+
             score_str = f"{si.score:.0f}  Lv.{si.level}  ({si.weight_pct:.0f}%)"
-            d.add(String(label_w + bar_max_w + 6, y + 3, score_str,
-                         fontName="Helvetica", fontSize=8, fillColor=COLOR_TEXT_DIM))
+            score_cell = Paragraph(score_str, sub_score_style)
 
-        elements.append(d)
-        elements.append(Spacer(1, 8 * mm))
+            sub_rows.append([label_cell, bar_cell, score_cell])
+
+        sub_tbl = RLTable(
+            sub_rows,
+            colWidths=[label_col_w, bar_col_w, score_col_w],
+        )
+        sub_tbl.setStyle(RLTableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("VALIGN", (1, 0), (1, -1), "MIDDLE"),
+            ("VALIGN", (2, 0), (2, -1), "MIDDLE"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 2),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(sub_tbl)
+        elements.append(Spacer(1, 6 * mm))
 
         # Weight philosophy callout + source-code-only disclaimer
         if self._lang == "ja":
             philosophy = (
-                "<b>重み哲学:</b> 暗号化技術の高度さ（35%）が核心。"
+                "<b>重み哲学:</b> Atlas は <b>サイバーセキュリティ対策全般</b>（暗号化・プライバシー・"
+                "通信・レイヤー防御）を 55% で重視する。中でも暗号化技術の実装深度（35%）が最大ウェイト。"
                 "MFA・WebAuthn 等の「誰でもできる」項目は最小重み（2%）に抑制。<br/>"
                 "<b>第三者認証（SOC2・ISO 27001・HIPAA 等）は参考情報のみでスコア対象外。</b>"
                 "DDE は純粋にソースコードから評価する。認証バッジではなくコードを読む。"
             )
         else:
             philosophy = (
-                "<b>Weight Philosophy:</b> Cryptographic sophistication (35%) is the core. "
+                "<b>Weight Philosophy:</b> Atlas places strong emphasis on "
+                "<b>cybersecurity defense overall</b> (encryption + privacy + communications + layers) "
+                "at 55%, with cryptographic implementation depth (35%) as the largest sub-weight. "
                 "Checkbox items (MFA/WebAuthn — \"anyone can do\") are minimum-weighted (2%).<br/>"
                 "<b>Third-party certifications (SOC2, ISO 27001, HIPAA, etc.) are REFERENCE ONLY — "
                 "not scored.</b> DDE judges the code, not the badge."
