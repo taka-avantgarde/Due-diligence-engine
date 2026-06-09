@@ -62,7 +62,7 @@ class AnalysisEngine:
         self._usage: dict[str, dict[str, int]] = {
             "haiku": {"input_tokens": 0, "output_tokens": 0},
             "sonnet": {"input_tokens": 0, "output_tokens": 0},
-            "opus": {"input_tokens": 0, "output_tokens": 0},
+            "fable": {"input_tokens": 0, "output_tokens": 0},
         }
 
     @property
@@ -267,7 +267,7 @@ class AnalysisEngine:
         findings: dict[str, Any] = {
             "haiku_scan": {},
             "sonnet_analysis": {},
-            "opus_judgment": {},
+            "fable_judgment": {},
         }
 
         summary = self._build_analysis_summary(result)
@@ -279,7 +279,7 @@ class AnalysisEngine:
         findings["sonnet_analysis"] = self._sonnet_analyze(summary, findings["haiku_scan"])
 
         logger.info("  Tier 3: Opus final judgment...")
-        findings["opus_judgment"] = self._opus_judge(summary, findings["sonnet_analysis"])
+        findings["fable_judgment"] = self._fable_judge(summary, findings["sonnet_analysis"])
 
         return findings
 
@@ -388,9 +388,9 @@ Respond in JSON format:
             logger.error(f"Sonnet analysis failed: {e}")
             return {"error": str(e)}
 
-    def _opus_judge(self, summary: str, sonnet_result: dict) -> dict[str, Any]:
-        """Tier 3: Opusによる最終判定。"""
-        model = MODELS["opus"]
+    def _fable_judge(self, summary: str, sonnet_result: dict) -> dict[str, Any]:
+        """Tier 3: Fable 5 による最終判定。"""
+        model = MODELS["fable"]
 
         prompt = f"""You are the final arbiter in a technical due diligence process for an
 AI startup investment. You must deliver a definitive verdict.
@@ -425,10 +425,10 @@ Respond in JSON format:
                 max_tokens=model.max_tokens,
                 messages=[{"role": "user", "content": prompt}],
             )
-            self._track_usage("opus", response.usage)
+            self._track_usage("fable", response.usage)
             return _parse_json_response(response.content[0].text)
         except Exception as e:
-            logger.error(f"Opus judgment failed: {e}")
+            logger.error(f"Fable judgment failed: {e}")
             return {"error": str(e)}
 
     def _build_analysis_summary(self, result: AnalysisResult) -> str:

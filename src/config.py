@@ -35,11 +35,11 @@ MODELS = {
         output_cost_per_mtok=15.00,
         max_tokens=8192,
     ),
-    "opus": ModelConfig(
-        model_id="claude-opus-4-8",
+    "fable": ModelConfig(
+        model_id="claude-fable-5",
         purpose="judge",
-        input_cost_per_mtok=5.00,   # Opus 4.8: $5 / MTok（4.7 と同水準）
-        output_cost_per_mtok=25.00, # Opus 4.8: $25 / MTok
+        input_cost_per_mtok=10.00,  # Fable 5: $10 / MTok（最高性能ティア、2026-06-09 GA）
+        output_cost_per_mtok=50.00, # Fable 5: $50 / MTok
         max_tokens=4096,
     ),
 }
@@ -235,7 +235,7 @@ def estimate_cost(
     """Estimate API cost for a given model and token count.
 
     Args:
-        model_tier: One of 'haiku', 'sonnet', 'opus'.
+        model_tier: One of 'haiku', 'sonnet', 'fable'.
         input_tokens: Number of input tokens.
         output_tokens: Number of output tokens.
         saas_multiplier: SaaS markup multiplier (default 1.0 for CLI).

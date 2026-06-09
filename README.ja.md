@@ -36,7 +36,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.3.5-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.3.6-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -83,7 +83,7 @@ macOS Homebrew ユーザーは必ず `python3 -m pip` を使用してくださ�
 
 **推奨セットアップ:**
 
-- **IDE 内で利用可能な最高性能モデルを起動**（Claude Opus 4.8 / GPT-5 / Gemini 2.5 Pro 等）
+- **IDE 内で利用可能な最高性能モデルを起動**（Claude Fable 5 / GPT-5 / Gemini 2.5 Pro 等）
 - **`dde prompt --pdf --lang ja` をターミナルにペースト**
 - **コーヒー一杯の時間 ☕ を** — AI が数百のファイルを読み、9軸以上で評価し、
   世界の競合 5〜10 社を調査し、22 ページのコンサル PDF を構築します
@@ -385,6 +385,7 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 ## 🗺️ ロードマップ
 
 **最近リリース (v0.3.x)**
+- ✅ **Claude Fable 5 へ更新**（2026-06、v0.3.6）: judge ティアを Opus 4.8 → **Fable 5**（`claude-fable-5`、Anthropic の最高性能モデル、2026-06-09 GA）に更新。ティア名も `opus` → `fable` にリネーム。価格は $10/$50 per MTok（Opus 4.8 比 2 倍だが最終判定の品質を最優先）
 - ✅ **PDF チャート視覚強化 + 文字重なり修正**（2026-05、v0.3.5）: スコアダッシュボード/技術レベル/競合/マトリックスの全バーをモダンな丸角ピル型に刷新。日本語の長いラベル（「アーキテクチャ品質（セキュリティ含む）」等）がバーに被る問題をラベル領域拡大で解消（実際に PDF を生成・目視確認しながら反復）
 - ✅ **Claude Opus 4.8 へ更新**（2026-05、v0.3.3〜4）: judge ティアを Opus 4.7→4.8 に（Sonnet 4.6 / Haiku 4.5 も最新化）。旧 Opus 4 / Sonnet 4 (20250514) の 2026-06-15 retire を回避し、Opus 値下げ（$15→$5 input）も反映
 - ✅ **Atlas-Associates-Inc 組織へ移管**（2026-05、v0.3.4〜5）: リポジトリを taka-avantgarde → Atlas-Associates-Inc に移管。全 URL 更新、作者表記を Takayuki Miyano（@taka-avantgarde）+ Atlas Associates Inc に統一、gitleaks → GitHub native Secret Scanning に切替
@@ -456,6 +457,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.3.5` — 🆕 Claude Opus 4.8 / Sonnet 4.6 / Haiku 4.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング · AIDD 時代哲学
+`v0.3.6` — 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング · AIDD 時代哲学
 
 </div>

@@ -36,7 +36,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.3.5-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.3.6-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -83,7 +83,7 @@ macOS Homebrew users: use `python3 -m pip` — the bare `pip` command is no long
 
 **Recommended setup:**
 
-- **Spin up the most capable model available** in your IDE (Claude Opus 4.8, GPT-5, Gemini 2.5 Pro, etc.)
+- **Spin up the most capable model available** in your IDE (Claude Fable 5, GPT-5, Gemini 2.5 Pro, etc.)
 - **Paste `dde prompt --pdf`** into the terminal
 - **Go grab a coffee** ☕ — the AI will read hundreds of files, evaluate across
   9+ dimensions, research 5-10 competitors globally, and build a 24-page consulting PDF
@@ -388,6 +388,7 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 ## 🗺️ Roadmap
 
 **Recently shipped (v0.3.x)**
+- ✅ **Claude Fable 5 upgrade** (2026-06, v0.3.6): judge tier moved Opus 4.8 → **Fable 5** (`claude-fable-5`, Anthropic's most capable widely released model, GA 2026-06-09). Tier key renamed `opus` → `fable`. Pricing $10/$50 per MTok (2× Opus 4.8, prioritizing final-verdict quality)
 - ✅ **PDF chart polish + label overlap fix** (2026-05, v0.3.5): all bars across Score Dashboard / Tech Level / Competitive / Matrix charts redesigned as modern rounded pill shapes. Long Japanese labels (e.g. 「アーキテクチャ品質（セキュリティ含む）」) that overlapped the bars are fixed by widening the label area (verified by rendering + visually inspecting each PDF page)
 - ✅ **Claude Opus 4.8 upgrade** (2026-05, v0.3.3–4): judge tier moved Opus 4.7→4.8 (Sonnet 4.6 / Haiku 4.5 also refreshed). Avoids the 2026-06-15 retirement of legacy Opus 4 / Sonnet 4 (20250514) and reflects the Opus price drop ($15→$5 input)
 - ✅ **Transfer to Atlas-Associates-Inc org** (2026-05, v0.3.4–5): repo moved taka-avantgarde → Atlas-Associates-Inc. All URLs updated, author credit unified to Takayuki Miyano (@taka-avantgarde) + Atlas Associates Inc, gitleaks → GitHub native Secret Scanning
@@ -459,6 +460,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.3.5` — 🆕 Claude Opus 4.8 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live web research · 5-dimension scoring · AIDD-era philosophy
+`v0.3.6` — 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live web research · 5-dimension scoring · AIDD-era philosophy
 
 </div>
