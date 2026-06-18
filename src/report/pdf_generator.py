@@ -1434,6 +1434,23 @@ class PDFReportGenerator:
             )
         )
 
+        # RTL layout disclaimer (Arabic only): the Arabic text is contextually
+        # shaped and reads right-to-left, but the page layout stays LTR (labels
+        # on the left, values on the right) like the other languages.
+        if self._lang == "ar":
+            note_style = ParagraphStyle(
+                "CoverRTLNote", parent=cover_small,
+                fontSize=7.5, leading=11, alignment=1,
+                textColor=colors.HexColor("#9ca3af"),
+            )
+            rtl_note = (
+                "ملاحظة: النص العربي مُشكَّل ويُقرأ من اليمين إلى اليسار، "
+                "لكن تخطيط الصفحة يظل من اليسار إلى اليمين (التسميات يساراً والقيم يميناً) "
+                "كما في سائر اللغات."
+            )
+            elements.append(Spacer(1, 12 * mm))
+            elements.append(Paragraph(self._maybe_reshape(rtl_note), note_style))
+
         return elements
 
     def _build_executive_summary(self, result: AnalysisResult) -> list:
