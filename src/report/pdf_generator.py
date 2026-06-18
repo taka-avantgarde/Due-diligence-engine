@@ -52,6 +52,18 @@ logger = logging.getLogger(__name__)
 # Register CID fonts for Japanese support
 pdfmetrics.registerFont(UnicodeCIDFont("HeiseiMin-W3"))
 pdfmetrics.registerFont(UnicodeCIDFont("HeiseiKakuGo-W5"))
+pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))        # Simplified Chinese (zh)
+pdfmetrics.registerFont(UnicodeCIDFont("HYSMyeongJo-Medium"))  # Korean (ko)
+
+# Language → (normal, bold) font family. CJK CID fonts have no separate bold
+# face, so the same face is used for both weights. Latin-script languages use
+# the standard Helvetica (WinAnsi) family.
+_FONTS_FOR_LANG: dict[str, tuple[str, str]] = {
+    "ja": ("HeiseiMin-W3", "HeiseiKakuGo-W5"),
+    "zh": ("STSong-Light", "STSong-Light"),
+    "ko": ("HYSMyeongJo-Medium", "HYSMyeongJo-Medium"),
+}
+_DEFAULT_FONTS: tuple[str, str] = ("Helvetica", "Helvetica-Bold")
 
 # Color palette — Arc brand: black + sky blue (#5271FF)
 COLOR_BG_DARK = colors.HexColor("#000000")       # pure black (cover)
@@ -804,13 +816,8 @@ def _build_styles(lang: str = "en") -> dict[str, ParagraphStyle]:
     """Build custom paragraph styles for the PDF report."""
     base = getSampleStyleSheet()
 
-    # Select font family based on language
-    if lang == "ja":
-        font_normal = "HeiseiMin-W3"
-        font_bold = "HeiseiKakuGo-W5"
-    else:
-        font_normal = "Helvetica"
-        font_bold = "Helvetica-Bold"
+    # Select font family based on language (CJK → CID fonts; Latin → Helvetica)
+    font_normal, font_bold = _FONTS_FOR_LANG.get(lang, _DEFAULT_FONTS)
 
     # ── Typography system (v2.0 — explicit leading, hierarchical sizes) ──
     # All styles below specify `leading` explicitly to prevent overlap.
@@ -1185,6 +1192,14 @@ class PDFReportGenerator:
         """Get dimension name in the current language."""
         return _DIM_NAME_MAPS.get(self._lang, {}).get(name, name)
 
+    def _font_normal(self) -> str:
+        """Normal-weight font for the current language (CJK-aware)."""
+        return _FONTS_FOR_LANG.get(self._lang, _DEFAULT_FONTS)[0]
+
+    def _font_bold(self) -> str:
+        """Bold-weight font for the current language (CJK-aware)."""
+        return _FONTS_FOR_LANG.get(self._lang, _DEFAULT_FONTS)[1]
+
     def _build_cover_page(self, result: AnalysisResult) -> list:
         """Build the cover page — dark theme with Atlas Associates branding."""
         s = self._styles
@@ -1194,7 +1209,7 @@ class PDFReportGenerator:
         # White/light styles for dark background
         cover_title = ParagraphStyle(
             "CoverTitle",
-            fontName="HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold",
+            fontName=self._font_bold(),
             fontSize=28,
             leading=36,
             textColor=colors.white,
@@ -1203,7 +1218,7 @@ class PDFReportGenerator:
         )
         cover_subtitle = ParagraphStyle(
             "CoverSubtitle",
-            fontName="HeiseiMin-W3" if self._lang == "ja" else "Helvetica",
+            fontName=self._font_normal(),
             fontSize=16,
             leading=22,
             textColor=colors.HexColor("#9ca3af"),
@@ -1212,7 +1227,7 @@ class PDFReportGenerator:
         )
         cover_center = ParagraphStyle(
             "CoverCenter",
-            fontName="HeiseiMin-W3" if self._lang == "ja" else "Helvetica",
+            fontName=self._font_normal(),
             fontSize=10,
             textColor=colors.HexColor("#d1d5db"),
             alignment=1,
@@ -1220,7 +1235,7 @@ class PDFReportGenerator:
         )
         cover_small = ParagraphStyle(
             "CoverSmall",
-            fontName="HeiseiMin-W3" if self._lang == "ja" else "Helvetica",
+            fontName=self._font_normal(),
             fontSize=8,
             textColor=colors.HexColor("#6b7280"),
             alignment=0,
@@ -1377,8 +1392,8 @@ class PDFReportGenerator:
             table.setStyle(TableStyle([
                 ("BACKGROUND", (0, 0), (-1, 0), COLOR_ACCENT),
                 ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
-                ("FONTNAME", (0, 0), (-1, 0), "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"),
-                ("FONTNAME", (0, 1), (-1, -1), "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"),
+                ("FONTNAME", (0, 0), (-1, 0), self._font_bold()),
+                ("FONTNAME", (0, 1), (-1, -1), self._font_normal()),
                 ("FONTSIZE", (0, 0), (-1, -1), 10),
                 ("ALIGN", (1, 0), (1, -1), "RIGHT"),
                 ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER),
@@ -1421,8 +1436,8 @@ class PDFReportGenerator:
                 f"{dim.weighted_score:.1f}",
             ])
 
-        font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        font_header = self._font_bold()
+        font_body = self._font_normal()
 
         table = Table(table_data, colWidths=[6 * cm, 3 * cm, 3 * cm, 3 * cm])
         table.setStyle(TableStyle([
@@ -1557,8 +1572,8 @@ class PDFReportGenerator:
             col_width = 15 * cm / n_cols
             col_widths = [col_width] * n_cols
 
-            font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-            font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+            font_header = self._font_bold()
+            font_body = self._font_normal()
 
             table = Table(table_data, colWidths=col_widths)
             table.setStyle(TableStyle([
@@ -1653,8 +1668,8 @@ class PDFReportGenerator:
             [t["has_docs"], t["yes"] if code.has_documentation else t["no"]],
         ]
 
-        font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        font_header = self._font_bold()
+        font_body = self._font_normal()
 
         table = Table(metrics_data, colWidths=[6 * cm, 9 * cm])
         table.setStyle(TableStyle([
@@ -1704,8 +1719,8 @@ class PDFReportGenerator:
             [t["rush_ratio"], f"{git.rush_commit_ratio:.0%}"],
         ]
 
-        font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        font_header = self._font_bold()
+        font_body = self._font_normal()
 
         table = Table(git_data, colWidths=[6 * cm, 9 * cm])
         table.setStyle(TableStyle([
@@ -1753,8 +1768,8 @@ class PDFReportGenerator:
             [t["contradictions"], str(len(consistency.contradictions))],
         ]
 
-        font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        font_header = self._font_bold()
+        font_body = self._font_normal()
 
         table = Table(consistency_data, colWidths=[6 * cm, 9 * cm])
         table.setStyle(TableStyle([
@@ -1809,8 +1824,8 @@ class PDFReportGenerator:
                     ])
 
             if len(cost_data) > 1:
-                font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-                font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+                font_header = self._font_bold()
+                font_body = self._font_normal()
 
                 table = Table(cost_data, colWidths=[5 * cm, 5 * cm, 5 * cm])
                 table.setStyle(TableStyle([
@@ -1866,8 +1881,8 @@ class PDFReportGenerator:
             [t["operator"], cert.operator],
         ]
 
-        font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        font_header = self._font_bold()
+        font_body = self._font_normal()
 
         table = Table(cert_data, colWidths=[5 * cm, 10 * cm])
         table.setStyle(TableStyle([
@@ -1940,8 +1955,9 @@ class PDFReportGenerator:
             self._CREDIT,
         )
 
-        # Page number
+        # Page number (lang-aware font: the page label may be CJK for ja/zh/ko)
         page_label = self._t.get("page", "Page")
+        canvas.setFont(self._font_normal(), 7)
         canvas.drawRightString(
             page_width - 2 * cm,
             1.2 * cm,
@@ -1965,7 +1981,7 @@ class PDFReportGenerator:
         )
 
         # NDA notice
-        font_name = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        font_name = self._font_normal()
         canvas.setFont(font_name, 7)
         canvas.setFillColor(COLOR_TEXT_DIM)
         canvas.drawCentredString(
@@ -1974,8 +1990,9 @@ class PDFReportGenerator:
             self._t.get("nda_footer", "CONFIDENTIAL"),
         )
 
-        # Page number
+        # Page number (lang-aware font: the page label may be CJK for ja/zh/ko)
         page_label = self._t.get("page", "Page")
+        canvas.setFont(self._font_normal(), 7)
         canvas.drawRightString(
             page_width - 2 * cm,
             1.2 * cm,
@@ -2101,12 +2118,12 @@ class PDFReportGenerator:
             y = chart_h - (i + 1) * row_h + 14
 
             # Dimension label (left, bold)
-            font_name = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            font_name = self._font_bold()
             d.add(String(0, y + 4, name, fontName=font_name, fontSize=8.5,
                          fillColor=COLOR_TEXT))
 
             # Dimension description (below label, small gray text — truncated to label width)
-            desc_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+            desc_font = self._font_normal()
             desc_fit = desc if len(desc) <= 22 else desc[:21] + "…"
             d.add(String(0, y - 8, desc_fit, fontName=desc_font, fontSize=6.5,
                          fillColor=COLOR_TEXT_DIM))
@@ -2266,8 +2283,8 @@ class PDFReportGenerator:
         ]
 
         # Style for cell content
-        font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        font_header = self._font_bold()
+        font_body = self._font_normal()
         # Colored header — rendered as a separate "tag" row above body
         cell_header_style = ParagraphStyle(
             "SWOTHeader", fontName=font_header, fontSize=11,
@@ -2506,7 +2523,7 @@ class PDFReportGenerator:
             dim_levels.append((display_name, int(dim.level or 0), dim.label or ""))
 
         if dim_levels:
-            label_font = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            label_font = self._font_bold()
             val_font = "Helvetica-Bold"
             label_w = 172
             seg_w = 22
@@ -2977,13 +2994,13 @@ class PDFReportGenerator:
 
             # Item name (bold)
             item_name = item.item_name_ja if self._lang == "ja" and item.item_name_ja else item.item_name
-            font_bold = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            font_bold = self._font_bold()
             d.add(String(0, y + 4, item_name, fontName=font_bold, fontSize=8.5,
                          fillColor=COLOR_TEXT))
 
             # Confidence label (small gray below name)
             conf_label = confidence_badge.get(item.confidence, "M")
-            conf_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+            conf_font = self._font_normal()
             conf_text = f"Confidence: {conf_label}"
             d.add(String(0, y - 8, conf_text, fontName=conf_font, fontSize=6.5,
                          fillColor=COLOR_TEXT_DIM))
@@ -3068,7 +3085,7 @@ class PDFReportGenerator:
                    strokeColor=COLOR_TEXT_DIM, strokeWidth=0.6))
 
         # --- Axis scale ticks: 0, 25, 50, 75, 100 ---
-        af = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        af = self._font_normal()
         for val in (0, 50, 100):
             # X ticks
             tx = pl + pw * (val / 100)
@@ -3085,7 +3102,7 @@ class PDFReportGenerator:
 
         # --- Quadrant labels (for quadrant-type charts) ---
         if quadrant_labels and len(quadrant_labels) == 4:
-            lf = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            lf = self._font_bold()
             lc = colors.HexColor("#c0c4cc")
             ls = 5.5
             mx = pl + pw / 2
@@ -3115,7 +3132,7 @@ class PDFReportGenerator:
             d.add(Rect(sx, sy, sw, sh,
                        fillColor=colors.HexColor("#e8f4f8"),
                        strokeColor=colors.HexColor("#b8d8e8"), strokeWidth=0.3))
-            lf = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            lf = self._font_bold()
             d.add(String(sx + 2, sy + sh - 9,
                          self._t.get("sweet_spot", "Sweet Spot"),
                          fontName=lf, fontSize=5, fillColor=COLOR_ACCENT))
@@ -3140,7 +3157,7 @@ class PDFReportGenerator:
 
         # --- Data points ---
         is_bubble = (ctype == "bubble_3d")
-        nf = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        nf = self._font_normal()
         # Sort: non-target first, target on top
         sorted_pts = sorted(chart.data_points, key=lambda dp: dp.is_target)
         label_positions: list[tuple[float, float]] = []
@@ -3262,8 +3279,8 @@ class PDFReportGenerator:
         score_col_w = 30 * mm   # score / Lv / weight%
         bar_max_w = bar_col_w - 4   # actual drawing width
 
-        font_label = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        font_label = self._font_bold()
+        font_body = self._font_normal()
 
         label_para_style = ParagraphStyle(
             "AxisLabel", fontName=font_label, fontSize=10,
@@ -3377,8 +3394,8 @@ class PDFReportGenerator:
             "layers": t.get("subitem_layers", "Layers"),
         }
 
-        font_label = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
-        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        font_label = self._font_bold()
+        font_body = self._font_normal()
 
         sub_label_style = ParagraphStyle(
             "SubLabel", fontName=font_label, fontSize=10,
@@ -3640,7 +3657,7 @@ class PDFReportGenerator:
 
         # Legend — use ○△× (Japanese tech rating standard, universally rendered by CID fonts).
         # ✓✗ are NOT in HeiseiKakuGo-W5, so we use ○△× (U+25EF/U+25B3/U+00D7) instead.
-        legend_text_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        legend_text_font = self._font_normal()
         legend_symbol_font = "HeiseiKakuGo-W5"  # has ○△× in both languages
         legend_text = (
             f'<font name="{legend_symbol_font}" size="10" color="{COLOR_ACCENT.hexval()}">○</font> '
@@ -3663,7 +3680,7 @@ class PDFReportGenerator:
         all_companies = [im.target_company] + im.competitors[:10]
 
         # Header row
-        font_header = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+        font_header = self._font_bold()
         header_para_style = ParagraphStyle(
             "MatHeader", fontName=font_header, fontSize=7,
             textColor=COLOR_WHITE, alignment=1, leading=9,
@@ -3700,7 +3717,7 @@ class PDFReportGenerator:
             items_by_cat.setdefault(item.category, []).append(item)
 
         # Build table rows: header + (category-row + items)*N
-        font_body = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+        font_body = self._font_normal()
         item_para_style = ParagraphStyle(
             "MatItem", fontName=font_body, fontSize=7,
             textColor=COLOR_TEXT, alignment=0, leading=9,
@@ -3893,8 +3910,8 @@ class PDFReportGenerator:
                            else sample_chart.x_axis_label)
                 y_label = (sample_chart.y_axis_label_ja if self._lang == "ja" and sample_chart.y_axis_label_ja
                            else sample_chart.y_axis_label)
-                cap_font = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
-                cap_bold = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+                cap_font = self._font_normal()
+                cap_bold = self._font_bold()
                 if x_rat or y_rat:
                     cap_parts = []
                     if x_label and x_rat:
@@ -3917,7 +3934,7 @@ class PDFReportGenerator:
 
             # Build Table data: alternating label-row + chart-row
             table_data = []
-            body_font = "HeiseiKakuGo-W5" if self._lang == "ja" else "Helvetica-Bold"
+            body_font = self._font_bold()
 
             for m_left, m_right in grid_rows:
                 # Label row
@@ -3938,7 +3955,7 @@ class PDFReportGenerator:
                         placeholder.add(Rect(0, 0, cw, ch,
                                              fillColor=colors.HexColor("#f5f5f5"),
                                              strokeColor=COLOR_BORDER, strokeWidth=0.3))
-                        nf = "HeiseiMin-W3" if self._lang == "ja" else "Helvetica"
+                        nf = self._font_normal()
                         placeholder.add(String(cw / 2 - 12, ch / 2, "No data",
                                                fontName=nf, fontSize=7, fillColor=COLOR_TEXT_DIM))
                         row_charts.append(placeholder)

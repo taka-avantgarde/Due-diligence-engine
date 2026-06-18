@@ -961,6 +961,8 @@ _LANG_OUTPUT_NAMES = {
     "nl": "Dutch (Nederlands)",
     "it": "Italian (Italiano)",
     "id": "Indonesian (Bahasa Indonesia)",
+    "zh": "Simplified Chinese (简体中文)",
+    "ko": "Korean (한국어)",
 }
 
 
