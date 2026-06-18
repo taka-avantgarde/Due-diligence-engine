@@ -2,9 +2,13 @@
 
 ## ⚠️ ドキュメント同期（必須） / Doc Sync (MANDATORY)
 
-- README は **必ず日本語版（`README.ja.md`）と英語版（`README.md`）の両方を同期更新**すること。
-- 片方だけの更新は禁止。バージョン番号・機能説明・比較表・FAQ・ロードマップ・フッターなど、**あらゆる変更を両言語に反映**する。
-- README is bilingual: **always update BOTH `README.md` (EN) and `README.ja.md` (JA) together.** Never update only one.
+- README は **6 言語すべてを同期更新**すること:
+  - `README.md` (English) / `README.ja.md` (日本語) / `README.es.md` (Español) /
+    `README.ar.md` (العربية) / `README.fr.md` (Français) / `README.de.md` (Deutsch)
+- 一部の言語だけの更新は禁止。バージョン番号・機能説明・比較表・FAQ・ロードマップ・フッターなど、**あらゆる変更を全 6 言語に反映**する。
+- 各ファイル最上部の言語スイッチャーは全ファイルで同一（自言語のみ青ハイライト `5271FF`、他は淡灰 `EEF2F7`）。
+- README is multilingual (6 languages): **always update ALL of `README.md`, `README.ja.md`, `README.es.md`, `README.ar.md`, `README.fr.md`, `README.de.md` together.** Never update only some.
+- 翻訳元は英語版 `README.md`。新機能はまず英語版を確定 → 各言語へ反映。
 
 ## バージョン同期 / Version Sync
 

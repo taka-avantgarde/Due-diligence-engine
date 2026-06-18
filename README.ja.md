@@ -1,5 +1,13 @@
 <div align="center">
 
+🌐 **言語 ・ Language ・ Idioma ・ اللغة ・ Langue ・ Sprache**
+
+[![English](https://img.shields.io/badge/English-EEF2F7?style=for-the-badge)](README.md) [![● 日本語](https://img.shields.io/badge/%E2%97%8F%20%E6%97%A5%E6%9C%AC%E8%AA%9E-5271FF?style=for-the-badge)](README.ja.md) [![Español](https://img.shields.io/badge/Espa%C3%B1ol-EEF2F7?style=for-the-badge)](README.es.md) [![العربية](https://img.shields.io/badge/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-EEF2F7?style=for-the-badge)](README.ar.md) [![Français](https://img.shields.io/badge/Fran%C3%A7ais-EEF2F7?style=for-the-badge)](README.fr.md) [![Deutsch](https://img.shields.io/badge/Deutsch-EEF2F7?style=for-the-badge)](README.de.md)
+
+<sub>👆 バッジをクリックで言語切替 ・ click a badge to switch language</sub>
+
+---
+
 # 🔍 Due Diligence Engine
 
 ### **IDE の AI が、世界トップクラスの技術DDアナリストになる**
@@ -36,11 +44,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.3.6-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.3.7-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
-
-[English](README.md) · [**日本語**](README.ja.md)
 
 </div>
 
@@ -385,6 +391,7 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 ## 🗺️ ロードマップ
 
 **最近リリース (v0.3.x)**
+- ✅ **6 言語 README**（2026-06、v0.3.7）: 最上部に言語スイッチャーを設置し、現在の言語をハイライト表示 — English / 日本語 / Español / العربية / Français / Deutsch、各言語を `README.<lang>.md` に分離
 - ✅ **Claude Fable 5 へ更新**（2026-06、v0.3.6）: judge ティアを Opus 4.8 → **Fable 5**（`claude-fable-5`、Anthropic の最高性能モデル、2026-06-09 GA）に更新。ティア名も `opus` → `fable` にリネーム。価格は $10/$50 per MTok（Opus 4.8 比 2 倍だが最終判定の品質を最優先）
 - ✅ **PDF チャート視覚強化 + 文字重なり修正**（2026-05、v0.3.5）: スコアダッシュボード/技術レベル/競合/マトリックスの全バーをモダンな丸角ピル型に刷新。日本語の長いラベル（「アーキテクチャ品質（セキュリティ含む）」等）がバーに被る問題をラベル領域拡大で解消（実際に PDF を生成・目視確認しながら反復）
 - ✅ **Claude Opus 4.8 へ更新**（2026-05、v0.3.3〜4）: judge ティアを Opus 4.7→4.8 に（Sonnet 4.6 / Haiku 4.5 も最新化）。旧 Opus 4 / Sonnet 4 (20250514) の 2026-06-15 retire を回避し、Opus 値下げ（$15→$5 input）も反映
@@ -457,6 +464,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.3.6` — 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング · AIDD 時代哲学
+`v0.3.7` — 🌍 6 言語 README · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング
 
 </div>
