@@ -965,6 +965,7 @@ _LANG_OUTPUT_NAMES = {
     "ko": "Korean (한국어)",
     "vi": "Vietnamese (Tiếng Việt)",
     "th": "Thai (ภาษาไทย)",
+    "ar": "Arabic (العربية)",
 }
 
 

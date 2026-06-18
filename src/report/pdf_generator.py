@@ -77,6 +77,53 @@ if _register_ttf("NotoSansVI", "NotoSans-Regular.ttf"):
     _TTF_LANG_FONTS["vi"] = ("NotoSansVI", "NotoSansVI")
 if _register_ttf("NotoSansThai", "NotoSansThai-Regular.ttf"):
     _TTF_LANG_FONTS["th"] = ("NotoSansThai", "NotoSansThai")
+if _register_ttf("NotoNaskhArabic", "NotoNaskhArabic-Regular.ttf"):
+    _TTF_LANG_FONTS["ar"] = ("NotoNaskhArabic", "NotoNaskhArabic")
+
+# Arabic shaping/bidi: reportlab renders strings left-to-right with no contextual
+# shaping, so Arabic text must be pre-shaped (joined presentation forms) and
+# reordered (bidi → visual order) before drawing. Optional deps; if missing,
+# Arabic falls back to unshaped text rather than breaking.
+try:
+    import arabic_reshaper as _arabic_reshaper
+    from bidi.algorithm import get_display as _bidi_get_display
+    _HAS_ARABIC = True
+except Exception:  # noqa: BLE001
+    _HAS_ARABIC = False
+
+
+def _reshape_ar(text: str) -> str:
+    """Shape + bidi-reorder Arabic text for an LTR-only renderer (reportlab).
+
+    Non-Arabic strings pass through essentially unchanged (reshaper only touches
+    Arabic letters; bidi of pure-LTR text is the identity).
+    """
+    if not _HAS_ARABIC or not isinstance(text, str) or not text:
+        return text
+    try:
+        return _bidi_get_display(_arabic_reshaper.reshape(text))
+    except Exception:  # noqa: BLE001 — never let shaping crash report generation
+        return text
+
+
+def _deep_reshape_inplace(obj):
+    """Recursively shape every Arabic string inside a pydantic model / list / dict."""
+    from pydantic import BaseModel
+
+    if isinstance(obj, BaseModel):
+        for name in obj.__class__.model_fields:
+            try:
+                setattr(obj, name, _deep_reshape_inplace(getattr(obj, name, None)))
+            except Exception:  # noqa: BLE001 — frozen/validated fields: skip
+                pass
+        return obj
+    if isinstance(obj, list):
+        return [_deep_reshape_inplace(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: _deep_reshape_inplace(v) for k, v in obj.items()}
+    if isinstance(obj, str):
+        return _reshape_ar(obj)
+    return obj
 
 # Language → (normal, bold) font family. CJK CID fonts have no separate bold
 # face, so the same face is used for both weights. Latin-script languages use
@@ -1047,6 +1094,12 @@ class PDFReportGenerator:
         self._lang = lang if lang in _PDF_I18N else "en"
         self._styles = _build_styles(self._lang)
         self._t = _PDF_I18N.get(self._lang, _PDF_I18N["en"])
+        if self._lang == "ar":
+            # Pre-shape chrome labels + all report content for RTL rendering.
+            self._t = {k: (_reshape_ar(v) if isinstance(v, str) else v)
+                       for k, v in self._t.items()}
+            if getattr(result, "consulting_report", None) is not None:
+                _deep_reshape_inplace(result.consulting_report)
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
@@ -1212,9 +1265,13 @@ class PDFReportGenerator:
         logger.info(f"PDF report saved to {output_path}")
         return output_path
 
+    def _maybe_reshape(self, text: str) -> str:
+        """Shape Arabic chrome/content strings for RTL; no-op for other languages."""
+        return _reshape_ar(text) if self._lang == "ar" else text
+
     def _dim_name(self, name: str) -> str:
         """Get dimension name in the current language."""
-        return _DIM_NAME_MAPS.get(self._lang, {}).get(name, name)
+        return self._maybe_reshape(_DIM_NAME_MAPS.get(self._lang, {}).get(name, name))
 
     def _font_normal(self) -> str:
         """Normal-weight font for the current language (CJK-aware)."""
@@ -1306,7 +1363,7 @@ class PDFReportGenerator:
             # Grade line first (above score)
             grade_label = f'{t["grade_prefix"]}: {grade}'
             rec = _PDF_GRADE_REC.get(self._lang, _PDF_GRADE_REC["en"])
-            recommendation = rec.get(grade, "")
+            recommendation = self._maybe_reshape(rec.get(grade, ""))
             elements.append(
                 Paragraph(
                     f'<font color="#5271FF" size="14"><b>{grade_label}</b></font>'
@@ -1393,7 +1450,7 @@ class PDFReportGenerator:
         score = result.score
         if score is not None:
             rec = _PDF_GRADE_REC.get(self._lang, _PDF_GRADE_REC["en"])
-            recommendation = rec.get(score.grade, score.recommendation)
+            recommendation = self._maybe_reshape(rec.get(score.grade, score.recommendation))
             elements.append(Paragraph(recommendation, s["body"]))
 
             # Key metrics summary
@@ -2122,7 +2179,7 @@ class PDFReportGenerator:
             if not dim:
                 continue
             name = self._dim_name(en_name)
-            desc = _dim_desc_maps.get(self._lang, _dim_desc_en).get(key, "")
+            desc = self._maybe_reshape(_dim_desc_maps.get(self._lang, _dim_desc_en).get(key, ""))
             w = weights.get(key, 0)
             dims.append((name, dim.score, dim.level, w, desc))
 
