@@ -1,10 +1,11 @@
 <div align="center">
 
-🌐 **言語 ・ Language ・ Idioma ・ اللغة ・ Langue ・ Sprache**
+### 🌐 Language ・ 言語 ・ Idioma ・ اللغة ・ Langue ・ Sprache
 
-🇬🇧 [![English](https://img.shields.io/badge/English-EEF2F7?style=for-the-badge)](README.md) 🇯🇵 [![● 日本語](https://img.shields.io/badge/%E2%97%8F%20%E6%97%A5%E6%9C%AC%E8%AA%9E-5271FF?style=for-the-badge)](README.ja.md) 🇪🇸 [![Español](https://img.shields.io/badge/Espa%C3%B1ol-EEF2F7?style=for-the-badge)](README.es.md) 🇸🇦 [![العربية](https://img.shields.io/badge/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-EEF2F7?style=for-the-badge)](README.ar.md) 🇫🇷 [![Français](https://img.shields.io/badge/Fran%C3%A7ais-EEF2F7?style=for-the-badge)](README.fr.md) 🇩🇪 [![Deutsch](https://img.shields.io/badge/Deutsch-EEF2F7?style=for-the-badge)](README.de.md)
+| 🇬🇧 [![English](https://img.shields.io/badge/English-EEF2F7?style=for-the-badge)](README.md) | 🇯🇵 [![● 日本語](https://img.shields.io/badge/%E2%97%8F%20%E6%97%A5%E6%9C%AC%E8%AA%9E-5271FF?style=for-the-badge)](README.ja.md) | 🇪🇸 [![Español](https://img.shields.io/badge/Espa%C3%B1ol-EEF2F7?style=for-the-badge)](README.es.md) | 🇸🇦 [![العربية](https://img.shields.io/badge/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-EEF2F7?style=for-the-badge)](README.ar.md) | 🇫🇷 [![Français](https://img.shields.io/badge/Fran%C3%A7ais-EEF2F7?style=for-the-badge)](README.fr.md) | 🇩🇪 [![Deutsch](https://img.shields.io/badge/Deutsch-EEF2F7?style=for-the-badge)](README.de.md) |
+|:--:|:--:|:--:|:--:|:--:|:--:|
 
-<sub>👆 バッジをクリックで言語切替 ・ click a badge to switch language</sub>
+<sub>👆 Click your language to switch ・ クリックで言語を切り替え</sub>
 
 <sub>🪟 **Windows の場合:** ネイティブで動作（Git が PATH に必要）。完全なセキュリティ保証（一時ファイルの権限ロック）には **WSL2** での実行を推奨。</sub>
 
