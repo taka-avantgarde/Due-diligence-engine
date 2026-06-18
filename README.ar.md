@@ -1,8 +1,6 @@
 <div align="center">
 
-### 🌐 اللغة
-
-| 🇬🇧 [![English](https://img.shields.io/badge/English-EEF2F7?style=for-the-badge)](README.md) | 🇯🇵 [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-EEF2F7?style=for-the-badge)](README.ja.md) | 🇪🇸 [![Español](https://img.shields.io/badge/Espa%C3%B1ol-EEF2F7?style=for-the-badge)](README.es.md) | 🇸🇦 [![● العربية](https://img.shields.io/badge/%E2%97%8F%20%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-5271FF?style=for-the-badge)](README.ar.md) | 🇫🇷 [![Français](https://img.shields.io/badge/Fran%C3%A7ais-EEF2F7?style=for-the-badge)](README.fr.md) | 🇩🇪 [![Deutsch](https://img.shields.io/badge/Deutsch-EEF2F7?style=for-the-badge)](README.de.md) |
+| 🇬🇧 [![English](https://img.shields.io/badge/English-30363D?style=for-the-badge)](README.md) | 🇯🇵 [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-30363D?style=for-the-badge)](README.ja.md) | 🇪🇸 [![Español](https://img.shields.io/badge/Espa%C3%B1ol-30363D?style=for-the-badge)](README.es.md) | 🇸🇦 [![العربية](https://img.shields.io/badge/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-5271FF?style=for-the-badge)](README.ar.md) | 🇫🇷 [![Français](https://img.shields.io/badge/Fran%C3%A7ais-30363D?style=for-the-badge)](README.fr.md) | 🇩🇪 [![Deutsch](https://img.shields.io/badge/Deutsch-30363D?style=for-the-badge)](README.de.md) |
 |:--:|:--:|:--:|:--:|:--:|:--:|
 
 <sub>👆 Click your language to switch ・ クリックで言語を切り替え</sub>
