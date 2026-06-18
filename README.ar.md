@@ -52,6 +52,8 @@
 
 ---
 
+<div dir="rtl">
+
 ## ⚡ البدء السريع
 
 **التثبيت مرة واحدة:**
@@ -458,6 +460,8 @@ pytest
 ## 📜 الترخيص
 
 [Apache License 2.0](LICENSE) — حقوق النشر © 2026 [Takayuki Miyano](https://github.com/taka-avantgarde) / [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
+
+</div>
 
 ---
 
