@@ -746,6 +746,18 @@ _DIM_NAME_ES = {
 # Per-language dimension-name maps (en and unmapped langs use the English name as-is)
 _DIM_NAME_MAPS = {"ja": _DIM_NAME_JA, "es": _DIM_NAME_ES}
 
+# Merge in additional Latin-script language packs (fr / de / pt / nl / it / id).
+# These render with the standard Helvetica font (WinAnsi), so no font work needed.
+from src.report.i18n_packs import (  # noqa: E402
+    PDF_I18N_PACKS as _PDF_I18N_PACKS,
+    GRADE_REC_PACKS as _GRADE_REC_PACKS,
+    DIM_NAME_PACKS as _DIM_NAME_PACKS,
+    DIM_DESC_PACKS as _DIM_DESC_PACKS,
+)
+_PDF_I18N.update(_PDF_I18N_PACKS)
+_PDF_GRADE_REC.update(_GRADE_REC_PACKS)
+_DIM_NAME_MAPS.update(_DIM_NAME_PACKS)
+
 
 def _wrap_lines(text: str, max_chars_per_line: int, max_lines: int = 2) -> list[str]:
     """Wrap text into N lines for use with Drawing.String (no auto-wrap).
@@ -2053,7 +2065,7 @@ class PDFReportGenerator:
             "architecture_quality": "Estructura del código + madurez de seguridad (cifrado, autenticación, vulnerabilidades)",
             "claim_consistency": "Alineación entre las afirmaciones de marketing y el código real",
         }
-        _dim_desc_maps = {"en": _dim_desc_en, "ja": _dim_desc_ja, "es": _dim_desc_es}
+        _dim_desc_maps = {"en": _dim_desc_en, "ja": _dim_desc_ja, "es": _dim_desc_es, **_DIM_DESC_PACKS}
         weights = {
             "technical_originality": 0.20,
             "technology_advancement": 0.20,
@@ -2130,10 +2142,7 @@ class PDFReportGenerator:
 
         # Weighted total line
         weighted_total = sum(sc * w for _, sc, _, w, _ in dims)
-        _wt_label = {
-            "ja": "加重合計スコア",
-            "es": "Puntuación Ponderada Total",
-        }.get(self._lang, "Weighted Total Score")
+        _wt_label = self._t.get("weighted_score", "Weighted Total Score")
         total_text = f"{_wt_label}: <b>{weighted_total:.1f}</b> / 100"
         elements.append(Paragraph(total_text, s["body"]))
 

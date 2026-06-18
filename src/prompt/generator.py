@@ -955,6 +955,12 @@ def generate_consulting_prompt(
 # (PDF chrome must also be localized in pdf_generator._PDF_I18N for full coverage.)
 _LANG_OUTPUT_NAMES = {
     "es": "Spanish (Español)",
+    "fr": "French (Français)",
+    "de": "German (Deutsch)",
+    "pt": "Portuguese (Português)",
+    "nl": "Dutch (Nederlands)",
+    "it": "Italian (Italiano)",
+    "id": "Indonesian (Bahasa Indonesia)",
 }
 
 

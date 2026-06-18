@@ -176,7 +176,7 @@ def analyze(
 @cli.command()
 @click.argument("target", default=".", required=False)
 @click.option("--name", "-n", default=None, help="Project name (auto-detected if omitted)")
-@click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja", "es"]),
+@click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja", "es", "fr", "de", "pt", "nl", "it", "id"]),
               help="Output language (en: English, ja: Japanese)")
 @click.option("--stage", "-s", default="unknown",
               type=click.Choice(["seed", "series_a", "series_b", "growth", "unknown"]),
@@ -396,7 +396,7 @@ def prompt(
 @click.option("--consulting", type=click.Path(exists=True), default=None,
               help="Consulting report JSON from AI evaluation (generates consulting-grade PDF)")
 @click.option("--pdf", "-p", is_flag=True, help="Generate PDF output")
-@click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja", "es"]),
+@click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja", "es", "fr", "de", "pt", "nl", "it", "id"]),
               help="PDF language")
 def report(
     result_file: str | None,
