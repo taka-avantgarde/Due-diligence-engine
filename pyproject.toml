@@ -42,6 +42,8 @@ dde = "src.cli:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
+# Bundle the Noto TTF fonts (Vietnamese / Thai report rendering) into the wheel.
+artifacts = ["src/report/fonts/*.ttf"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -963,6 +963,8 @@ _LANG_OUTPUT_NAMES = {
     "id": "Indonesian (Bahasa Indonesia)",
     "zh": "Simplified Chinese (简体中文)",
     "ko": "Korean (한국어)",
+    "vi": "Vietnamese (Tiếng Việt)",
+    "th": "Thai (ภาษาไทย)",
 }
 
 

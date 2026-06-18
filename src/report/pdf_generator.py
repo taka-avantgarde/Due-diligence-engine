@@ -28,6 +28,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm, mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.graphics import renderPDF
 from reportlab.graphics.shapes import Drawing, Rect, String, Line, Circle
 from reportlab.platypus import (
@@ -55,6 +56,28 @@ pdfmetrics.registerFont(UnicodeCIDFont("HeiseiKakuGo-W5"))
 pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))        # Simplified Chinese (zh)
 pdfmetrics.registerFont(UnicodeCIDFont("HYSMyeongJo-Medium"))  # Korean (ko)
 
+# Bundled Noto TTF fonts (OFL) for scripts not covered by the built-in CID
+# fonts or Helvetica/WinAnsi: Vietnamese (Latin diacritics beyond WinAnsi)
+# and Thai. Registration is best-effort — if a font file is missing the
+# language simply falls back to Helvetica rather than crashing.
+_FONT_DIR = Path(__file__).resolve().parent / "fonts"
+_TTF_LANG_FONTS: dict[str, tuple[str, str]] = {}
+
+
+def _register_ttf(name: str, filename: str) -> bool:
+    try:
+        pdfmetrics.registerFont(TTFont(name, str(_FONT_DIR / filename)))
+        return True
+    except Exception as exc:  # noqa: BLE001 — missing/corrupt font must not break import
+        logger.warning("Could not register TTF font %s (%s): %s", name, filename, exc)
+        return False
+
+
+if _register_ttf("NotoSansVI", "NotoSans-Regular.ttf"):
+    _TTF_LANG_FONTS["vi"] = ("NotoSansVI", "NotoSansVI")
+if _register_ttf("NotoSansThai", "NotoSansThai-Regular.ttf"):
+    _TTF_LANG_FONTS["th"] = ("NotoSansThai", "NotoSansThai")
+
 # Language → (normal, bold) font family. CJK CID fonts have no separate bold
 # face, so the same face is used for both weights. Latin-script languages use
 # the standard Helvetica (WinAnsi) family.
@@ -62,6 +85,7 @@ _FONTS_FOR_LANG: dict[str, tuple[str, str]] = {
     "ja": ("HeiseiMin-W3", "HeiseiKakuGo-W5"),
     "zh": ("STSong-Light", "STSong-Light"),
     "ko": ("HYSMyeongJo-Medium", "HYSMyeongJo-Medium"),
+    **_TTF_LANG_FONTS,
 }
 _DEFAULT_FONTS: tuple[str, str] = ("Helvetica", "Helvetica-Bold")
 
