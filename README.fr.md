@@ -44,7 +44,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.3.7-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.3.8-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -394,6 +394,7 @@ R : DDE évalue le code source, pas le badge. Un service de stockage en clair ce
 ## 🗺️ Feuille de route
 
 **Livré récemment (v0.3.x)**
+- ✅ **Corrections de compatibilité Windows** (2026-06, v0.3.8) : chemin temporaire multiplateforme pour le flux de conseil `--pdf` (auparavant un `/tmp` codé en dur) et prise en charge du presse-papiers Windows (`clip`) pour `--copy`
 - ✅ **READMEs en 6 langues** (2026-06, v0.3.7) : sélecteur de langue en haut de page avec la langue active mise en évidence — English / 日本語 / Español / العربية / Français / Deutsch, chacun étant un fichier `README.<lang>.md` distinct
 - ✅ **Mise à niveau vers Claude Fable 5** (2026-06, v0.3.6) : le palier juge est passé d'Opus 4.8 → **Fable 5** (`claude-fable-5`, le modèle le plus capable largement diffusé d'Anthropic, GA 2026-06-09). Clé de palier renommée `opus` → `fable`. Tarif 10 $/50 $ par MTok (2× Opus 4.8, priorité à la qualité du verdict final)
 - ✅ **Peaufinage des graphiques PDF + correction du chevauchement des libellés** (2026-05, v0.3.5) : toutes les barres des graphiques Tableau de bord des scores / Niveau technique / Concurrentiel / Matrice ont été redessinées en pilules arrondies modernes. Les longs libellés japonais (par ex. « アーキテクチャ品質（セキュリティ含む） ») qui chevauchaient les barres sont corrigés en élargissant la zone des libellés (vérifié par rendu + inspection visuelle de chaque page PDF)
@@ -467,6 +468,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.3.7` — 🌍 READMEs en 6 langues · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Recherche web en direct · notation à 5 dimensions
+`v0.3.8` — 🌍 READMEs en 6 langues · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Recherche web en direct · notation à 5 dimensions
 
 </div>

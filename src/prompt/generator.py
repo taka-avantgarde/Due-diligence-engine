@@ -2229,21 +2229,25 @@ Do not add markdown formatting around it — output raw JSON only.
 
 def _consulting_pdf_command(result: AnalysisResult, lang: str) -> str:
     """Generate the final instruction to save JSON and produce PDF."""
+    import os
+    import tempfile
     from datetime import datetime
 
     project_safe = result.project_name.replace("/", "_").replace("\\", "_")
     date_stamp = datetime.now().strftime("%Y%m%d")
     filename = f"dde_consulting_{project_safe}_{date_stamp}.json"
+    # Cross-platform temp path: /tmp on Unix, %TEMP% (e.g. C:\Users\...\Temp) on Windows
+    temp_path = os.path.join(tempfile.gettempdir(), filename)
 
     if lang == "ja":
         return f"""## 実行手順（質問せずに全て実行すること）
 
 **Step 1**: リポジトリのコードを読み取り、上記スキーマに従ったJSONを生成する
-**Step 2**: JSONを `/tmp/{filename}` に保存する（Write toolまたはcatコマンドで）
+**Step 2**: JSONを `{temp_path}` に保存する（Write toolまたはcatコマンドで）
 **Step 3**: 以下のコマンドを実行する:
 
 ```bash
-dde report --consulting /tmp/{filename} --pdf --lang ja
+dde report --consulting "{temp_path}" --pdf --lang ja
 ```
 
 **Step 4**: PDFは `~/Downloads/` に保存される。ファイルパスをユーザーに伝える
@@ -2258,11 +2262,11 @@ dde report --consulting /tmp/{filename} --pdf --lang ja
         return f"""## Execution Steps (do NOT ask questions — just execute)
 
 **Step 1**: Read the repository code and generate JSON following the schema above
-**Step 2**: Save JSON to `/tmp/{filename}` (via Write tool or cat command)
+**Step 2**: Save JSON to `{temp_path}` (via Write tool or cat command)
 **Step 3**: Run this command:
 
 ```bash
-dde report --consulting /tmp/{filename} --pdf --lang en
+dde report --consulting "{temp_path}" --pdf --lang en
 ```
 
 **Step 4**: PDF is saved to `~/Downloads/`. Tell the user the file path.

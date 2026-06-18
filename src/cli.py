@@ -27,7 +27,7 @@ console = Console()
 
 
 @click.group()
-@click.version_option(version="0.3.7", prog_name="dde")
+@click.version_option(version="0.3.8", prog_name="dde")
 def cli() -> None:
     """Due Diligence Engine - AI startup technical due diligence."""
     pass
@@ -362,14 +362,18 @@ def prompt(
     if copy:
         try:
             import subprocess
-            process = subprocess.Popen(
-                ["pbcopy"] if sys.platform == "darwin" else ["xclip", "-selection", "clipboard"],
-                stdin=subprocess.PIPE,
-            )
+            # Cross-platform clipboard: Windows (clip), macOS (pbcopy), Linux (xclip)
+            if sys.platform == "win32":
+                clip_cmd = ["clip"]
+            elif sys.platform == "darwin":
+                clip_cmd = ["pbcopy"]
+            else:
+                clip_cmd = ["xclip", "-selection", "clipboard"]
+            process = subprocess.Popen(clip_cmd, stdin=subprocess.PIPE)
             process.communicate(prompt_text.encode("utf-8"))
             console.print("[green]Prompt copied to clipboard![/green]")
         except (FileNotFoundError, OSError):
-            console.print("[yellow]Could not copy to clipboard (pbcopy/xclip not found)[/yellow]")
+            console.print("[yellow]Could not copy to clipboard (clip/pbcopy/xclip not found)[/yellow]")
 
     if not pdf:
         console.print(

@@ -44,7 +44,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.3.7-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.3.8-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -391,6 +391,7 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 ## 🗺️ ロードマップ
 
 **最近リリース (v0.3.x)**
+- ✅ **Windows 互換性修正**（2026-06、v0.3.8）: `--pdf` コンサルフローの一時ファイルパスをクロスプラットフォーム化（旧 `/tmp` ハードコード）+ `--copy` の Windows クリップボード対応（`clip`）
 - ✅ **6 言語 README**（2026-06、v0.3.7）: 最上部に言語スイッチャーを設置し、現在の言語をハイライト表示 — English / 日本語 / Español / العربية / Français / Deutsch、各言語を `README.<lang>.md` に分離
 - ✅ **Claude Fable 5 へ更新**（2026-06、v0.3.6）: judge ティアを Opus 4.8 → **Fable 5**（`claude-fable-5`、Anthropic の最高性能モデル、2026-06-09 GA）に更新。ティア名も `opus` → `fable` にリネーム。価格は $10/$50 per MTok（Opus 4.8 比 2 倍だが最終判定の品質を最優先）
 - ✅ **PDF チャート視覚強化 + 文字重なり修正**（2026-05、v0.3.5）: スコアダッシュボード/技術レベル/競合/マトリックスの全バーをモダンな丸角ピル型に刷新。日本語の長いラベル（「アーキテクチャ品質（セキュリティ含む）」等）がバーに被る問題をラベル領域拡大で解消（実際に PDF を生成・目視確認しながら反復）
@@ -464,6 +465,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.3.7` — 🌍 6 言語 README · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング
+`v0.3.8` — 🌍 6 言語 README · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング
 
 </div>
