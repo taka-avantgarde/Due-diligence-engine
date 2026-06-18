@@ -6,6 +6,8 @@
 
 <sub>👆 バッジをクリックで言語切替 ・ click a badge to switch language</sub>
 
+<sub>🪟 **Windows の場合:** ネイティブで動作（Git が PATH に必要）。完全なセキュリティ保証（一時ファイルの権限ロック）には **WSL2** での実行を推奨。</sub>
+
 ---
 
 # 🔍 Due Diligence Engine

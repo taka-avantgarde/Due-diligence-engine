@@ -6,6 +6,8 @@
 
 <sub>👆 haz clic en una insignia para cambiar de idioma</sub>
 
+<sub>🪟 **En Windows:** funciona de forma nativa (Git debe estar en el PATH) — para la garantía de seguridad completa (bloqueo de permisos de archivos temporales), ejecuta con **WSL2**.</sub>
+
 ---
 
 # 🔍 Due Diligence Engine

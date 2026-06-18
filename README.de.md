@@ -6,6 +6,8 @@
 
 <sub>👆 klicke auf ein Badge, um die Sprache zu wechseln</sub>
 
+<sub>🪟 **Unter Windows:** läuft nativ (Git muss im PATH sein) — für die vollständige Sicherheitsgarantie (Berechtigungssperre für temporäre Dateien) WSL2 verwenden.</sub>
+
 ---
 
 # 🔍 Due Diligence Engine

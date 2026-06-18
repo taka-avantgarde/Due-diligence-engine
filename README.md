@@ -6,6 +6,8 @@
 
 <sub>👆 click a badge to switch language ・ バッジをクリックで言語切替</sub>
 
+<sub>🪟 **On Windows:** works natively (Git required on PATH) — for the full security guarantee (temp-file permission lock), run under **WSL2**.</sub>
+
 ---
 
 # 🔍 Due Diligence Engine
