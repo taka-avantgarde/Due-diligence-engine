@@ -1,6 +1,6 @@
 <div align="center">
 
-### 🌐 Language ・ 言語 ・ Idioma ・ اللغة ・ Langue ・ Sprache
+### 🌐 اللغة
 
 | 🇬🇧 [![English](https://img.shields.io/badge/English-EEF2F7?style=for-the-badge)](README.md) | 🇯🇵 [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-EEF2F7?style=for-the-badge)](README.ja.md) | 🇪🇸 [![Español](https://img.shields.io/badge/Espa%C3%B1ol-EEF2F7?style=for-the-badge)](README.es.md) | 🇸🇦 [![● العربية](https://img.shields.io/badge/%E2%97%8F%20%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-5271FF?style=for-the-badge)](README.ar.md) | 🇫🇷 [![Français](https://img.shields.io/badge/Fran%C3%A7ais-EEF2F7?style=for-the-badge)](README.fr.md) | 🇩🇪 [![Deutsch](https://img.shields.io/badge/Deutsch-EEF2F7?style=for-the-badge)](README.de.md) |
 |:--:|:--:|:--:|:--:|:--:|:--:|
