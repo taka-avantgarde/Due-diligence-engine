@@ -207,7 +207,7 @@ _PDF_I18N = {
         "invest_pass": "Pass",
         "invest_strong_pass": "Strong Pass",
         "score_dashboard": "Score Dashboard",
-        "score_dashboard_subtitle": "6-Dimension Evaluation at a Glance",
+        "score_dashboard_subtitle": "5-Dimension Evaluation at a Glance",
         # Site Verification
         "site_verification": "Site Verification",
         "site_verification_subtitle": "Website Claims vs Codebase Evidence",
@@ -502,6 +502,198 @@ _PDF_I18N = {
         "rationale_hq": "本社",
         "rationale_position": "市場ポジション",
     },
+    "es": {
+        "title_prefix": "DUE DILIGENCE ENGINE",
+        "report_title": "Informe de Due Diligence Técnica",
+        "analysis_id": "ID de Análisis",
+        "date": "Fecha",
+        "grade_prefix": "Calificación",
+        "exec_summary": "Resumen Ejecutivo",
+        "metric": "Métrica",
+        "value": "Valor",
+        "overall_score": "Puntuación Global",
+        "total_red_flags": "Total de Señales de Alerta",
+        "critical_flags": "Señales Críticas",
+        "high_severity": "Señales de Alta Severidad",
+        "files_analyzed": "Archivos Analizados",
+        "lines_of_code": "Líneas de Código",
+        "languages": "Lenguajes",
+        "api_cost": "Costo de API",
+        "score_breakdown": "Desglose de Puntuación",
+        "dimension": "Dimensión",
+        "score": "Puntuación",
+        "weight": "Peso",
+        "weighted_score": "Puntuación Ponderada",
+        "red_flags": "Señales de Alerta",
+        "codebase_metrics": "Métricas del Código Base",
+        "total_files": "Total de Archivos",
+        "total_lines": "Total de Líneas de Código",
+        "wrapper_ratio": "Proporción de Wrappers de API",
+        "test_coverage": "Estimación de Cobertura de Pruebas",
+        "dependencies": "Dependencias",
+        "has_tests": "Tiene Pruebas",
+        "has_cicd": "Tiene CI/CD",
+        "has_docs": "Tiene Documentación",
+        "key_findings": "Hallazgos Clave",
+        "git_forensics": "Análisis Forense de Git",
+        "total_commits": "Total de Commits",
+        "unique_authors": "Autores Únicos",
+        "first_commit": "Primer Commit",
+        "last_commit": "Último Commit",
+        "rush_ratio": "Proporción de Commits Apresurados",
+        "suspicious_patterns": "Patrones Sospechosos",
+        "claim_consistency": "Consistencia de Afirmaciones",
+        "consistency_score": "Puntuación de Consistencia",
+        "verified_claims": "Afirmaciones Verificadas",
+        "unverified_claims": "Afirmaciones No Verificadas",
+        "contradictions": "Contradicciones",
+        "contradictions_found": "Contradicciones Encontradas",
+        "analysis_cost": "Costo del Análisis",
+        "total_api_cost": "Costo Total de API",
+        "model_tier": "Nivel del Modelo",
+        "input_tokens": "Tokens de Entrada",
+        "output_tokens": "Tokens de Salida",
+        "purge_cert_title": "Certificado de Purga de Datos",
+        "purge_cert_body": (
+            "Esto certifica que todo el código fuente y los datos de análisis asociados con "
+            "el siguiente análisis han sido borrados criptográficamente de este sistema."
+        ),
+        "field": "Campo",
+        "certificate_id": "ID del Certificado",
+        "project_name": "Nombre del Proyecto",
+        "purge_timestamp": "Marca de Tiempo de la Purga",
+        "files_purged": "Archivos Purgados",
+        "bytes_overwritten": "Bytes Sobrescritos",
+        "deletion_method": "Método de Eliminación",
+        "operator": "Operador",
+        "verification_hash": "Hash de Verificación",
+        "purge_footer": (
+            "Todos los datos del código fuente han sido eliminados permanentemente de esta herramienta. "
+            "Solo se han conservado las puntuaciones y los hallazgos del informe."
+        ),
+        "nda_footer": (
+            "CONFIDENCIAL - Este informe está sujeto a un NDA. "
+            "No distribuir sin autorización."
+        ),
+        "page": "Página",
+        "yes": "Sí",
+        "no": "No",
+        "no_score": "No se calculó ninguna puntuación para este análisis.",
+        "improvement_title": "Recomendaciones de Mejora",
+        "business_summary": "Resumen Ejecutivo de Negocio",
+        "swot_analysis": "Análisis SWOT",
+        "strengths": "Fortalezas",
+        "weaknesses": "Debilidades",
+        "opportunities": "Oportunidades",
+        "threats": "Amenazas",
+        "tech_level": "Evaluación del Nivel Tecnológico",
+        "future_outlook": "Perspectiva a Futuro",
+        "product_vision": "Visión del Producto",
+        "viability": "Evaluación de Viabilidad",
+        "year_1": "Año 1",
+        "year_3": "Año 3",
+        "year_5": "Año 5",
+        "confidence": "Confianza",
+        "milestones": "Hitos Clave",
+        "strategic_advice": "Asesoría Estratégica",
+        "immediate_actions": "Acciones Inmediatas",
+        "medium_term": "Prioridades a Mediano Plazo",
+        "long_term_vision": "Visión a Largo Plazo",
+        "investment_thesis": "Tesis de Inversión",
+        "recommendation": "Recomendación",
+        "key_risks": "Riesgos Clave",
+        "key_upside": "Potencial Alcista Clave",
+        "comparable_companies": "Empresas Comparables",
+        "valuation_factors": "Factores de Valoración",
+        "glossary": "Glosario",
+        "term": "Término",
+        "definition": "Definición",
+        "ai_model": "Modelo de IA Utilizado",
+        "enables": "Habilita",
+        "action": "Acción",
+        "rationale": "Justificación",
+        "impact": "Impacto Esperado",
+        "invest_strong": "Inversión Sólida",
+        "invest_conditions": "Invertir con Condiciones",
+        "invest_cautious": "Cauteloso",
+        "invest_pass": "Descartar",
+        "invest_strong_pass": "Descartar Rotundamente",
+        "score_dashboard": "Panel de Puntuación",
+        "score_dashboard_subtitle": "Evaluación de 5 Dimensiones de un Vistazo",
+        "site_verification": "Verificación del Sitio",
+        "site_verification_subtitle": "Afirmaciones del Sitio Web vs Evidencia del Código Base",
+        "overall_credibility": "Credibilidad Global",
+        "sv_urls_analyzed": "URLs Analizadas",
+        "sv_summary": "Resumen",
+        "competitive_analysis": "Análisis Competitivo",
+        "competitive_subtitle": "Gráficos de Posicionamiento de Mercado",
+        "chart_magic_quadrant": "Forrester Wave / Magic Quadrant",
+        "chart_bcg_matrix": "Matriz de Crecimiento-Participación BCG",
+        "chart_mckinsey_moat": "Análisis de Foso Tecnológico",
+        "chart_gs_risk_return": "Análisis de Rendimiento Ajustado al Riesgo",
+        "chart_bubble_3d": "Innovación vs. Comercialización",
+        "chart_security_posture": "Madurez de Seguridad y Privacidad",
+        "chart_data_governance": "Gobernanza de Datos y Transparencia",
+        "leaders": "Líderes",
+        "challengers": "Competidores Destacados",
+        "visionaries": "Aspirantes",
+        "niche_players": "Retadores",
+        "stars": "Estrellas",
+        "cash_cows": "Vacas Lecheras",
+        "question_marks": "Incógnitas",
+        "dogs": "Perros",
+        "fortress": "Fortaleza",
+        "innovator": "Innovador",
+        "commodity": "Producto Básico",
+        "fast_follower": "Seguidor Rápido",
+        "privacy_leader": "Líder en Privacidad",
+        "security_fortress": "Fortaleza de Seguridad",
+        "compliance_risk": "Riesgo de Cumplimiento",
+        "exposed": "Expuesto",
+        "trust_leader": "Líder en Confianza",
+        "opaque_fortress": "Fortaleza Opaca",
+        "transparent_vuln": "Transparente / Vulnerable",
+        "high_risk": "Alto Riesgo",
+        "sweet_spot": "Punto Óptimo",
+        "avoid": "Evitar",
+        "confidence_high": "H",
+        "confidence_medium": "M",
+        "confidence_low": "L",
+        "atlas_four_axis": "Evaluación de Optimización Atlas",
+        "atlas_subtitle": "Filosofía de ingeniería Arc — evaluación de 4 ejes (paralela a la puntuación de 5 dimensiones)",
+        "atlas_overall": "Puntuación Compuesta Atlas",
+        "atlas_industry_context": "Contexto de la Industria",
+        "axis_performance": "Rendimiento",
+        "axis_stability": "Estabilidad",
+        "axis_lightweight": "Ligereza",
+        "axis_security": "Solidez de Seguridad",
+        "security_breakdown": "Solidez de Seguridad — Subdesglose",
+        "security_breakdown_subtitle": "Defensa de ciberseguridad global — 5 subcategorías dentro del 55% (el cifrado es la mayor con un 35%)",
+        "subitem_encryption": "Sofisticación Criptográfica",
+        "subitem_privacy": "Protección de la Privacidad",
+        "subitem_posture": "Higiene Básica (MFA / SOC2 etc.)",
+        "subitem_comms": "Seguridad de las Comunicaciones",
+        "subitem_layers": "Composición de Capas",
+        "impl_matrix": "Matriz de Capacidad de Implementación",
+        "impl_matrix_subtitle": "30 ítems × principales competidores globales — verificado / declarado / no implementado / desconocido",
+        "impl_legend_verified": "Verificado",
+        "impl_legend_claimed": "Declarado",
+        "impl_legend_not_impl": "No Implementado",
+        "impl_legend_unknown": "Desconocido",
+        "matcat_performance": "Rendimiento",
+        "matcat_stability": "Estabilidad",
+        "matcat_lightweight": "Ligereza",
+        "matcat_encryption": "Cifrado (Diferenciador Central)",
+        "matcat_privacy": "Privacidad",
+        "matcat_posture": "Higiene Básica",
+        "matcat_comms": "Seguridad de las Comunicaciones",
+        "matcat_layers": "Composición de Capas",
+        "competitor_rationales": "Justificación de la Selección de Competidores",
+        "competitor_rationales_subtitle": "Por qué se eligieron estos competidores específicos como objetivos de comparación",
+        "rationale_category": "Categoría",
+        "rationale_hq": "Sede Central",
+        "rationale_position": "Posición de Mercado",
+    },
 }
 
 # Grade recommendations for PDF
@@ -520,6 +712,13 @@ _PDF_GRADE_REC = {
         "D": "\u9ad8\u30ea\u30b9\u30af\u3002\u898b\u9001\u308a\u307e\u305f\u306f\u5927\u5e45\u306a\u6761\u4ef6\u5909\u66f4\u3092\u691c\u8a0e\u3002",
         "F": "\u6295\u8cc7\u4e0d\u53ef\u3002\u6839\u672c\u7684\u306a\u554f\u984c\u3092\u691c\u51fa\u3002",
     },
+    "es": {
+        "A": "Candidato s\u00f3lido para inversi\u00f3n. Proceder con t\u00e9rminos est\u00e1ndar.",
+        "B": "Viable con condiciones. Resolver los \u00edtems se\u00f1alados antes del cierre.",
+        "C": "Preocupaciones significativas. Requerir un plan de remediaci\u00f3n con hitos.",
+        "D": "Alto riesgo. Considerar descartar o t\u00e9rminos con fuerte descuento.",
+        "F": "No invertir. Se detectaron problemas fundamentales.",
+    },
 }
 
 # Dimension name translations
@@ -533,6 +732,19 @@ _DIM_NAME_JA = {
     # v0.3: Security Posture was merged into Architecture Quality; kept here for backward compat
     "Security Posture": "セキュリティ態勢",
 }
+
+_DIM_NAME_ES = {
+    "Technical Originality": "Originalidad Técnica",
+    "Technology Advancement": "Avance Tecnológico",
+    "Implementation Depth": "Profundidad de Implementación",
+    "Architecture Quality": "Calidad de la Arquitectura",
+    "Architecture Quality (incl. Security)": "Calidad de la Arquitectura (incl. Seguridad)",
+    "Claim Consistency": "Consistencia de Afirmaciones",
+    "Security Posture": "Postura de Seguridad",
+}
+
+# Per-language dimension-name maps (en and unmapped langs use the English name as-is)
+_DIM_NAME_MAPS = {"ja": _DIM_NAME_JA, "es": _DIM_NAME_ES}
 
 
 def _wrap_lines(text: str, max_chars_per_line: int, max_lines: int = 2) -> list[str]:
@@ -789,7 +1001,7 @@ class PDFReportGenerator:
         Returns:
             PDF file content as bytes.
         """
-        self._lang = lang if lang in ("en", "ja") else "en"
+        self._lang = lang if lang in _PDF_I18N else "en"
         self._styles = _build_styles(self._lang)
         self._t = _PDF_I18N.get(self._lang, _PDF_I18N["en"])
 
@@ -959,9 +1171,7 @@ class PDFReportGenerator:
 
     def _dim_name(self, name: str) -> str:
         """Get dimension name in the current language."""
-        if self._lang == "ja":
-            return _DIM_NAME_JA.get(name, name)
-        return name
+        return _DIM_NAME_MAPS.get(self._lang, {}).get(name, name)
 
     def _build_cover_page(self, result: AnalysisResult) -> list:
         """Build the cover page — dark theme with Atlas Associates branding."""
@@ -1836,6 +2046,14 @@ class PDFReportGenerator:
             "architecture_quality": "コード構造 + セキュリティ成熟度（暗号化・認証・脆弱性）",
             "claim_consistency": "マーケティング主張と実装コードの整合性",
         }
+        _dim_desc_es = {
+            "technical_originality": "Novedad de los algoritmos, patentes y tecnología propietaria",
+            "technology_advancement": "Modernidad del stack, frameworks y herramientas",
+            "implementation_depth": "Cobertura de pruebas, manejo de errores y preparación para producción",
+            "architecture_quality": "Estructura del código + madurez de seguridad (cifrado, autenticación, vulnerabilidades)",
+            "claim_consistency": "Alineación entre las afirmaciones de marketing y el código real",
+        }
+        _dim_desc_maps = {"en": _dim_desc_en, "ja": _dim_desc_ja, "es": _dim_desc_es}
         weights = {
             "technical_originality": 0.20,
             "technology_advancement": 0.20,
@@ -1850,8 +2068,8 @@ class PDFReportGenerator:
             dim = cr.dimension_scores.get(key)
             if not dim:
                 continue
-            name = _DIM_NAME_JA.get(en_name, en_name) if self._lang == "ja" else en_name
-            desc = _dim_desc_ja.get(key, "") if self._lang == "ja" else _dim_desc_en.get(key, "")
+            name = self._dim_name(en_name)
+            desc = _dim_desc_maps.get(self._lang, _dim_desc_en).get(key, "")
             w = weights.get(key, 0)
             dims.append((name, dim.score, dim.level, w, desc))
 
@@ -1912,10 +2130,11 @@ class PDFReportGenerator:
 
         # Weighted total line
         weighted_total = sum(sc * w for _, sc, _, w, _ in dims)
-        if self._lang == "ja":
-            total_text = f"加重合計スコア: <b>{weighted_total:.1f}</b> / 100"
-        else:
-            total_text = f"Weighted Total Score: <b>{weighted_total:.1f}</b> / 100"
+        _wt_label = {
+            "ja": "加重合計スコア",
+            "es": "Puntuación Ponderada Total",
+        }.get(self._lang, "Weighted Total Score")
+        total_text = f"{_wt_label}: <b>{weighted_total:.1f}</b> / 100"
         elements.append(Paragraph(total_text, s["body"]))
 
         # Score barometer
@@ -2196,9 +2415,7 @@ class PDFReportGenerator:
             dim = cr.dimension_scores.get(key)
             if not dim:
                 continue
-            name = dim_name_map[key]
-            if self._lang == "ja":
-                name = _DIM_NAME_JA.get(name, name)
+            name = self._dim_name(dim_name_map[key])
             w = weights.get(key, 0)
             rows.append([
                 Paragraph(name, cell_style_name),
@@ -2227,9 +2444,7 @@ class PDFReportGenerator:
             dim = cr.dimension_scores.get(key)
             if not dim or not dim.rationale:
                 continue
-            name = dim_name_map[key]
-            if self._lang == "ja":
-                name = _DIM_NAME_JA.get(name, name)
+            name = self._dim_name(dim_name_map[key])
 
             block: list = [
                 Paragraph(f"<b>{name}</b> — Lv.{dim.level} {dim.label}", s["body"]),
@@ -2278,7 +2493,7 @@ class PDFReportGenerator:
             dim = cr.dimension_scores.get(key)
             if not dim:
                 continue
-            display_name = _DIM_NAME_JA.get(en_name, en_name) if self._lang == "ja" else en_name
+            display_name = self._dim_name(en_name)
             dim_levels.append((display_name, int(dim.level or 0), dim.label or ""))
 
         if dim_levels:
