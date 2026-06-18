@@ -47,7 +47,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.3.8-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.4.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -397,6 +397,7 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 ## 🗺️ Roadmap
 
 **Recently shipped (v0.3.x)**
+- ✅ **14-language PDF reports** (2026-06, v0.4.0): the consulting PDF generates in any of 14 languages via `--lang` — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية (Arabic with RTL contextual shaping). Bundled Noto fonts, no setup.
 - ✅ **Windows compatibility fixes** (2026-06, v0.3.8): cross-platform temp path for the `--pdf` consulting flow (was a hardcoded `/tmp`) and Windows clipboard support (`clip`) for `--copy`
 - ✅ **6-language READMEs** (2026-06, v0.3.7): top-of-page language switcher with the active language highlighted — English / 日本語 / Español / العربية / Français / Deutsch, each a separate `README.<lang>.md`
 - ✅ **Claude Fable 5 upgrade** (2026-06, v0.3.6): judge tier moved Opus 4.8 → **Fable 5** (`claude-fable-5`, Anthropic's most capable widely released model, GA 2026-06-09). Tier key renamed `opus` → `fable`. Pricing $10/$50 per MTok (2× Opus 4.8, prioritizing final-verdict quality)
@@ -471,6 +472,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.3.8` — 🌍 6-language READMEs · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live web research · 5-dimension scoring
+`v0.4.0` — 🌍 6-language READMEs · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live web research · 5-dimension scoring
 
 </div>

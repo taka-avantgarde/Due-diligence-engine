@@ -47,7 +47,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.3.8-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.4.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -399,6 +399,7 @@ dde analyze owner/repo
 ## 🗺️ خريطة الطريق
 
 **أُطلق مؤخرًا (v0.3.x)**
+- ✅ **تقارير PDF بـ 14 لغة** (2026-06، v0.4.0): يُنشأ تقرير الاستشارة بصيغة PDF بأي من 14 لغة عبر `--lang` — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية (العربية مع تشكيل سياقي واتجاه RTL). خطوط Noto مضمّنة، دون إعداد.
 - ✅ **إصلاحات توافق Windows** (2026-06، v0.3.8): مسار مؤقت متعدّد المنصّات لمسار `--pdf` الاستشاري (كان `/tmp` ثابتًا) ودعم حافظة Windows (`clip`) لأمر `--copy`
 - ✅ **ملفات README بست لغات** (2026-06، v0.3.7): مُبدّل لغة أعلى الصفحة مع إبراز اللغة النشطة — English / 日本語 / Español / العربية / Français / Deutsch، كلٌّ منها ملف `README.<lang>.md` منفصل
 - ✅ **الترقية إلى Claude Fable 5** (2026-06، v0.3.6): انتقلت طبقة الحَكَم من Opus 4.8 → **Fable 5** (`claude-fable-5`، أقوى نموذج من Anthropic مُطلق على نطاق واسع، متاح عمومًا 2026-06-09). أُعيدت تسمية مفتاح الطبقة `opus` → `fable`. التسعير $10/$50 لكل مليون توكن (ضعف Opus 4.8، إعطاءً للأولوية لجودة الحكم النهائي)
@@ -475,6 +476,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.3.8` — 🌍 ملفات README بست لغات · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
+`v0.4.0` — 🌍 ملفات README بست لغات · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
 
 </div>

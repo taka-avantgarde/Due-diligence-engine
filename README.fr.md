@@ -47,7 +47,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.3.8-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.4.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -397,6 +397,7 @@ R : DDE évalue le code source, pas le badge. Un service de stockage en clair ce
 ## 🗺️ Feuille de route
 
 **Livré récemment (v0.3.x)**
+- ✅ **Rapports PDF en 14 langues** (2026-06, v0.4.0) : le PDF de conseil se génère en 14 langues via `--lang` — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية (arabe avec mise en forme contextuelle RTL). Polices Noto incluses, sans configuration.
 - ✅ **Corrections de compatibilité Windows** (2026-06, v0.3.8) : chemin temporaire multiplateforme pour le flux de conseil `--pdf` (auparavant un `/tmp` codé en dur) et prise en charge du presse-papiers Windows (`clip`) pour `--copy`
 - ✅ **READMEs en 6 langues** (2026-06, v0.3.7) : sélecteur de langue en haut de page avec la langue active mise en évidence — English / 日本語 / Español / العربية / Français / Deutsch, chacun étant un fichier `README.<lang>.md` distinct
 - ✅ **Mise à niveau vers Claude Fable 5** (2026-06, v0.3.6) : le palier juge est passé d'Opus 4.8 → **Fable 5** (`claude-fable-5`, le modèle le plus capable largement diffusé d'Anthropic, GA 2026-06-09). Clé de palier renommée `opus` → `fable`. Tarif 10 $/50 $ par MTok (2× Opus 4.8, priorité à la qualité du verdict final)
@@ -471,6 +472,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.3.8` — 🌍 READMEs en 6 langues · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Recherche web en direct · notation à 5 dimensions
+`v0.4.0` — 🌍 READMEs en 6 langues · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Recherche web en direct · notation à 5 dimensions
 
 </div>

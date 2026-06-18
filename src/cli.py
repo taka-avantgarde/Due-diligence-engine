@@ -27,7 +27,7 @@ console = Console()
 
 
 @click.group()
-@click.version_option(version="0.3.8", prog_name="dde")
+@click.version_option(version="0.4.0", prog_name="dde")
 def cli() -> None:
     """Due Diligence Engine - AI startup technical due diligence."""
     pass
@@ -177,7 +177,7 @@ def analyze(
 @click.argument("target", default=".", required=False)
 @click.option("--name", "-n", default=None, help="Project name (auto-detected if omitted)")
 @click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"]),
-              help="Output language (en: English, ja: Japanese)")
+              help="Report language — 14 supported: en/ja/es/fr/de/pt/nl/it/id/zh/ko/vi/th/ar")
 @click.option("--stage", "-s", default="unknown",
               type=click.Choice(["seed", "series_a", "series_b", "growth", "unknown"]),
               help="Startup development stage (adjusts evaluation criteria)")
@@ -397,7 +397,7 @@ def prompt(
               help="Consulting report JSON from AI evaluation (generates consulting-grade PDF)")
 @click.option("--pdf", "-p", is_flag=True, help="Generate PDF output")
 @click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"]),
-              help="PDF language")
+              help="PDF language — 14 supported: en/ja/es/fr/de/pt/nl/it/id/zh/ko/vi/th/ar")
 def report(
     result_file: str | None,
     fmt: str,
