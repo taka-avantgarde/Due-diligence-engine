@@ -643,9 +643,16 @@ class TestConsultingPdfGeneration:
     # ── Downloads directory default ──────────────────────
 
     def test_downloads_dir_default(self):
-        """Default consulting PDF output is ~/Downloads."""
+        """Default consulting PDF output path is ~/Downloads (created on demand).
+
+        The CLI runs ``mkdir(parents=True, exist_ok=True)`` on this path, so
+        pre-existence is NOT part of the contract — asserting ``exists()``
+        made this test environment-dependent (it failed on CI runners that
+        have no Downloads directory). Verify the path composition instead.
+        """
         downloads = Path.home() / "Downloads"
-        assert downloads.exists(), "~/Downloads does not exist on this machine"
+        assert downloads.name == "Downloads"
+        assert downloads.parent == Path.home()
 
     # ── Both languages produce multi-page PDFs ───────────
 
