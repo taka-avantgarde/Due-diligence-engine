@@ -314,6 +314,8 @@ competidor específico fue elegido como objetivo de comparación (sede, posició
 
 ## 🛠️ Uso
 
+> 🌍 **Idiomas del informe (14):** `en` `ja` `es` `fr` `de` `pt` `nl` `it` `id` `zh` `ko` `vi` `th` `ar` — p. ej. `dde prompt --pdf --lang es`. El árabe se renderiza con modelado contextual RTL (el diseño de página sigue siendo LTR).
+
 ```bash
 # Current directory, English PDF
 dde prompt --pdf

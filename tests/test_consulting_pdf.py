@@ -774,3 +774,65 @@ class TestConsultingPdfGeneration:
         pdf_gen.generate_to_file(result, pdf_path, lang="en")
         assert pdf_path.exists()
         assert pdf_path.stat().st_size > 1000
+
+
+# ── Multilingual report tests (v0.4.0: 14 languages) ─────────────────────────
+
+ALL_REPORT_LANGS = [
+    "en", "ja", "es", "fr", "de", "pt", "nl", "it", "id",
+    "zh", "ko", "vi", "th", "ar",
+]
+
+
+class TestMultilingualReports:
+    """Smoke tests guarding the 14-language report pipeline.
+
+    Each language must (a) have a complete i18n key set identical to English
+    and (b) actually render a non-trivial PDF without raising. Fonts:
+    Latin=Helvetica, ja/zh/ko=CID, vi/th=bundled Noto TTF, ar=Noto Naskh
+    with reshaping+bidi.
+    """
+
+    @pytest.fixture()
+    def analysis_result(self) -> AnalysisResult:
+        return _make_analysis_result(_make_consulting_report())
+
+    def test_i18n_key_parity_with_english(self):
+        """Every language pack must have exactly the same keys as English."""
+        from src.report.pdf_generator import _PDF_I18N
+
+        en_keys = set(_PDF_I18N["en"])
+        for lang in ALL_REPORT_LANGS:
+            keys = set(_PDF_I18N[lang])
+            assert keys == en_keys, (
+                f"{lang}: missing={sorted(en_keys - keys)} "
+                f"extra={sorted(keys - en_keys)}"
+            )
+
+    def test_grade_rec_and_dim_names_cover_all_langs(self):
+        """Grade recommendations and dimension names exist for every language."""
+        from src.report.pdf_generator import _DIM_NAME_MAPS, _PDF_GRADE_REC
+
+        for lang in ALL_REPORT_LANGS:
+            assert set(_PDF_GRADE_REC[lang]) == {"A", "B", "C", "D", "F"}, lang
+            if lang != "en":  # en uses the English names as-is (no map needed)
+                assert "Technical Originality" in _DIM_NAME_MAPS[lang], lang
+
+    @pytest.mark.parametrize("lang", ALL_REPORT_LANGS)
+    def test_pdf_generates_in_every_language(self, analysis_result, tmp_path, lang):
+        """A consulting PDF renders in each supported language."""
+        pdf_path = tmp_path / f"test_multilang_{lang}.pdf"
+        PDFReportGenerator().generate_to_file(analysis_result, pdf_path, lang=lang)
+        assert pdf_path.exists(), f"PDF ({lang}) was not created"
+        assert pdf_path.stat().st_size > 5000, f"PDF ({lang}) suspiciously small"
+        assert pdf_path.read_bytes()[:5] == b"%PDF-", f"PDF ({lang}) invalid header"
+
+    def test_arabic_reshaping_available_and_applied(self):
+        """Arabic support libs are importable and shaping changes the string."""
+        from src.report.pdf_generator import _HAS_ARABIC, _reshape_ar
+
+        assert _HAS_ARABIC, "arabic-reshaper / python-bidi not installed"
+        raw = "تقرير العناية الواجبة"
+        shaped = _reshape_ar(raw)
+        assert shaped != raw  # presentation forms + bidi reorder applied
+        assert _reshape_ar("Score: 72") == "Score: 72"  # Latin is a no-op

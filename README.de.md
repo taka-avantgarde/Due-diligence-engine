@@ -314,6 +314,8 @@ bestimmte Wettbewerber als Vergleichsziel gewählt wurde (Hauptsitz, Marktpositi
 
 ## 🛠️ Verwendung
 
+> 🌍 **Berichtssprachen (14):** `en` `ja` `es` `fr` `de` `pt` `nl` `it` `id` `zh` `ko` `vi` `th` `ar` — z. B. `dde prompt --pdf --lang de`. Arabisch wird mit kontextueller RTL-Formung gerendert (Seitenlayout bleibt LTR).
+
 ```bash
 # Current directory, English PDF
 dde prompt --pdf

@@ -314,6 +314,8 @@ concurrent précis a été retenu comme cible de comparaison (siège, position d
 
 ## 🛠️ Utilisation
 
+> 🌍 **Langues du rapport (14) :** `en` `ja` `es` `fr` `de` `pt` `nl` `it` `id` `zh` `ko` `vi` `th` `ar` — p. ex. `dde prompt --pdf --lang fr`. L'arabe est rendu avec une mise en forme contextuelle RTL (la mise en page reste LTR).
+
 ```bash
 # Current directory, English PDF
 dde prompt --pdf

@@ -316,6 +316,8 @@ Privacy & Compliance
 
 ## 🛠️ الاستخدام
 
+> 🌍 **لغات التقرير (14):** `en` `ja` `es` `fr` `de` `pt` `nl` `it` `id` `zh` `ko` `vi` `th` `ar` — مثال: `dde prompt --pdf --lang ar`. تُعرض العربية بتشكيل سياقي واتجاه RTL (يظل تخطيط الصفحة LTR).
+
 ```bash
 # Current directory, English PDF
 dde prompt --pdf

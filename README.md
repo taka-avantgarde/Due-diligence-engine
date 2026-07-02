@@ -314,6 +314,8 @@ specific competitor was chosen as a comparison target (HQ, market position, cate
 
 ## 🛠️ Usage
 
+> 🌍 **Report languages (14):** `en` `ja` `es` `fr` `de` `pt` `nl` `it` `id` `zh` `ko` `vi` `th` `ar` — e.g. `dde prompt --pdf --lang es`. Arabic renders with RTL contextual shaping (page layout stays LTR).
+
 ```bash
 # Current directory, English PDF
 dde prompt --pdf

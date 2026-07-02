@@ -314,6 +314,8 @@ SOC2 / MFA / WebAuthn 等の認証は参考情報のみ、スコア対象外。
 
 ## 🛠️ 使い方
 
+> 🌍 **レポート対応言語（14）:** `en` `ja` `es` `fr` `de` `pt` `nl` `it` `id` `zh` `ko` `vi` `th` `ar` — 例: `dde prompt --pdf --lang es`。アラビア語は RTL 字形整形で描画（紙面レイアウトは LTR のまま）。
+
 ```bash
 # カレントディレクトリ、日本語 PDF
 dde prompt --pdf --lang ja
