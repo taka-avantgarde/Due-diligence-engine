@@ -413,6 +413,20 @@ class CompetitiveAnalysis(BaseModel):
     markets: list[MarketPosition] = Field(default_factory=list)
 
 
+class DataFreshness(BaseModel):
+    """Provenance of the STEP 0 live web research behind a consulting report.
+
+    Written by the AI at the top of the consulting JSON so readers can tell
+    what is current market data versus training-cutoff knowledge.
+    """
+
+    web_search_performed: bool = False
+    search_date: str = ""
+    queries_executed: list[str] = Field(default_factory=list)
+    sources_consulted: list[str] = Field(default_factory=list)
+    data_cutoff_warning: str | None = None
+
+
 class ConsultingReport(BaseModel):
     """Complete AI-generated consulting report parsed from structured JSON.
 
@@ -445,6 +459,7 @@ class ConsultingReport(BaseModel):
     atlas_four_axis: "AtlasFourAxisEvaluation | None" = None
     implementation_matrix: "ImplementationMatrix | None" = None
     competitor_rationales: "list[CompetitorRationale]" = Field(default_factory=list)
+    data_freshness: DataFreshness | None = None
 
 
 # ─────────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ from src.models import (
     CompetitiveAnalysis,
     CompetitorDataPoint,
     ConsultingReport,
+    DataFreshness,
     EnhancedDimensionScore,
     FutureOutlook,
     InvestmentThesis,
@@ -109,6 +110,13 @@ def _make_competitive_analysis() -> CompetitiveAnalysis:
 def _make_consulting_report() -> ConsultingReport:
     """Build a realistic consulting report fixture."""
     return ConsultingReport(
+        data_freshness=DataFreshness(
+            web_search_performed=True,
+            search_date="2026-04-02",
+            queries_executed=["fintech AI competitors 2026", "NeuralPay funding"],
+            sources_consulted=["https://example.com/a", "https://example.com/b",
+                               "https://example.com/c"],
+        ),
         executive_summary="A technically solid project with strong architecture.",
         executive_summary_business=(
             "This product demonstrates genuine technical capability "
@@ -843,3 +851,79 @@ class TestMultilingualReports:
         shaped = _reshape_ar(raw)
         assert shaped != raw  # presentation forms + bidi reorder applied
         assert _reshape_ar("Score: 72") == "Score: 72"  # Latin is a no-op
+
+
+# ── Data freshness + radar chart tests (v0.5.0) ──────────────────────────────
+
+
+class TestDataFreshnessAndRadar:
+    """Guards the STEP 0 provenance box and the 5-dimension radar chart."""
+
+    def test_parser_reads_data_freshness(self):
+        from src.prompt.response_parser import parse_consulting_dict
+
+        cr = parse_consulting_dict({
+            "overall_score": 70,
+            "grade": "B",
+            "data_freshness": {
+                "web_search_performed": True,
+                "search_date": "2026-07-01",
+                "queries_executed": ["q1", "q2", "q3"],
+                "sources_consulted": ["https://x.example"],
+                "data_cutoff_warning": None,
+            },
+        })
+        assert cr.data_freshness is not None
+        assert cr.data_freshness.web_search_performed is True
+        assert cr.data_freshness.search_date == "2026-07-01"
+        assert len(cr.data_freshness.queries_executed) == 3
+        assert len(cr.data_freshness.sources_consulted) == 1
+
+    def test_parser_tolerates_missing_data_freshness(self):
+        from src.prompt.response_parser import parse_consulting_dict
+
+        cr = parse_consulting_dict({"overall_score": 70, "grade": "B"})
+        assert cr.data_freshness is None
+
+    def test_pdf_renders_with_no_web_warning(self, tmp_path):
+        """PDF renders the training-data-only warning path without error."""
+        cr = _make_consulting_report()
+        cr.data_freshness = DataFreshness(
+            web_search_performed=False,
+            data_cutoff_warning="WebSearch unavailable in this terminal.",
+        )
+        result = _make_analysis_result(cr)
+        pdf_path = tmp_path / "test_df_warning.pdf"
+        PDFReportGenerator().generate_to_file(result, pdf_path, lang="en")
+        assert pdf_path.exists()
+        assert pdf_path.stat().st_size > 5000
+
+    def test_pdf_renders_without_data_freshness(self, tmp_path):
+        """Older consulting JSONs (no data_freshness) still render fine."""
+        cr = _make_consulting_report()
+        cr.data_freshness = None
+        result = _make_analysis_result(cr)
+        pdf_path = tmp_path / "test_df_absent.pdf"
+        PDFReportGenerator().generate_to_file(result, pdf_path, lang="en")
+        assert pdf_path.exists()
+
+    def test_radar_drawing_built_for_five_dims(self):
+        gen = PDFReportGenerator()
+        gen._lang = "en"
+        radar = gen._build_radar_drawing(
+            [("A", 75), ("B", 82), ("C", 65), ("D", 70), ("E", 55)]
+        )
+        assert radar is not None
+
+    def test_radar_skipped_below_three_dims(self):
+        gen = PDFReportGenerator()
+        gen._lang = "en"
+        assert gen._build_radar_drawing([("A", 75), ("B", 82)]) is None
+
+    def test_i18n_has_data_freshness_keys_in_all_langs(self):
+        from src.report.pdf_generator import _PDF_I18N
+
+        needed = {"data_freshness_title", "df_search_date", "df_queries",
+                  "df_sources", "df_no_web_warning"}
+        for lang in ALL_REPORT_LANGS:
+            assert needed <= set(_PDF_I18N[lang]), f"missing df keys in {lang}"

@@ -18,6 +18,7 @@ import re
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
@@ -72,13 +73,41 @@ class SecureLoader:
         return list(self._manifest)
 
     def _create_secure_temp(self) -> Path:
-        """Create a temporary directory with restricted permissions."""
+        """Create a temporary directory with restricted permissions.
+
+        Unix/macOS: chmod 0o700 (owner-only). Windows: chmod does not map to
+        NTFS ACLs, so inherited ACEs are stripped and full control granted to
+        the current user only via ``icacls`` (stdlib subprocess, no pywin32).
+        Best-effort — a hardening failure is logged, never fatal.
+        """
         base = self._config.temp_dir
         base.mkdir(parents=True, exist_ok=True)
         tmp = Path(tempfile.mkdtemp(prefix="dde_", dir=str(base)))
         # Restrict to owner only
         tmp.chmod(stat.S_IRWXU)
+        if sys.platform == "win32":
+            self._restrict_acl_windows(tmp)
         return tmp
+
+    @staticmethod
+    def _restrict_acl_windows(path: Path) -> None:
+        """Owner-only NTFS ACL: remove inheritance, grant only the current user."""
+        import getpass
+
+        try:
+            user = getpass.getuser()
+            proc = subprocess.run(
+                ["icacls", str(path), "/inheritance:r",
+                 "/grant:r", f"{user}:(OI)(CI)F"],
+                capture_output=True, text=True, timeout=30,
+            )
+            if proc.returncode != 0:
+                logger.warning(
+                    "Windows ACL hardening failed for %s: %s",
+                    path, (proc.stderr or proc.stdout).strip(),
+                )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            logger.warning("Windows ACL hardening failed for %s: %s", path, exc)
 
     def load_from_url(self, url: str) -> Path:
         """Load a project from a GitHub URL (or any Git-compatible URL).

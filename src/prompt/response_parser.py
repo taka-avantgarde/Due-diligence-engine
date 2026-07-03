@@ -21,6 +21,7 @@ from src.models import (
     CompetitorDataPoint,
     CompetitorRationale,
     ConsultingReport,
+    DataFreshness,
     EnhancedDimensionScore,
     FutureOutlook,
     ImplementationMatrix,
@@ -258,6 +259,21 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
         atlas_four_axis=atlas_four_axis,
         implementation_matrix=implementation_matrix,
         competitor_rationales=competitor_rationales,
+        data_freshness=_parse_data_freshness(data.get("data_freshness")),
+    )
+
+
+def _parse_data_freshness(raw: Any) -> DataFreshness | None:
+    """Parse the STEP 0 web-research provenance block (v0.3.2 schema)."""
+    if not isinstance(raw, dict):
+        return None
+    warning = raw.get("data_cutoff_warning")
+    return DataFreshness(
+        web_search_performed=bool(raw.get("web_search_performed", False)),
+        search_date=str(raw.get("search_date", "") or ""),
+        queries_executed=[str(q) for q in raw.get("queries_executed", []) if q],
+        sources_consulted=[str(s) for s in raw.get("sources_consulted", []) if s],
+        data_cutoff_warning=str(warning) if warning else None,
     )
 
 

@@ -11,13 +11,17 @@ permissions:
 
 jobs:
   pytest:
-    name: pytest (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    name: pytest (${{ matrix.os }} / Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.11", "3.12"]
+        include:
+          - os: windows-latest
+            python-version: "3.11"
 
     steps:
       - uses: actions/checkout@v7

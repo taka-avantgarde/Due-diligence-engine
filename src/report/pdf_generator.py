@@ -30,7 +30,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.graphics import renderPDF
-from reportlab.graphics.shapes import Drawing, Rect, String, Line, Circle
+from reportlab.graphics.shapes import Drawing, Rect, String, Line, Circle, Polygon
 from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
@@ -379,6 +379,12 @@ _PDF_I18N = {
         "rationale_category": "Category",
         "rationale_hq": "HQ",
         "rationale_position": "Market Position",
+        # Data provenance (STEP 0 live web research)
+        "data_freshness_title": "Data Provenance — Live Web Research",
+        "df_search_date": "Search Date",
+        "df_queries": "Queries Executed",
+        "df_sources": "Sources Consulted",
+        "df_no_web_warning": "No live web search performed — analysis relies on AI training data only",
     },
     "ja": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -584,6 +590,12 @@ _PDF_I18N = {
         "rationale_category": "カテゴリ",
         "rationale_hq": "本社",
         "rationale_position": "市場ポジション",
+        # Data provenance (STEP 0 live web research)
+        "data_freshness_title": "データ出所 — ライブ Web 調査",
+        "df_search_date": "検索日",
+        "df_queries": "実行クエリ数",
+        "df_sources": "参照ソース数",
+        "df_no_web_warning": "ライブ Web 検索なし — AI の学習データのみに基づく分析",
     },
     "es": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -776,6 +788,12 @@ _PDF_I18N = {
         "rationale_category": "Categoría",
         "rationale_hq": "Sede Central",
         "rationale_position": "Posición de Mercado",
+        # Data provenance (STEP 0 live web research)
+        "data_freshness_title": "Procedencia de los Datos — Investigación Web en Vivo",
+        "df_search_date": "Fecha de Búsqueda",
+        "df_queries": "Consultas Ejecutadas",
+        "df_sources": "Fuentes Consultadas",
+        "df_no_web_warning": "Sin búsqueda web en vivo — el análisis se basa solo en datos de entrenamiento de la IA",
     },
 }
 
@@ -2189,8 +2207,9 @@ class PDFReportGenerator:
             "claim_consistency": 0.20,
         }
 
-        # Collect dimension data
+        # Collect dimension data (+ short localized labels for the radar chart)
         dims = []
+        radar_data: list[tuple[str, float]] = []
         for key, en_name in dim_name_map.items():
             dim = cr.dimension_scores.get(key)
             if not dim:
@@ -2199,6 +2218,10 @@ class PDFReportGenerator:
             desc = self._maybe_reshape(_dim_desc_maps.get(self._lang, _dim_desc_en).get(key, ""))
             w = weights.get(key, 0)
             dims.append((name, dim.score, dim.level, w, desc))
+            # Radar labels use the base name (parenthetical stripped from the
+            # ENGLISH key before localization, so RTL reshaping stays intact).
+            short = self._dim_name(en_name.split(" (")[0])
+            radar_data.append((short, dim.score))
 
         if not dims:
             return elements
@@ -2296,7 +2319,116 @@ class PDFReportGenerator:
 
         elements.append(barometer)
 
+        # ── 5-dimension radar (spider) chart ──────────────────
+        radar = self._build_radar_drawing(radar_data)
+        if radar is not None:
+            elements.append(Spacer(1, 6 * mm))
+            elements.append(radar)
+
+        # ── Data provenance box (STEP 0 live web research) ────
+        df_flow = self._build_data_freshness_box(cr)
+        if df_flow:
+            elements.append(Spacer(1, 4 * mm))
+            elements.extend(df_flow)
+
         return elements
+
+    def _build_radar_drawing(self, radar_data: list) -> "Drawing | None":
+        """Pentagon radar (spider) chart of the dimension scores.
+
+        Consulting-report staple: shows the balance/skew of the 5 dimensions
+        at a glance, complementing the horizontal bars above.
+        """
+        import math
+
+        if len(radar_data) < 3:
+            return None
+        n = len(radar_data)
+        cx, cy, radius = 150.0, 96.0, 62.0
+        d = Drawing(300, 200)
+
+        def pt(i: int, r: float) -> tuple[float, float]:
+            ang = math.radians(90 - 360.0 * i / n)  # start at top, clockwise
+            return cx + r * math.cos(ang), cy + r * math.sin(ang)
+
+        # Grid rings (25/50/75/100) + spokes
+        grid = colors.HexColor("#e2e8f0")
+        for frac in (0.25, 0.5, 0.75, 1.0):
+            ring: list[float] = []
+            for i in range(n):
+                x, y = pt(i, radius * frac)
+                ring.extend((x, y))
+            d.add(Polygon(ring, strokeColor=grid, strokeWidth=0.75, fillColor=None))
+        for i in range(n):
+            x, y = pt(i, radius)
+            d.add(Line(cx, cy, x, y, strokeColor=grid, strokeWidth=0.75))
+
+        # Score polygon — translucent Arc-sky fill + solid outline + dots
+        pts: list[float] = []
+        for i, (_, score) in enumerate(radar_data):
+            x, y = pt(i, radius * max(score, 2.0) / 100.0)
+            pts.extend((x, y))
+        d.add(Polygon(pts, fillColor=colors.Color(82 / 255, 113 / 255, 1.0, alpha=0.30),
+                      strokeColor=COLOR_ACCENT, strokeWidth=1.5))
+        for j in range(0, len(pts), 2):
+            d.add(Circle(pts[j], pts[j + 1], 2.2,
+                         fillColor=COLOR_ACCENT, strokeColor=None, strokeWidth=0))
+
+        # Vertex labels: short dimension name + score
+        font = self._font_normal()
+        for i, (short, score) in enumerate(radar_data):
+            label = short if len(short) <= 18 else short[:17] + "…"
+            x, y = pt(i, radius + 12)
+            anchor = "middle"
+            if x > cx + 4:
+                anchor = "start"
+            elif x < cx - 4:
+                anchor = "end"
+            dy = 1 if y >= cy else -7
+            d.add(String(x, y + dy, f"{label}  {score:.0f}",
+                         fontName=font, fontSize=6.5,
+                         fillColor=COLOR_TEXT_DIM, textAnchor=anchor))
+        return d
+
+    def _build_data_freshness_box(self, cr) -> list:
+        """Provenance box: surfaces the STEP 0 live-web-research metadata.
+
+        Makes the freshness guarantee visible in the PDF itself — search date
+        and query/source counts when web research ran, or a clearly marked
+        training-data-only warning when it did not.
+        """
+        df = getattr(cr, "data_freshness", None)
+        if df is None:
+            return []
+        t = self._t
+        s = self._styles
+
+        title = Paragraph(f"<b>{t['data_freshness_title']}</b>", s["body_small"])
+        if df.web_search_performed:
+            parts = []
+            if df.search_date:
+                parts.append(f"{t['df_search_date']}: {df.search_date}")
+            parts.append(f"{t['df_queries']}: {len(df.queries_executed)}")
+            parts.append(f"{t['df_sources']}: {len(df.sources_consulted)}")
+            detail = Paragraph("   ·   ".join(parts), s["body_small"])
+            edge = COLOR_ACCENT
+        else:
+            warn = df.data_cutoff_warning or t["df_no_web_warning"]
+            detail = Paragraph(
+                f'<font color="{COLOR_RED.hexval()}">{warn}</font>', s["body_small"],
+            )
+            edge = COLOR_RED
+
+        box = Table([[title], [detail]], colWidths=[430])
+        box.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), COLOR_LIGHT_BG),
+            ("LINEBEFORE", (0, 0), (0, -1), 2, edge),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, 0), 5),
+            ("BOTTOMPADDING", (0, -1), (-1, -1), 5),
+        ]))
+        return [box]
 
     def _build_business_summary(self, cr) -> list:
         """Executive business summary page."""

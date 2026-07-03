@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.4.1-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.5.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -397,6 +397,7 @@ A: DDE bewertet den Quellcode, nicht das Abzeichen. Ein SOC2-zertifizierter Dien
 ## 🗺️ Roadmap
 
 **Kürzlich ausgeliefert (v0.3.x)**
+- ✅ **Radar-Diagramm + Datenherkunft + Windows-Härtung** (2026-07, v0.5.0): 5-Dimensionen-Radar-Diagramm im Bewertungs-Dashboard; STEP-0-Webrecherche-Herkunftsbox im PDF (Suchdatum, Anzahl Anfragen/Quellen oder deutliche Nur-Trainingsdaten-Warnung); Windows-NTFS-ACL-Sperre für das sichere Temp-Verzeichnis (icacls, nur Eigentümer); Windows zur CI-Testmatrix hinzugefügt
 - ✅ **PDF-Berichte in 14 Sprachen** (2026-06, v0.4.0): Das Beratungs-PDF wird über `--lang` in 14 Sprachen erzeugt — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية (Arabisch mit kontextueller RTL-Formung). Gebündelte Noto-Schriften, keine Einrichtung.
 - ✅ **Windows-Kompatibilitätskorrekturen** (2026-06, v0.3.8): plattformübergreifender temporärer Pfad für den `--pdf`-Beratungsablauf (zuvor fest codiertes `/tmp`) und Windows-Zwischenablage-Unterstützung (`clip`) für `--copy`
 - ✅ **READMEs in 6 Sprachen** (2026-06, v0.3.7): Sprachumschalter am Seitenanfang mit hervorgehobener aktiver Sprache — English / 日本語 / Español / العربية / Français / Deutsch, jeweils ein separates `README.<lang>.md`
@@ -472,6 +473,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.4.1` — 🌍 READMEs in 6 Sprachen · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live-Websuche · 5-Dimensionen-Bewertung
+`v0.5.0` — 🌍 READMEs in 6 Sprachen · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live-Websuche · 5-Dimensionen-Bewertung
 
 </div>
