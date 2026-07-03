@@ -5,7 +5,7 @@
 
 <sub>👆 Click your language to switch ・ クリックで言語を切り替え</sub>
 
-<sub>🪟 **En Windows:** funciona de forma nativa (Git debe estar en el PATH) — para la garantía de seguridad completa (bloqueo de permisos de archivos temporales), ejecuta con **WSL2**.</sub>
+<sub>🪟 **En Windows:** totalmente compatible y probado en CI (Git debe estar en el PATH). Desde v0.5.0 el directorio temporal seguro se bloquea por ACL al usuario actual de forma nativa — WSL2 es opcional.</sub>
 
 ---
 

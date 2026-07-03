@@ -5,7 +5,7 @@
 
 <sub>👆 Click your language to switch ・ クリックで言語を切り替え</sub>
 
-<sub>🪟 **On Windows:** works natively (Git required on PATH) — for the full security guarantee (temp-file permission lock), run under **WSL2**.</sub>
+<sub>🪟 **On Windows:** fully supported & CI-tested (Git required on PATH). Since v0.5.0 the secure temp dir is ACL-locked to the current user natively — WSL2 is optional.</sub>
 
 ---
 

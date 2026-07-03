@@ -5,7 +5,7 @@
 
 <sub>👆 Click your language to switch ・ クリックで言語を切り替え</sub>
 
-<sub>🪟 **Windows の場合:** ネイティブで動作（Git が PATH に必要）。完全なセキュリティ保証（一時ファイルの権限ロック）には **WSL2** での実行を推奨。</sub>
+<sub>🪟 **Windows の場合:** ネイティブ完全対応・CI テスト済み（Git が PATH に必要）。v0.5.0 から一時領域を現ユーザーのみに ACL ロック — WSL2 は任意です。</sub>
 
 ---
 

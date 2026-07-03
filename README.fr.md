@@ -5,7 +5,7 @@
 
 <sub>👆 Click your language to switch ・ クリックで言語を切り替え</sub>
 
-<sub>🪟 **Sous Windows :** fonctionne nativement (Git requis dans le PATH) — pour la garantie de sécurité complète (verrouillage des permissions des fichiers temporaires), utilisez **WSL2**.</sub>
+<sub>🪟 **Sous Windows :** entièrement pris en charge et testé en CI (Git requis dans le PATH). Depuis v0.5.0, le répertoire temporaire sécurisé est verrouillé par ACL pour l'utilisateur courant nativement — WSL2 est optionnel.</sub>
 
 ---
 

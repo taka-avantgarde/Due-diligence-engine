@@ -5,7 +5,7 @@
 
 <sub>👆 Click your language to switch ・ クリックで言語を切り替え</sub>
 
-<sub>🪟 **Unter Windows:** läuft nativ (Git muss im PATH sein) — für die vollständige Sicherheitsgarantie (Berechtigungssperre für temporäre Dateien) WSL2 verwenden.</sub>
+<sub>🪟 **Unter Windows:** vollständig unterstützt und CI-getestet (Git muss im PATH sein). Seit v0.5.0 wird das sichere Temp-Verzeichnis nativ per ACL auf den aktuellen Benutzer beschränkt — WSL2 ist optional.</sub>
 
 ---
 
