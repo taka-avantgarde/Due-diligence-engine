@@ -447,10 +447,12 @@ def report(
         pdf_gen = PDFReportGenerator()
         safe_name = result.project_name.replace("/", "_").replace("\\", "_")
 
-        # Date stamp in filename (ja: 2026年04月02日, en: 2026-04-02)
+        # Date stamp in filename (ja: 2026年04月02日, en: 2026-04-02).
+        # NOTE: no non-ASCII inside strftime — on Windows it delegates to the
+        # C runtime with the ANSI code page and raises UnicodeEncodeError.
         now = datetime.now()
         if lang == "ja":
-            date_str = now.strftime("%Y年%m月%d日")
+            date_str = f"{now.year}年{now.month:02d}月{now.day:02d}日"
         else:
             date_str = now.strftime("%Y-%m-%d")
 

@@ -630,9 +630,13 @@ class TestConsultingPdfGeneration:
         assert re.match(r"dde_consulting_\w+_\d{4}-\d{2}-\d{2}\.pdf", filename)
 
     def test_filename_date_ja(self):
-        """Japanese filename uses YYYY年MM月DD日 format."""
+        """Japanese filename uses YYYY年MM月DD日 format.
+
+        Built with an f-string, not strftime — non-ASCII strftime formats
+        raise UnicodeEncodeError on Windows (ANSI code page).
+        """
         now = datetime.now()
-        date_str = now.strftime("%Y年%m月%d日")
+        date_str = f"{now.year}年{now.month:02d}月{now.day:02d}日"
         filename = f"dde_consulting_NeuralPay_{date_str}.pdf"
         assert re.match(r"dde_consulting_\w+_\d{4}年\d{2}月\d{2}日\.pdf", filename)
 
@@ -642,7 +646,7 @@ class TestConsultingPdfGeneration:
         """CLI produces correct date strings for each lang."""
         now = datetime(2026, 4, 2, 15, 30)
 
-        ja_date = now.strftime("%Y年%m月%d日")
+        ja_date = f"{now.year}年{now.month:02d}月{now.day:02d}日"
         assert ja_date == "2026年04月02日"
 
         en_date = now.strftime("%Y-%m-%d")
