@@ -176,7 +176,7 @@ a través de cifrado, privacidad, comunicaciones y defensa por capas — leído 
 del código fuente. El cumplimiento de casillas marcadas (certificaciones SOC2, MFA, WebAuthn)
 es solo de referencia, nunca se puntúa.
 
-**🌐 Nuevo en v0.3.2**: Antes de leer cualquier código, la IA ejecuta **búsquedas web en vivo** para obtener el panorama competitivo más reciente (adquisiciones, cierres, nuevos participantes), rondas de financiación de 2026, CVEs recientes y cambios regulatorios. Cada competidor y cada celda de la matriz de implementación lleva una **URL de fuente + fecha de verificación**, y la salida JSON comienza con un bloque `data_freshness` que rastrea cada consulta de búsqueda. **El análisis obsoleto limitado al corte de entrenamiento se elimina estructuralmente.**
+**🌐 Nuevo en v0.3.2**: Antes de leer cualquier código, la IA ejecuta **búsquedas web en vivo** para obtener el panorama competitivo más reciente (adquisiciones, cierres, nuevos participantes), rondas de financiación de 2026, CVEs recientes y cambios regulatorios. Cada competidor y cada celda de la matriz de implementación lleva una **URL de fuente + fecha de verificación**, y la salida JSON comienza con un bloque `data_freshness` que rastrea cada consulta de búsqueda. **El análisis obsoleto limitado al corte de entrenamiento se elimina estructuralmente.** **(v0.5.0)** Esta procedencia ahora se muestra directamente en el PDF: una caja de procedencia de datos en el panel de puntuación indica la fecha de búsqueda y el número de consultas/fuentes, o una advertencia claramente marcada de solo-datos-de-entrenamiento cuando no se ejecutó la investigación web.
 
 ---
 
@@ -293,7 +293,7 @@ competidor específico fue elegido como objetivo de comparación (sede, posició
 | # | Sección | Contenido |
 |---|---------|---------|
 | 1 | Portada | Negro + acento cielo Arc (#5271FF), nombre del proyecto, puntuación, calificación |
-| 2 | Panel de Puntuación | Gráfico de barras horizontales de **5 dimensiones** (20% cada una) + barómetro de puntuación |
+| 2 | Panel de Puntuación | Barras horizontales de **5 dimensiones** (20% cada una) + barómetro + **gráfico de radar de 5 dimensiones** + **caja de procedencia de datos** (fecha de búsqueda / nº de consultas y fuentes, o advertencia de solo datos de entrenamiento) |
 | 3 | Resumen Ejecutivo | Resumen empresarial + técnico |
 | 4 | Análisis FODA | Cuadrícula visual 2×2 con evidencia + analogías de negocio |
 | 5 | Desglose de Puntuación | Justificación y habilitadores por dimensión |

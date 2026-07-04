@@ -176,7 +176,7 @@ Aufgebaut auf der **Atlas Engineering Philosophy**: ernsthaftes Cybersicherheits
 aus dem Quellcode gelesen. Häkchen-Compliance (SOC2, MFA, WebAuthn-Zertifizierungen)
 dient nur als Referenz und wird nie bewertet.
 
-**🌐 Neu in v0.3.2**: Bevor überhaupt Code gelesen wird, führt die KI **Live-Websuchen** für die aktuellste Wettbewerbslandschaft (Übernahmen, Einstellungen, neue Marktteilnehmer), Finanzierungsrunden 2026, jüngste CVEs und regulatorische Veränderungen durch. Jeder Wettbewerber und jede Zelle der Implementierungsmatrix trägt eine **Quellen-URL + ein Verifizierungsdatum**, und die JSON-Ausgabe beginnt mit einem `data_freshness`-Block, der jede Suchanfrage protokolliert. **Veraltete Analysen, die nur auf dem Trainingsstichtag beruhen, sind strukturell ausgeschlossen.**
+**🌐 Neu in v0.3.2**: Bevor überhaupt Code gelesen wird, führt die KI **Live-Websuchen** für die aktuellste Wettbewerbslandschaft (Übernahmen, Einstellungen, neue Marktteilnehmer), Finanzierungsrunden 2026, jüngste CVEs und regulatorische Veränderungen durch. Jeder Wettbewerber und jede Zelle der Implementierungsmatrix trägt eine **Quellen-URL + ein Verifizierungsdatum**, und die JSON-Ausgabe beginnt mit einem `data_freshness`-Block, der jede Suchanfrage protokolliert. **Veraltete Analysen, die nur auf dem Trainingsstichtag beruhen, sind strukturell ausgeschlossen.** **(v0.5.0)** Diese Herkunft wird nun direkt im PDF angezeigt: Eine Datenherkunftsbox im Score-Dashboard zeigt Suchdatum und Anzahl der Anfragen/Quellen oder eine deutlich markierte Nur-Trainingsdaten-Warnung, wenn keine Webrecherche ausgeführt wurde.
 
 ---
 
@@ -293,7 +293,7 @@ bestimmte Wettbewerber als Vergleichsziel gewählt wurde (Hauptsitz, Marktpositi
 | # | Abschnitt | Inhalt |
 |---|---------|---------|
 | 1 | Titelseite | Schwarz + Arc-Sky-Akzent (#5271FF), Projektname, Score, Note |
-| 2 | Score-Dashboard | **5-Dim**-Balkendiagramm (je 20 %) + Score-Barometer |
+| 2 | Score-Dashboard | **5-Dim**-Balken (je 20 %) + Score-Barometer + **5-Dim-Radar-Diagramm** + **Datenherkunftsbox** (Suchdatum / Anzahl Anfragen & Quellen oder Nur-Trainingsdaten-Warnung) |
 | 3 | Executive Summary | Geschäftliche + technische Zusammenfassung |
 | 4 | SWOT-Analyse | 2×2-Visualraster mit Belegen + Geschäftsanalogien |
 | 5 | Score-Aufschlüsselung | Begründung & Treiber je Dimension |

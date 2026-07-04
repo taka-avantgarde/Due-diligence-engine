@@ -176,7 +176,7 @@ across encryption, privacy, communications, and layered defense — read directl
 from the source code. Checkbox compliance (SOC2, MFA, WebAuthn certifications)
 is reference-only, never scored.
 
-**🌐 New in v0.3.2**: Before reading any code, the AI runs **live web searches** for the latest competitor landscape (acquisitions, shutdowns, new entrants), 2026 funding rounds, recent CVEs, and regulatory shifts. Every competitor and every implementation-matrix cell carries a **source URL + verification date**, and the JSON output starts with a `data_freshness` block that tracks every search query. **Training-cutoff-only stale analysis is structurally eliminated.**
+**🌐 New in v0.3.2**: Before reading any code, the AI runs **live web searches** for the latest competitor landscape (acquisitions, shutdowns, new entrants), 2026 funding rounds, recent CVEs, and regulatory shifts. Every competitor and every implementation-matrix cell carries a **source URL + verification date**, and the JSON output starts with a `data_freshness` block that tracks every search query. **Training-cutoff-only stale analysis is structurally eliminated.** **(v0.5.0)** This provenance is now surfaced directly in the PDF — a data-provenance box on the score dashboard shows the search date and query/source counts, or a clearly marked training-data-only warning when web research did not run.
 
 ---
 
@@ -293,7 +293,7 @@ specific competitor was chosen as a comparison target (HQ, market position, cate
 | # | Section | Content |
 |---|---------|---------|
 | 1 | Cover | Black + Arc sky (#5271FF) accent, project name, score, grade |
-| 2 | Score Dashboard | **5-dim** horizontal bar chart (20% each) + score barometer |
+| 2 | Score Dashboard | **5-dim** horizontal bars (20% each) + score barometer + **5-dim radar chart** + **data-provenance box** (search date / query & source counts, or a training-data-only warning) |
 | 3 | Executive Summary | Business + technical summary |
 | 4 | SWOT Analysis | 2×2 visual grid with evidence + business analogies |
 | 5 | Score Breakdown | Per-dimension rationale & enablers |

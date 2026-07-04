@@ -176,7 +176,7 @@ couvrant le chiffrement, la confidentialité, les communications et la défense 
 depuis le code source. La conformité par cases à cocher (certifications SOC2, MFA, WebAuthn)
 est purement indicative, jamais notée.
 
-**🌐 Nouveau dans la v0.3.2** : avant de lire le moindre code, l'IA effectue des **recherches web en direct** pour obtenir le dernier paysage concurrentiel (acquisitions, fermetures, nouveaux entrants), les tours de financement 2026, les CVE récentes et les évolutions réglementaires. Chaque concurrent et chaque cellule de la matrice d'implémentation porte une **URL de source + une date de vérification**, et la sortie JSON débute par un bloc `data_freshness` qui suit chaque requête de recherche. **L'analyse périmée fondée uniquement sur la date de coupure d'entraînement est structurellement éliminée.**
+**🌐 Nouveau dans la v0.3.2** : avant de lire le moindre code, l'IA effectue des **recherches web en direct** pour obtenir le dernier paysage concurrentiel (acquisitions, fermetures, nouveaux entrants), les tours de financement 2026, les CVE récentes et les évolutions réglementaires. Chaque concurrent et chaque cellule de la matrice d'implémentation porte une **URL de source + une date de vérification**, et la sortie JSON débute par un bloc `data_freshness` qui suit chaque requête de recherche. **L'analyse périmée fondée uniquement sur la date de coupure d'entraînement est structurellement éliminée.** **(v0.5.0)** Cette provenance est désormais affichée directement dans le PDF : un encadré de provenance des données sur le tableau de bord indique la date de recherche et le nombre de requêtes/sources, ou un avertissement clairement signalé « données d'entraînement uniquement » lorsque la recherche web n'a pas été exécutée.
 
 ---
 
@@ -293,7 +293,7 @@ concurrent précis a été retenu comme cible de comparaison (siège, position d
 | # | Section | Contenu |
 |---|---------|---------|
 | 1 | Couverture | Accent noir + ciel Arc (#5271FF), nom du projet, score, note |
-| 2 | Tableau de bord des scores | Graphique à barres horizontales **5 dim.** (20 % chacune) + baromètre de score |
+| 2 | Tableau de bord des scores | Barres horizontales **5 dim.** (20 % chacune) + baromètre + **graphique radar 5 dim.** + **encadré de provenance des données** (date de recherche / nombre de requêtes et sources, ou avertissement données d'entraînement uniquement) |
 | 3 | Résumé exécutif | Synthèse métier + technique |
 | 4 | Analyse SWOT | Grille visuelle 2×2 avec preuves + analogies métier |
 | 5 | Détail des scores | Justification par dimension & facteurs favorables |
