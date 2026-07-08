@@ -17,7 +17,7 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from pydantic import BaseModel, Field
 
-from src.models import RedFlag, Severity
+from due_diligence_engine.models import RedFlag, Severity
 
 logger = logging.getLogger(__name__)
 

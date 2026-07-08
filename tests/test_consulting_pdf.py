@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from src.models import (
+from due_diligence_engine.models import (
     AnalysisResult,
     CompetitiveAnalysis,
     CompetitorDataPoint,
@@ -34,7 +34,7 @@ from src.models import (
     StrategicAdvice,
     YearProjection,
 )
-from src.report.pdf_generator import PDFReportGenerator
+from due_diligence_engine.report.pdf_generator import PDFReportGenerator
 
 
 def _make_chart(chart_type: str, title: str, title_ja: str,
@@ -313,7 +313,7 @@ def _make_competitor_rationales() -> "list":
 
     ⚠ Must align 1:1 with _make_implementation_matrix.competitors.
     """
-    from src.models import CompetitorRationale
+    from due_diligence_engine.models import CompetitorRationale
     return [
         CompetitorRationale(
             name="Stripe",
@@ -407,7 +407,7 @@ def _make_competitor_rationales() -> "list":
 
 def _make_atlas_four_axis() -> "AtlasFourAxisEvaluation":
     """Atlas 4-axis evaluation fixture (v2.0)."""
-    from src.models import AtlasAxisScore, AtlasAxisSubItem, AtlasFourAxisEvaluation
+    from due_diligence_engine.models import AtlasAxisScore, AtlasAxisSubItem, AtlasFourAxisEvaluation
 
     security_subs = [
         AtlasAxisSubItem(
@@ -476,7 +476,7 @@ def _make_atlas_four_axis() -> "AtlasFourAxisEvaluation":
 
 def _make_implementation_matrix() -> "ImplementationMatrix":
     """Implementation Capability Matrix fixture (v2.0)."""
-    from src.models import (
+    from due_diligence_engine.models import (
         CompanyImplementationStatus,
         ImplementationMatrix,
         ImplementationStatus,
@@ -818,7 +818,7 @@ class TestMultilingualReports:
 
     def test_i18n_key_parity_with_english(self):
         """Every language pack must have exactly the same keys as English."""
-        from src.report.pdf_generator import _PDF_I18N
+        from due_diligence_engine.report.pdf_generator import _PDF_I18N
 
         en_keys = set(_PDF_I18N["en"])
         for lang in ALL_REPORT_LANGS:
@@ -830,7 +830,7 @@ class TestMultilingualReports:
 
     def test_grade_rec_and_dim_names_cover_all_langs(self):
         """Grade recommendations and dimension names exist for every language."""
-        from src.report.pdf_generator import _DIM_NAME_MAPS, _PDF_GRADE_REC
+        from due_diligence_engine.report.pdf_generator import _DIM_NAME_MAPS, _PDF_GRADE_REC
 
         for lang in ALL_REPORT_LANGS:
             assert set(_PDF_GRADE_REC[lang]) == {"A", "B", "C", "D", "F"}, lang
@@ -848,7 +848,7 @@ class TestMultilingualReports:
 
     def test_arabic_reshaping_available_and_applied(self):
         """Arabic support libs are importable and shaping changes the string."""
-        from src.report.pdf_generator import _HAS_ARABIC, _reshape_ar
+        from due_diligence_engine.report.pdf_generator import _HAS_ARABIC, _reshape_ar
 
         assert _HAS_ARABIC, "arabic-reshaper / python-bidi not installed"
         raw = "تقرير العناية الواجبة"
@@ -864,7 +864,7 @@ class TestDataFreshnessAndRadar:
     """Guards the STEP 0 provenance box and the 5-dimension radar chart."""
 
     def test_parser_reads_data_freshness(self):
-        from src.prompt.response_parser import parse_consulting_dict
+        from due_diligence_engine.prompt.response_parser import parse_consulting_dict
 
         cr = parse_consulting_dict({
             "overall_score": 70,
@@ -884,7 +884,7 @@ class TestDataFreshnessAndRadar:
         assert len(cr.data_freshness.sources_consulted) == 1
 
     def test_parser_tolerates_missing_data_freshness(self):
-        from src.prompt.response_parser import parse_consulting_dict
+        from due_diligence_engine.prompt.response_parser import parse_consulting_dict
 
         cr = parse_consulting_dict({"overall_score": 70, "grade": "B"})
         assert cr.data_freshness is None
@@ -925,7 +925,7 @@ class TestDataFreshnessAndRadar:
         assert gen._build_radar_drawing([("A", 75), ("B", 82)]) is None
 
     def test_i18n_has_data_freshness_keys_in_all_langs(self):
-        from src.report.pdf_generator import _PDF_I18N
+        from due_diligence_engine.report.pdf_generator import _PDF_I18N
 
         needed = {"data_freshness_title", "df_search_date", "df_queries",
                   "df_sources", "df_no_web_warning"}
@@ -938,7 +938,7 @@ class TestDataFreshnessAndRadar:
 
 def _gen_for(lang: str = "en") -> PDFReportGenerator:
     """A generator with _lang/_styles/_t initialized (normally done in generate)."""
-    from src.report.pdf_generator import _PDF_I18N, _build_styles
+    from due_diligence_engine.report.pdf_generator import _PDF_I18N, _build_styles
 
     gen = PDFReportGenerator()
     gen._lang = lang if lang in _PDF_I18N else "en"
@@ -1000,7 +1000,7 @@ class TestVisualSummaryAndSourceAppendix:
         assert not any(isinstance(e, Table) for e in elements)  # but no URL table
 
     def test_i18n_has_v060_keys_in_all_langs(self):
-        from src.report.pdf_generator import _PDF_I18N
+        from due_diligence_engine.report.pdf_generator import _PDF_I18N
 
         needed = {"visual_summary", "visual_summary_subtitle",
                   "source_appendix_title", "source_appendix_subtitle",

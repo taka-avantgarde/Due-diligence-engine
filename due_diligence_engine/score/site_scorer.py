@@ -20,8 +20,8 @@ import logging
 import os
 import re
 
-from src.analyze.site_analyzer import SiteAnalysisResult
-from src.models import RedFlag, Score, ScoreDimension, Severity
+from due_diligence_engine.analyze.site_analyzer import SiteAnalysisResult
+from due_diligence_engine.models import RedFlag, Score, ScoreDimension, Severity
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +189,7 @@ class SiteScorer:
 
     def _score_with_ai(self, site_result: SiteAnalysisResult, api_key: str) -> Score:
         """Claude APIによるセマンティックスコアリング。"""
-        from src.ai.providers import _require_sdk
+        from due_diligence_engine.ai.providers import _require_sdk
 
         anthropic = _require_sdk("anthropic")
 

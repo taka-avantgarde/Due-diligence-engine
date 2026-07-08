@@ -6,7 +6,7 @@ import pathlib
 
 from click.testing import CliRunner
 
-from src.cli import doctor
+from due_diligence_engine.cli import doctor
 
 
 def test_doctor_runs_without_crashing():

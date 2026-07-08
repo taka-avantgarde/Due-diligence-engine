@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "due-diligence-engine"
-version = "0.6.0"
+version = "0.6.1"
 description = "AI-powered technical due diligence CLI — PDF-first, zero API keys required"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -80,20 +80,20 @@ Repository = "https://github.com/Atlas-Associates-Inc/Due-diligence-engine"
 Issues = "https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues"
 
 [project.scripts]
-dde = "src.cli:cli"
+dde = "due_diligence_engine.cli:cli"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["due_diligence_engine"]
 # Bundle the Noto TTF fonts (Vietnamese / Thai report rendering) into the wheel.
-artifacts = ["src/report/fonts/*.ttf"]
+artifacts = ["due_diligence_engine/report/fonts/*.ttf"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.coverage.run]
-source = ["src"]
-omit = ["src/report/fonts/*"]
+source = ["due_diligence_engine"]
+omit = ["due_diligence_engine/report/fonts/*"]
 
 [tool.coverage.report]
 show_missing = true

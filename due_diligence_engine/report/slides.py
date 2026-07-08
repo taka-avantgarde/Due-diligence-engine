@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.models import AnalysisResult
+from due_diligence_engine.models import AnalysisResult
 
 
 class SlideGenerator:

@@ -14,20 +14,20 @@
 
 リリース時、バージョン番号は以下 **4 箇所すべて**で揃える:
 1. `pyproject.toml` の `version`
-2. `src/cli.py` の `@click.version_option(version=...)`
+2. `due_diligence_engine/cli.py` の `@click.version_option(version=...)`
 3. 両 README のバッジ `version-vX.Y.Z`
 4. 両 README フッターの `` `vX.Y.Z` `` 行
 
 ## モデル ID / Model IDs
 
-- Claude モデル ID は `src/config.py` の `MODELS` 辞書で一元管理。
+- Claude モデル ID は `due_diligence_engine/config.py` の `MODELS` 辞書で一元管理。
 - 更新時は必ず[公式モデル一覧](https://platform.claude.com/docs/en/about-claude/models/overview)で実在とエイリアスを確認してから変更する（存在しない ID は API を壊す）。
 
 ## PDF レポートの検証 / PDF Verification
 
-- `src/report/pdf_generator.py` を変更したら、**実際に PDF を生成して目視確認**する:
+- `due_diligence_engine/report/pdf_generator.py` を変更したら、**実際に PDF を生成して目視確認**する:
   ```bash
-  python3 -c "from pathlib import Path; from tests.test_consulting_pdf import _make_consulting_report, _make_analysis_result; from src.report.pdf_generator import PDFReportGenerator; cr=_make_consulting_report(); ar=_make_analysis_result(cr); g=PDFReportGenerator(); g.generate_to_file(ar, Path('/tmp/dde_check_ja.pdf'), lang='ja'); g.generate_to_file(ar, Path('/tmp/dde_check_en.pdf'), lang='en'); print('OK')"
+  python3 -c "from pathlib import Path; from tests.test_consulting_pdf import _make_consulting_report, _make_analysis_result; from due_diligence_engine.report.pdf_generator import PDFReportGenerator; cr=_make_consulting_report(); ar=_make_analysis_result(cr); g=PDFReportGenerator(); g.generate_to_file(ar, Path('/tmp/dde_check_ja.pdf'), lang='ja'); g.generate_to_file(ar, Path('/tmp/dde_check_en.pdf'), lang='en'); print('OK')"
   ```
 - Drawing 内の `String` 絶対座標描画は自動改行されない。日本語の長いラベルが領域（`label_w`）を超えて他要素に被らないか必ず確認する。
 

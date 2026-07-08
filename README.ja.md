@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.6.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.1-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -398,6 +398,7 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 ## 🗺️ ロードマップ
 
 **最近リリース (v0.3.x)**
+- ✅ **パッケージ名を `src` → `due_diligence_engine` に改名**（2026-07、v0.6.1）: import されるパッケージが汎用トップレベル名 `src` を使わなくなり、PyPI からインストールした際の `sys.path` 衝突を回避。`dde` コマンドは不変で、変わるのは `import` パスのみ（`from due_diligence_engine...`）。
 - ✅ **PyPI 公開対応・`dde doctor`・ビジュアルサマリーページ・出典付録**（2026-07、v0.6.0）: AI プロバイダー SDK を任意の `[byok]` extra へ分離し、標準インストールを真の「API キー不要」に（`anthropic` 未インストールで `dde prompt` が落ちる実バグも修正）。環境自己診断コマンド `dde doctor` を新設。レーダーチャートを専用の**ビジュアルサマリー**ページに分離し、参照した全ライブ Web URL を列挙する**出典付録**を追加（14 言語）。アーカイブ読み込み時に平文の展開コピーがディスクに残る**セキュリティ不具合を修正**。secure-loader / secure-purge モジュールの初テストを追加。CI マトリクスを macOS + Windows 3.12 へ拡張しカバレッジ計測を導入。PyPI 公開ワークフロー（OIDC Trusted Publishing）を整備（初回公開は組織側の PyPI 設定待ち）。
 - ✅ **レーダーチャート + データ出所 + Windows 強化**（2026-07、v0.5.0）: スコアダッシュボードに5次元レーダー（スパイダー）チャート追加。STEP 0 の Web 調査証跡を PDF に表示（検索日・クエリ/ソース数、未実施時は学習データのみ警告）。セキュア一時領域の Windows NTFS ACL ロック（icacls・所有者のみ）。CI テストマトリクスに Windows 追加
 - ✅ **PDF レポート 14 言語対応**（2026-06、v0.4.0）: `--lang` でコンサル PDF を14言語生成 — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية（アラビア語は RTL 字形整形）。Noto フォント同梱・設定不要。
@@ -475,6 +476,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.0` — 🌍 6 言語 README · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング
+`v0.6.1` — 🌍 6 言語 README · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング
 
 </div>

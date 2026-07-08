@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.6.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.1-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -403,6 +403,7 @@ dde analyze owner/repo
 ## 🗺️ خريطة الطريق
 
 **أُطلق مؤخرًا (v0.3.x)**
+- ✅ **إعادة تسمية الحزمة `src` ← `due_diligence_engine`** (2026-07، v0.6.1): لم تعد الحزمة القابلة للاستيراد تستخدم الاسم العام `src` على المستوى الأعلى، ما يتجنّب التعارضات على `sys.path` عند التثبيت من PyPI. أمر `dde` لم يتغيّر؛ تتغيّر فقط مسارات `import` (`from due_diligence_engine...`).
 - ✅ **تجهيز للنشر على PyPI و`dde doctor` وصفحة ملخص مرئي وملحق المصادر** (2026-07، v0.6.0): نُقِلت حِزم SDK لمزوّدي الذكاء الاصطناعي إلى إضافة اختيارية `[byok]`، لتصبح التثبيتة الأساسية بلا مفاتيح API فعليًا (مع إصلاح خلل كان يُعطِّل `dde prompt` عند غياب `anthropic`)؛ أمر تشخيص ذاتي جديد `dde doctor`؛ أصبح لمخطط الرادار صفحة **ملخص مرئي** خاصة به، وأُضيف **ملحق المصادر** الذي يسرد كل رابط ويب مباشر تمت استشارته (14 لغة)؛ إصلاح أمني حقيقي كي لا يُبقي تحميل الأرشيف نسخة استخراج بنص صريح على القرص؛ أول اختبارات لوحدتَي secure-loader/secure-purge؛ توسيع مصفوفة CI إلى macOS وWindows 3.12 مع قياس التغطية. تدفّق النشر على PyPI (OIDC Trusted Publishing) جاهز؛ النشر الأول بانتظار إعداد PyPI من جهة المؤسسة.
 - ✅ **مخطط رادار + مصدر البيانات + تعزيز Windows** (2026-07، v0.5.0): مخطط رادار خماسي الأبعاد في لوحة الدرجات؛ صندوق مصدر بحث الويب (STEP 0) داخل PDF (تاريخ البحث وعدد الاستعلامات/المصادر، أو تحذير واضح عند الاعتماد على بيانات التدريب فقط)؛ قفل NTFS ACL على مجلد العمل المؤقت في Windows (icacls، للمالك فقط)؛ إضافة Windows إلى مصفوفة اختبارات CI
 - ✅ **تقارير PDF بـ 14 لغة** (2026-06، v0.4.0): يُنشأ تقرير الاستشارة بصيغة PDF بأي من 14 لغة عبر `--lang` — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية (العربية مع تشكيل سياقي واتجاه RTL). خطوط Noto مضمّنة، دون إعداد.
@@ -482,6 +483,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.0` — 🌍 ملفات README بست لغات · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
+`v0.6.1` — 🌍 ملفات README بست لغات · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
 
 </div>

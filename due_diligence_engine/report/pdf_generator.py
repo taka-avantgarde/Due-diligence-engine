@@ -46,7 +46,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from src.models import AIProviderResult, AnalysisResult, PurgeCertificate, Severity
+from due_diligence_engine.models import AIProviderResult, AnalysisResult, PurgeCertificate, Severity
 
 logger = logging.getLogger(__name__)
 
@@ -873,7 +873,7 @@ _DIM_NAME_MAPS = {"ja": _DIM_NAME_JA, "es": _DIM_NAME_ES}
 
 # Merge in additional Latin-script language packs (fr / de / pt / nl / it / id).
 # These render with the standard Helvetica font (WinAnsi), so no font work needed.
-from src.report.i18n_packs import (  # noqa: E402
+from due_diligence_engine.report.i18n_packs import (  # noqa: E402
     PDF_I18N_PACKS as _PDF_I18N_PACKS,
     GRADE_REC_PACKS as _GRADE_REC_PACKS,
     DIM_NAME_PACKS as _DIM_NAME_PACKS,
@@ -2568,7 +2568,7 @@ class PDFReportGenerator:
 
     def _build_business_summary(self, cr) -> list:
         """Executive business summary page."""
-        from src.models import ConsultingReport
+        from due_diligence_engine.models import ConsultingReport
 
         t = self._t
         s = self._styles

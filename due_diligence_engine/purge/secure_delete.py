@@ -22,7 +22,7 @@ from cryptography.hazmat.primitives.asymmetric.utils import (
     encode_dss_signature,
 )
 
-from src.models import PurgeCertificate
+from due_diligence_engine.models import PurgeCertificate
 
 
 OVERWRITE_PASSES = 3

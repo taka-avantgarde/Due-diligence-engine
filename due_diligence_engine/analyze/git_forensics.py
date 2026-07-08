@@ -8,7 +8,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
-from src.models import GitForensicsResult, RedFlag, Severity
+from due_diligence_engine.models import GitForensicsResult, RedFlag, Severity
 
 
 class GitForensicsAnalyzer:

@@ -16,20 +16,20 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
-from src.ai.providers import (
+from due_diligence_engine.ai.providers import (
     AIProvider,
     _require_sdk,
     create_provider,
     estimate_provider_cost,
 )
-from src.analyze.code import CodeAnalyzer
-from src.analyze.consistency import ConsistencyAnalyzer
-from src.analyze.docs import DocAnalyzer
-from src.analyze.git_forensics import GitForensicsAnalyzer
-from src.config import MODELS, Config, estimate_cost
-from src.ingest.secure_loader import SecureLoader
-from src.models import AIProviderResult, AnalysisResult, RedFlag, Severity
-from src.score.scorer import Scorer
+from due_diligence_engine.analyze.code import CodeAnalyzer
+from due_diligence_engine.analyze.consistency import ConsistencyAnalyzer
+from due_diligence_engine.analyze.docs import DocAnalyzer
+from due_diligence_engine.analyze.git_forensics import GitForensicsAnalyzer
+from due_diligence_engine.config import MODELS, Config, estimate_cost
+from due_diligence_engine.ingest.secure_loader import SecureLoader
+from due_diligence_engine.models import AIProviderResult, AnalysisResult, RedFlag, Severity
+from due_diligence_engine.score.scorer import Scorer
 
 logger = logging.getLogger(__name__)
 

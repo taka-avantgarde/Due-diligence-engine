@@ -1,4 +1,4 @@
-"""Tests for the secure ingestion loader (src/ingest/secure_loader.py).
+"""Tests for the secure ingestion loader (due_diligence_engine/ingest/secure_loader.py).
 
 Covers: 0o700 temp permissions (POSIX), encryption-at-rest, manifest
 classification, walk/ignore rules, per-file size cap, archive extraction +
@@ -19,9 +19,9 @@ from pathlib import Path
 
 import pytest
 
-from src.config import Config
-from src.ingest import secure_loader as sl
-from src.ingest.secure_loader import SecureLoader, _classify_file
+from due_diligence_engine.config import Config
+from due_diligence_engine.ingest import secure_loader as sl
+from due_diligence_engine.ingest.secure_loader import SecureLoader, _classify_file
 
 POSIX_ONLY = pytest.mark.skipif(sys.platform == "win32", reason="POSIX file mode only")
 

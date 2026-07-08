@@ -21,13 +21,13 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from src.config import Config, get_config
+from due_diligence_engine.config import Config, get_config
 
 console = Console()
 
 
 @click.group()
-@click.version_option(version="0.6.0", prog_name="dde")
+@click.version_option(version="0.6.1", prog_name="dde")
 def cli() -> None:
     """Due Diligence Engine - AI startup technical due diligence."""
     pass
@@ -66,10 +66,10 @@ def analyze(
       dde analyze ./my-startup-code
       dde analyze startup.zip
     """
-    from src.analyze.engine import AnalysisEngine
-    from src.ingest.secure_loader import SecureLoader
-    from src.report.generator import ReportGenerator
-    from src.report.slides import SlideGenerator
+    from due_diligence_engine.analyze.engine import AnalysisEngine
+    from due_diligence_engine.ingest.secure_loader import SecureLoader
+    from due_diligence_engine.report.generator import ReportGenerator
+    from due_diligence_engine.report.slides import SlideGenerator
 
     config = get_config()
 
@@ -220,9 +220,9 @@ def prompt(
       dde prompt owner/repo --lang ja        # GitHub repo, Japanese output
       dde prompt ./my-startup -s seed -c     # Seed stage, copy to clipboard
     """
-    from src.analyze.engine import AnalysisEngine
-    from src.ingest.secure_loader import SecureLoader
-    from src.prompt.generator import generate_prompt
+    from due_diligence_engine.analyze.engine import AnalysisEngine
+    from due_diligence_engine.ingest.secure_loader import SecureLoader
+    from due_diligence_engine.prompt.generator import generate_prompt
 
     # --pdf mode: ask language if not explicitly given AND stdin is a TTY
     if pdf:
@@ -345,7 +345,7 @@ def prompt(
             # Continue anyway — the user may know what they're doing
             console.print("[dim]Continuing anyway...[/dim]\n")
 
-        from src.prompt.generator import generate_consulting_prompt
+        from due_diligence_engine.prompt.generator import generate_consulting_prompt
         prompt_text = generate_consulting_prompt(result, lang=lang, stage=stage, urls=site_urls)
     else:
         prompt_text = generate_prompt(result, lang=lang, stage=stage)
@@ -417,8 +417,8 @@ def report(
     Consulting mode (from AI evaluation):
       dde report --consulting ai_result.json --pdf --lang ja
     """
-    from src.models import AnalysisResult
-    from src.report.generator import ReportGenerator
+    from due_diligence_engine.models import AnalysisResult
+    from due_diligence_engine.report.generator import ReportGenerator
 
     config = get_config()
     config.ensure_dirs()
@@ -426,8 +426,8 @@ def report(
 
     if consulting:
         # Consulting PDF mode — always save to ~/Downloads
-        from src.prompt.response_parser import parse_consulting_json
-        from src.report.pdf_generator import PDFReportGenerator
+        from due_diligence_engine.prompt.response_parser import parse_consulting_json
+        from due_diligence_engine.report.pdf_generator import PDFReportGenerator
 
         cr = parse_consulting_json(consulting)
 
@@ -488,7 +488,7 @@ def report(
     saved = report_gen.save_report(result, output_dir, formats=[fmt])
 
     if pdf:
-        from src.report.pdf_generator import PDFReportGenerator
+        from due_diligence_engine.report.pdf_generator import PDFReportGenerator
         pdf_gen = PDFReportGenerator()
         safe_name = result.project_name.replace("/", "_").replace("\\", "_")
         pdf_path = output_dir / f"dde_report_{safe_name}_{result.analysis_id}.pdf"
@@ -514,7 +514,7 @@ def purge(
     cert_output: str | None,
 ) -> None:
     """Securely purge analysis data and generate a purge certificate."""
-    from src.purge.secure_delete import SecurePurger
+    from due_diligence_engine.purge.secure_delete import SecurePurger
 
     target = Path(path)
     purger = SecurePurger()
@@ -561,7 +561,7 @@ def purge(
 @click.option("--data-dir", type=click.Path(), default=None, help="Data directory with results")
 def leaderboard(data_dir: str | None) -> None:
     """Show a scoring leaderboard across all completed analyses."""
-    from src.models import AnalysisResult
+    from due_diligence_engine.models import AnalysisResult
 
     config = get_config()
     search_dir = Path(data_dir) if data_dir else config.output_dir

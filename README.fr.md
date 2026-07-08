@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.6.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.1-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -401,6 +401,7 @@ R : DDE évalue le code source, pas le badge. Un service de stockage en clair ce
 ## 🗺️ Feuille de route
 
 **Livré récemment (v0.3.x)**
+- ✅ **Paquet renommé `src` → `due_diligence_engine`** (2026-07, v0.6.1) : le paquet importable n'utilise plus le nom générique de premier niveau `src`, évitant les collisions sur `sys.path` une fois installé depuis PyPI. La commande `dde` est inchangée ; seuls les chemins d'`import` changent (`from due_diligence_engine...`).
 - ✅ **Empaquetage prêt pour PyPI, `dde doctor`, page de résumé visuel et annexe des sources** (2026-07, v0.6.0) : les SDK des fournisseurs d'IA sont déplacés vers un extra optionnel `[byok]`, de sorte que l'installation de base est vraiment sans clé d'API (corrige un bug où `dde prompt` plantait si `anthropic` était absent) ; nouveau autodiagnostic `dde doctor` ; le graphique radar a désormais sa propre page **Résumé Visuel** et une nouvelle **Annexe des Sources** liste chaque URL web en direct consultée (14 langues) ; correctif de sécurité réel afin que le chargement d'archive ne laisse plus de copie d'extraction en clair sur le disque ; premiers tests des modules secure-loader/secure-purge ; matrice de CI étendue à macOS + Windows 3.12 avec couverture. Le workflow de publication PyPI (OIDC Trusted Publishing) est en place ; la première publication reste en attente de la configuration PyPI de l'organisation.
 - ✅ **Graphique radar + provenance des données + durcissement Windows** (2026-07, v0.5.0) : graphique radar à 5 dimensions sur le tableau de bord ; encadré de provenance de la recherche web STEP 0 dans le PDF (date de recherche, nombre de requêtes/sources, ou avertissement explicite données-d'entraînement-uniquement) ; verrouillage ACL NTFS Windows du répertoire temporaire sécurisé (icacls, propriétaire uniquement) ; Windows ajouté à la matrice de CI
 - ✅ **Rapports PDF en 14 langues** (2026-06, v0.4.0) : le PDF de conseil se génère en 14 langues via `--lang` — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية (arabe avec mise en forme contextuelle RTL). Polices Noto incluses, sans configuration.
@@ -478,6 +479,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.0` — 🌍 READMEs en 6 langues · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Recherche web en direct · notation à 5 dimensions
+`v0.6.1` — 🌍 READMEs en 6 langues · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Recherche web en direct · notation à 5 dimensions
 
 </div>

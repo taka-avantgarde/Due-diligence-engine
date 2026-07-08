@@ -27,7 +27,7 @@ from urllib.parse import urlparse
 
 from cryptography.fernet import Fernet
 
-from src.config import Config
+from due_diligence_engine.config import Config
 
 logger = logging.getLogger(__name__)
 

@@ -6,8 +6,8 @@ import ast
 import re
 from pathlib import Path
 
-from src.ingest.secure_loader import SecureLoader
-from src.models import CodeAnalysisResult, RedFlag, Severity
+from due_diligence_engine.ingest.secure_loader import SecureLoader
+from due_diligence_engine.models import CodeAnalysisResult, RedFlag, Severity
 
 
 # Patterns that suggest thin API wrapping rather than real implementation

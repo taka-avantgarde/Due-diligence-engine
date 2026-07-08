@@ -15,7 +15,7 @@ Dimensions (weights sum to 1.0):
 
 from __future__ import annotations
 
-from src.models import (
+from due_diligence_engine.models import (
     AnalysisResult,
     RedFlag,
     Score,

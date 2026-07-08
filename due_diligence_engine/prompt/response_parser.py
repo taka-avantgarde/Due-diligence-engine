@@ -12,7 +12,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from src.models import (
+from due_diligence_engine.models import (
     AtlasAxisScore,
     AtlasAxisSubItem,
     AtlasFourAxisEvaluation,

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from src.models import AnalysisResult, Severity
+from due_diligence_engine.models import AnalysisResult, Severity
 
 
 class ReportGenerator:

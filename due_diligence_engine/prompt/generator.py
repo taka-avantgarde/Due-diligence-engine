@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from src.models import AnalysisResult, RedFlag
+from due_diligence_engine.models import AnalysisResult, RedFlag
 
 
 # ---------------------------------------------------------------------------

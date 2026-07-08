@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 
-from src.ingest.secure_loader import SecureLoader
-from src.models import DocAnalysisResult, RedFlag, Severity
+from due_diligence_engine.ingest.secure_loader import SecureLoader
+from due_diligence_engine.models import DocAnalysisResult, RedFlag, Severity
 
 
 # Patterns for extracting specific types of claims

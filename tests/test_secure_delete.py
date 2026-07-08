@@ -1,4 +1,4 @@
-"""Tests for cryptographic purge + certificate (src/purge/secure_delete.py).
+"""Tests for cryptographic purge + certificate (due_diligence_engine/purge/secure_delete.py).
 
 Covers: multi-pass overwrite byte accounting, file/directory removal,
 missing-target handling, purge-certificate fields, signing, JSON export, and
@@ -15,8 +15,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
-from src.purge import secure_delete as sd
-from src.purge.secure_delete import OVERWRITE_PASSES, SecurePurger
+from due_diligence_engine.purge import secure_delete as sd
+from due_diligence_engine.purge.secure_delete import OVERWRITE_PASSES, SecurePurger
 
 
 def _file(tmp_path: Path, name: str = "f.bin", size: int = 1000) -> Path:

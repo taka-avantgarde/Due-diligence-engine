@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.models import (
+from due_diligence_engine.models import (
     AnalysisResult,
     CodeAnalysisResult,
     ConsistencyResult,
@@ -13,7 +13,7 @@ from src.models import (
     RedFlag,
     Severity,
 )
-from src.score.scorer import Scorer
+from due_diligence_engine.score.scorer import Scorer
 
 
 @pytest.fixture
