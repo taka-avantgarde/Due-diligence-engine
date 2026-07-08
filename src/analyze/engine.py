@@ -16,10 +16,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
-import anthropic
-
 from src.ai.providers import (
     AIProvider,
+    _require_sdk,
     create_provider,
     estimate_provider_cost,
 )
@@ -66,7 +65,10 @@ class AnalysisEngine:
         }
 
     @property
-    def client(self) -> anthropic.Anthropic:
+    def client(self) -> "anthropic.Anthropic":
+        # Lazy: the anthropic SDK is an optional [byok] extra. Only the managed
+        # API-key path reaches here; the local-only flow never touches it.
+        anthropic = _require_sdk("anthropic")
         if self._client is None:
             self._client = anthropic.Anthropic(api_key=self._config.anthropic_api_key)
         return self._client

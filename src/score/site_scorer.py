@@ -189,7 +189,9 @@ class SiteScorer:
 
     def _score_with_ai(self, site_result: SiteAnalysisResult, api_key: str) -> Score:
         """Claude APIによるセマンティックスコアリング。"""
-        import anthropic
+        from src.ai.providers import _require_sdk
+
+        anthropic = _require_sdk("anthropic")
 
         # テキストを最大15,000文字に圧縮（トークン節約）
         all_text = "\n\n".join(

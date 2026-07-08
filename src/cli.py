@@ -27,7 +27,7 @@ console = Console()
 
 
 @click.group()
-@click.version_option(version="0.5.0", prog_name="dde")
+@click.version_option(version="0.6.0", prog_name="dde")
 def cli() -> None:
     """Due Diligence Engine - AI startup technical due diligence."""
     pass
@@ -623,6 +623,183 @@ def leaderboard(data_dir: str | None) -> None:
         )
 
     console.print(table)
+
+
+@cli.command()
+def doctor() -> None:
+    """Diagnose the local environment for running DDE.
+
+    Runs self-checks (git, Python, bundled fonts, reportlab, ~/Downloads,
+    AI terminal, optional AI SDKs, Arabic libs) and prints a status table.
+
+    \b
+    Exit code is non-zero ONLY when a hard requirement is missing
+    (Python < 3.11, or reportlab not importable). Warnings and
+    informational rows never fail the command.
+
+    \b
+    Example:
+      dde doctor
+    """
+    import importlib.util
+    import os
+    import platform
+    import shutil
+    import subprocess
+    import tempfile
+
+    def _has(mod: str) -> bool:
+        try:
+            return importlib.util.find_spec(mod) is not None
+        except (ImportError, ValueError):
+            return False
+
+    OK, WARN, FAIL, INFO = (
+        "[green]OK[/green]", "[yellow]WARN[/yellow]",
+        "[red]FAIL[/red]", "[cyan]INFO[/cyan]",
+    )
+    rows: list[tuple[str, str, str]] = []
+    hard_fail = False
+
+    # 1. git on PATH (+version) — WARN only
+    if shutil.which("git"):
+        try:
+            out = subprocess.run(
+                ["git", "--version"],
+                capture_output=True, text=True, timeout=5, check=False,
+            )
+            rows.append(("git on PATH", OK, out.stdout.strip() or "version unknown"))
+        except (OSError, subprocess.SubprocessError) as e:
+            rows.append(("git on PATH", WARN, f"found but not runnable: {e}"))
+    else:
+        rows.append((
+            "git on PATH", WARN,
+            "not found - URL clone & git forensics unavailable "
+            "(local paths + --skip-git still work)",
+        ))
+
+    # 2. Python >= 3.11 — HARD FAIL
+    if sys.version_info >= (3, 11):
+        rows.append(("Python >= 3.11", OK, platform.python_version()))
+    else:
+        hard_fail = True
+        rows.append((
+            "Python >= 3.11", FAIL,
+            f"{platform.python_version()} (requires-python >= 3.11)",
+        ))
+
+    # 3. Bundled TTF fonts — WARN only (vi/th/ar; en/ja/CJK use CID fonts)
+    font_dir = Path(__file__).resolve().parent / "report" / "fonts"
+    expected = [
+        "NotoSans-Regular.ttf", "NotoSansThai-Regular.ttf",
+        "NotoNaskhArabic-Regular.ttf",
+    ]
+    missing = [
+        f for f in expected
+        if not (font_dir / f).is_file() or (font_dir / f).stat().st_size == 0
+    ]
+    if not missing:
+        rows.append(("Bundled TTF fonts", OK, f"{len(expected)} present ({font_dir})"))
+    else:
+        rows.append((
+            "Bundled TTF fonts", WARN,
+            f"missing/empty: {', '.join(missing)} -> vi/th/ar PDFs will fail",
+        ))
+
+    # 4. reportlab importable — HARD FAIL (core PDF engine)
+    if _has("reportlab"):
+        try:
+            import reportlab
+            ver = getattr(reportlab, "Version", getattr(reportlab, "__version__", "?"))
+        except Exception:
+            ver = "?"
+        rows.append(("reportlab", OK, f"v{ver}"))
+    else:
+        hard_fail = True
+        rows.append(("reportlab", FAIL, "not importable - run: pip install -e ."))
+
+    # 5. ~/Downloads writable/creatable — WARN only (-o overrides).
+    # Path.home() itself raises RuntimeError (NOT OSError) when HOME is unset and
+    # the UID has no passwd entry (minimal Docker/CI) — keep it inside the try so
+    # doctor never crashes in exactly the broken environments it diagnoses.
+    probe: Path | None = None
+    try:
+        downloads = Path.home() / "Downloads"
+        downloads.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(prefix=".dde_doctor_", dir=str(downloads))
+        os.close(fd)
+        probe = Path(tmp)
+        rows.append(("~/Downloads writable", OK, str(downloads)))
+    except (OSError, RuntimeError) as e:
+        rows.append((
+            "~/Downloads writable", WARN,
+            f"~/Downloads not resolvable/writable ({e}); pass -o to override",
+        ))
+    finally:
+        if probe is not None:
+            probe.unlink(missing_ok=True)
+
+    # 6. AI terminal — INFO only (reuse existing helper)
+    if _detect_ai_terminal():
+        rows.append(("AI terminal", INFO, "detected (Claude Code / Cursor / VS Code)"))
+    else:
+        rows.append((
+            "AI terminal", INFO,
+            "not detected - standalone shell (best-effort; --pdf still runs)",
+        ))
+
+    # 7. Optional BYOK AI SDKs — INFO only (absence is NOT a failure)
+    sdks = {
+        "anthropic": "anthropic", "openai": "openai",
+        "google-generativeai": "google.generativeai",
+    }
+    present = [d for d, m in sdks.items() if _has(m)]
+    absent = [d for d in sdks if d not in present]
+    detail = "present: " + (", ".join(present) or "none")
+    if absent:
+        detail += " | absent: " + ", ".join(absent) + " (BYOK AI-key mode only)"
+    rows.append(("BYOK AI SDKs", INFO, detail))
+
+    # 8. Arabic rendering libs — WARN only.
+    # Import names differ from dist names: arabic-reshaper -> arabic_reshaper,
+    # python-bidi -> bidi.
+    ar_missing = [
+        d for d, m in (("arabic-reshaper", "arabic_reshaper"),
+                       ("python-bidi", "bidi")) if not _has(m)
+    ]
+    if not ar_missing:
+        rows.append(("Arabic libs", OK, "arabic-reshaper + python-bidi present"))
+    else:
+        rows.append((
+            "Arabic libs", WARN,
+            f"missing: {', '.join(ar_missing)} -> Arabic (ar) reports won't shape/RTL",
+        ))
+
+    # ---- Render ----
+    table = Table(title="DDE Environment Doctor")
+    table.add_column("Check", style="bold")
+    table.add_column("Status", justify="center")
+    table.add_column("Details", style="dim", overflow="fold")
+    for check, status, det in rows:
+        table.add_row(check, status, det)
+    console.print(table)
+
+    warn_count = sum(1 for _, s, _ in rows if s == WARN)
+    if hard_fail:
+        console.print(Panel(
+            "[bold red]One or more hard requirements are missing.[/bold red]\n"
+            "DDE cannot generate reports until the FAIL rows above are resolved.",
+            title="Doctor: FAIL", border_style="red"))
+        sys.exit(1)
+    elif warn_count:
+        console.print(Panel(
+            f"[yellow]{warn_count} warning(s).[/yellow] Core PDF workflow is functional; "
+            "some optional features are degraded (see WARN rows).",
+            title="Doctor: OK (with warnings)", border_style="yellow"))
+    else:
+        console.print(Panel(
+            "[bold green]All checks passed.[/bold green] Environment is fully configured.",
+            title="Doctor: OK", border_style="green"))
 
 
 def _display_score_summary(result, score) -> None:

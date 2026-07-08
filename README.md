@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.5.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -326,12 +326,16 @@ dde prompt --pdf --lang ja
 # GitHub repo with stage context
 dde prompt owner/repo --pdf --lang ja --stage seed
 
+# Check your environment is ready (git, fonts, reportlab, ~/Downloads, AI SDKs)
+dde doctor
+
 # Non-interactive (for AI terminals without prompt support)
 dde prompt --pdf --lang ja \
   --url https://example.com \
   --url https://docs.example.com
 
-# Direct BYOK multi-AI cross-verification (optional)
+# Direct BYOK multi-AI cross-verification (optional — needs the [byok] extra)
+pip install "due-diligence-engine[byok]"
 export ANTHROPIC_API_KEY=sk-ant-...
 export GOOGLE_AI_API_KEY=AIza...
 export OPENAI_API_KEY=sk-...
@@ -397,6 +401,7 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 ## 🗺️ Roadmap
 
 **Recently shipped (v0.3.x)**
+- ✅ **PyPI-ready packaging, `dde doctor`, visual-summary page & source appendix** (2026-07, v0.6.0): AI-provider SDKs moved to an optional `[byok]` extra so the base install is truly zero-API-key (fixes a bug where `dde prompt` crashed when `anthropic` was absent); new `dde doctor` environment self-check; the radar chart now gets its own **Visual Summary** page and a new **Source Appendix** lists every live-web URL consulted (14 languages); a real security fix so archive loading no longer leaves a plaintext staging copy on disk; first tests for the secure-loader/secure-purge modules; CI matrix extended to macOS + Windows 3.12 with coverage. PyPI publish workflow (OIDC Trusted Publishing) is in place — first publish pending org-side PyPI setup.
 - ✅ **Radar chart + data provenance + Windows hardening** (2026-07, v0.5.0): 5-dimension radar (spider) chart on the score dashboard; STEP 0 web-research provenance box in the PDF (search date, query/source counts, or a clearly marked training-data-only warning); Windows NTFS ACL lock for the secure temp dir (`icacls`, owner-only); Windows added to the CI test matrix
 - ✅ **14-language PDF reports** (2026-06, v0.4.0): the consulting PDF generates in any of 14 languages via `--lang` — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية (Arabic with RTL contextual shaping). Bundled Noto fonts, no setup.
 - ✅ **Windows compatibility fixes** (2026-06, v0.3.8): cross-platform temp path for the `--pdf` consulting flow (was a hardcoded `/tmp`) and Windows clipboard support (`clip`) for `--copy`
@@ -473,6 +478,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.5.0` — 🌍 6-language READMEs · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live web research · 5-dimension scoring
+`v0.6.0` — 🌍 6-language READMEs · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live web research · 5-dimension scoring
 
 </div>

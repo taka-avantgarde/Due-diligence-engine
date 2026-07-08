@@ -272,20 +272,28 @@ class SecureLoader:
         if not archive_path.exists():
             raise FileNotFoundError(f"Archive not found: {archive_path}")
 
-        self._work_dir = self._create_secure_temp()
-        extract_dir = self._work_dir / "_extracted"
-        extract_dir.mkdir()
+        # Extract to a throwaway staging dir. This holds the PLAINTEXT archive
+        # contents, so it must be shredded once load_directory() has re-ingested
+        # them into a fresh, encrypted workspace — otherwise the plaintext copy
+        # would survive destroy() (which only knows about the encrypted _work_dir).
+        staging = self._create_secure_temp()
+        try:
+            extract_dir = staging / "_extracted"
+            extract_dir.mkdir()
 
-        with zipfile.ZipFile(str(archive_path), "r") as zf:
-            # Security: check for path traversal
-            for member in zf.namelist():
-                resolved = (extract_dir / member).resolve()
-                if not str(resolved).startswith(str(extract_dir.resolve())):
-                    raise ValueError(f"Zip path traversal detected: {member}")
-            zf.extractall(str(extract_dir))
+            with zipfile.ZipFile(str(archive_path), "r") as zf:
+                # Security: check for path traversal
+                for member in zf.namelist():
+                    resolved = (extract_dir / member).resolve()
+                    if not str(resolved).startswith(str(extract_dir.resolve())):
+                        raise ValueError(f"Zip path traversal detected: {member}")
+                zf.extractall(str(extract_dir))
 
-        # Re-process extracted files through secure loading
-        return self.load_directory(extract_dir)
+            # Re-process extracted files through secure loading (sets _work_dir
+            # to a new encrypted workspace, distinct from `staging`).
+            return self.load_directory(extract_dir)
+        finally:
+            self._shred_tree(staging)
 
     def read_file(self, relative_path: str) -> str:
         """Read and decrypt a file from the secure workspace.
@@ -326,13 +334,27 @@ class SecureLoader:
         if self._work_dir is None or not self._work_dir.exists():
             return 0
 
+        bytes_overwritten = self._shred_tree(self._work_dir)
+        self._work_dir = None
+        self._encryption_key = b""
+        self._manifest.clear()
+        return bytes_overwritten
+
+    @staticmethod
+    def _shred_tree(target: Path) -> int:
+        """Overwrite every file under ``target`` with random bytes, then remove
+        the whole tree. Returns the number of bytes overwritten.
+
+        Shared by destroy() and the archive-staging cleanup so both teardown
+        paths give the same best-effort secure erase. (Overwrite-in-place is
+        best-effort only — see the README security notes on SSD/COW media.)
+        """
         bytes_overwritten = 0
-        for root, _dirs, files in os.walk(str(self._work_dir)):
+        for root, _dirs, files in os.walk(str(target)):
             for fname in files:
                 fpath = Path(root) / fname
                 try:
                     size = fpath.stat().st_size
-                    # Overwrite with random data before deletion
                     with open(fpath, "wb") as f:
                         f.write(os.urandom(size))
                         f.flush()
@@ -342,10 +364,7 @@ class SecureLoader:
                 except OSError:
                     pass
 
-        shutil.rmtree(str(self._work_dir), ignore_errors=True)
-        self._work_dir = None
-        self._encryption_key = b""
-        self._manifest.clear()
+        shutil.rmtree(str(target), ignore_errors=True)
         return bytes_overwritten
 
     def _walk_files(self, root: Path) -> Iterator[Path]:

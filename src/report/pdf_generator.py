@@ -385,6 +385,14 @@ _PDF_I18N = {
         "df_queries": "Queries Executed",
         "df_sources": "Sources Consulted",
         "df_no_web_warning": "No live web search performed — analysis relies on AI training data only",
+        "visual_summary": "Visual Summary",
+        "visual_summary_subtitle": "5-dimension radar + data provenance at a glance",
+        "source_appendix_title": "Source Appendix",
+        "source_appendix_subtitle": "Live web sources consulted during research",
+        "src_verified_on": "Verification Date",
+        "src_col_num": "#",
+        "src_col_url": "Source URL",
+        "src_none": "No external sources were recorded for this analysis.",
     },
     "ja": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -596,6 +604,14 @@ _PDF_I18N = {
         "df_queries": "実行クエリ数",
         "df_sources": "参照ソース数",
         "df_no_web_warning": "ライブ Web 検索なし — AI の学習データのみに基づく分析",
+        "visual_summary": "ビジュアルサマリー",
+        "visual_summary_subtitle": "5次元レーダー + データ出所を一目で",
+        "source_appendix_title": "出典付録",
+        "source_appendix_subtitle": "調査中に参照したライブ Web ソース",
+        "src_verified_on": "検証日",
+        "src_col_num": "#",
+        "src_col_url": "ソース URL",
+        "src_none": "本分析では外部ソースの記録はありません。",
     },
     "es": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -794,6 +810,14 @@ _PDF_I18N = {
         "df_queries": "Consultas Ejecutadas",
         "df_sources": "Fuentes Consultadas",
         "df_no_web_warning": "Sin búsqueda web en vivo — el análisis se basa solo en datos de entrenamiento de la IA",
+        "visual_summary": "Resumen Visual",
+        "visual_summary_subtitle": "Radar de 5 dimensiones + procedencia de datos de un vistazo",
+        "source_appendix_title": "Apéndice de Fuentes",
+        "source_appendix_subtitle": "Fuentes web en vivo consultadas durante la investigación",
+        "src_verified_on": "Fecha de verificación",
+        "src_col_num": "#",
+        "src_col_url": "URL de la fuente",
+        "src_none": "No se registraron fuentes externas para este análisis.",
     },
 }
 
@@ -858,6 +882,16 @@ from src.report.i18n_packs import (  # noqa: E402
 _PDF_I18N.update(_PDF_I18N_PACKS)
 _PDF_GRADE_REC.update(_GRADE_REC_PACKS)
 _DIM_NAME_MAPS.update(_DIM_NAME_PACKS)
+
+# Canonical dimension key → English name. Single source of truth shared by the
+# score dashboard bar chart and the visual-summary radar chart.
+_DIM_NAME_MAP = {
+    "technical_originality": "Technical Originality",
+    "technology_advancement": "Technology Advancement",
+    "implementation_depth": "Implementation Depth",
+    "architecture_quality": "Architecture Quality (incl. Security)",
+    "claim_consistency": "Claim Consistency",
+}
 
 
 def _wrap_lines(text: str, max_chars_per_line: int, max_lines: int = 2) -> list[str]:
@@ -1144,6 +1178,13 @@ class PDFReportGenerator:
             story.append(PageBreak())
             story.extend(self._build_score_dashboard(cr))
 
+            # Visual summary (radar chart + data provenance) — its own page so
+            # neither element gets stranded across a page break.
+            visual = self._build_visual_summary_page(cr)
+            if visual:
+                story.append(PageBreak())
+                story.extend(visual)
+
             # Business summary
             story.append(PageBreak())
             story.extend(self._build_business_summary(cr))
@@ -1242,6 +1283,12 @@ class PDFReportGenerator:
         if cr is not None:
             story.append(PageBreak())
             story.extend(self._build_glossary_page(cr))
+
+            # Source appendix — the actual live-web URLs consulted in STEP 0.
+            appendix = self._build_source_appendix_page(cr)
+            if appendix:
+                story.append(PageBreak())
+                story.extend(appendix)
 
         # Cost breakdown — skip if zero (consulting mode uses no API)
         if result.total_cost_usd > 0:
@@ -2170,13 +2217,7 @@ class PDFReportGenerator:
         elements.append(Spacer(1, 8 * mm))
 
         # --- 5-Dimension bar chart (v0.3: Security Posture merged into Architecture Quality) ---
-        dim_name_map = {
-            "technical_originality": "Technical Originality",
-            "technology_advancement": "Technology Advancement",
-            "implementation_depth": "Implementation Depth",
-            "architecture_quality": "Architecture Quality (incl. Security)",
-            "claim_consistency": "Claim Consistency",
-        }
+        dim_name_map = _DIM_NAME_MAP
         _dim_desc_en = {
             "technical_originality": "Novelty of algorithms, patents, and proprietary tech",
             "technology_advancement": "Modernity of stack, frameworks, and tooling",
@@ -2207,9 +2248,8 @@ class PDFReportGenerator:
             "claim_consistency": 0.20,
         }
 
-        # Collect dimension data (+ short localized labels for the radar chart)
+        # Collect dimension data
         dims = []
-        radar_data: list[tuple[str, float]] = []
         for key, en_name in dim_name_map.items():
             dim = cr.dimension_scores.get(key)
             if not dim:
@@ -2218,10 +2258,6 @@ class PDFReportGenerator:
             desc = self._maybe_reshape(_dim_desc_maps.get(self._lang, _dim_desc_en).get(key, ""))
             w = weights.get(key, 0)
             dims.append((name, dim.score, dim.level, w, desc))
-            # Radar labels use the base name (parenthetical stripped from the
-            # ENGLISH key before localization, so RTL reshaping stays intact).
-            short = self._dim_name(en_name.split(" (")[0])
-            radar_data.append((short, dim.score))
 
         if not dims:
             return elements
@@ -2319,33 +2355,38 @@ class PDFReportGenerator:
 
         elements.append(barometer)
 
-        # ── 5-dimension radar (spider) chart ──────────────────
-        radar = self._build_radar_drawing(radar_data)
-        if radar is not None:
-            elements.append(Spacer(1, 6 * mm))
-            elements.append(radar)
-
-        # ── Data provenance box (STEP 0 live web research) ────
-        df_flow = self._build_data_freshness_box(cr)
-        if df_flow:
-            elements.append(Spacer(1, 4 * mm))
-            elements.extend(df_flow)
-
         return elements
 
-    def _build_radar_drawing(self, radar_data: list) -> "Drawing | None":
+    def _collect_radar_data(self, cr) -> list:
+        """(short localized dimension name, score) pairs for the radar chart.
+
+        Shared source of truth with the score dashboard so the two views never
+        drift; labels strip the parenthetical from the ENGLISH key *before*
+        localization so RTL (Arabic) reshaping stays intact.
+        """
+        radar_data: list[tuple[str, float]] = []
+        for key, en_name in _DIM_NAME_MAP.items():
+            dim = cr.dimension_scores.get(key)
+            if not dim:
+                continue
+            short = self._dim_name(en_name.split(" (")[0])
+            radar_data.append((short, dim.score))
+        return radar_data
+
+    def _build_radar_drawing(self, radar_data: list, scale: float = 1.0) -> "Drawing | None":
         """Pentagon radar (spider) chart of the dimension scores.
 
         Consulting-report staple: shows the balance/skew of the 5 dimensions
-        at a glance, complementing the horizontal bars above.
+        at a glance. ``scale`` enlarges the whole drawing for the dedicated
+        visual-summary page (1.0 = the original 300×200 footprint).
         """
         import math
 
         if len(radar_data) < 3:
             return None
         n = len(radar_data)
-        cx, cy, radius = 150.0, 96.0, 62.0
-        d = Drawing(300, 200)
+        cx, cy, radius = 150.0 * scale, 96.0 * scale, 62.0 * scale
+        d = Drawing(300 * scale, 200 * scale)
 
         def pt(i: int, r: float) -> tuple[float, float]:
             ang = math.radians(90 - 360.0 * i / n)  # start at top, clockwise
@@ -2371,14 +2412,14 @@ class PDFReportGenerator:
         d.add(Polygon(pts, fillColor=colors.Color(82 / 255, 113 / 255, 1.0, alpha=0.30),
                       strokeColor=COLOR_ACCENT, strokeWidth=1.5))
         for j in range(0, len(pts), 2):
-            d.add(Circle(pts[j], pts[j + 1], 2.2,
+            d.add(Circle(pts[j], pts[j + 1], 2.2 * scale,
                          fillColor=COLOR_ACCENT, strokeColor=None, strokeWidth=0))
 
         # Vertex labels: short dimension name + score
         font = self._font_normal()
         for i, (short, score) in enumerate(radar_data):
             label = short if len(short) <= 18 else short[:17] + "…"
-            x, y = pt(i, radius + 12)
+            x, y = pt(i, radius + 12 * scale)
             anchor = "middle"
             if x > cx + 4:
                 anchor = "start"
@@ -2386,7 +2427,7 @@ class PDFReportGenerator:
                 anchor = "end"
             dy = 1 if y >= cy else -7
             d.add(String(x, y + dy, f"{label}  {score:.0f}",
-                         fontName=font, fontSize=6.5,
+                         fontName=font, fontSize=6.5 * scale,
                          fillColor=COLOR_TEXT_DIM, textAnchor=anchor))
         return d
 
@@ -2429,6 +2470,101 @@ class PDFReportGenerator:
             ("BOTTOMPADDING", (0, -1), (-1, -1), 5),
         ]))
         return [box]
+
+    def _build_visual_summary_page(self, cr) -> list:
+        """Dedicated 'Visual Summary' page: enlarged 5-dimension radar chart +
+        the STEP 0 data-provenance box.
+
+        Split out of the score dashboard so neither element gets pushed across a
+        page break (which previously left the dashboard half-empty and the radar
+        stranded on a near-blank page).
+        """
+        t = self._t
+        s = self._styles
+
+        radar = self._build_radar_drawing(self._collect_radar_data(cr), scale=1.3)
+        df_flow = self._build_data_freshness_box(cr)
+        if radar is None and not df_flow:
+            return []  # nothing to show → caller skips the PageBreak
+
+        elements: list = [
+            Paragraph(t["visual_summary"], s["heading1"]),
+            HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=4 * mm),
+            Paragraph(t["visual_summary_subtitle"], s["body_dim"]),
+            Spacer(1, 8 * mm),
+        ]
+        if radar is not None:
+            radar.hAlign = "CENTER"
+            elements.append(radar)
+        if df_flow:
+            elements.append(Spacer(1, 8 * mm))
+            elements.extend(df_flow)
+        return elements
+
+    def _build_source_appendix_page(self, cr) -> list:
+        """Appendix listing the actual live-web sources consulted during STEP 0.
+
+        Makes the 'sources are traceable' claim provable from the PDF alone.
+        Long URLs wrap character-by-character (wordWrap='CJK'); the table
+        auto-paginates with a repeated header for large source lists.
+        """
+        df = getattr(cr, "data_freshness", None)
+        if df is None:
+            return []
+        # No appendix when web research never ran — the red provenance box on the
+        # visual-summary page already states that; an empty URL list is just noise.
+        if not df.web_search_performed and not df.sources_consulted:
+            return []
+
+        t = self._t
+        s = self._styles
+        elements: list = [
+            Paragraph(t["source_appendix_title"], s["heading1"]),
+            HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=4 * mm),
+            Paragraph(t["source_appendix_subtitle"], s["body_dim"]),
+        ]
+        if df.search_date:
+            elements.append(Spacer(1, 2 * mm))
+            elements.append(
+                Paragraph(f"{t['src_verified_on']}: {df.search_date}", s["body_small"])
+            )
+        elements.append(Spacer(1, 4 * mm))
+
+        if not df.sources_consulted:
+            elements.append(Paragraph(t["src_none"], s["body_dim"]))
+            return elements
+
+        # URLs are always ASCII/LTR — render them in Helvetica, NOT the language
+        # font. The Arabic font (NotoNaskhArabic) has no Latin glyphs, so a
+        # localized font would make every URL invisible in `ar` reports.
+        url_style = ParagraphStyle(
+            "SourceURL", parent=s["body_small"], fontName="Helvetica",
+            fontSize=7.5, leading=10, wordWrap="CJK",
+        )
+        hdr_style = ParagraphStyle(
+            "SourceHdr", parent=s["body_small"], fontName=self._font_bold(),
+            fontSize=8, textColor=COLOR_TEXT,
+        )
+        rows = [[Paragraph(t["src_col_num"], hdr_style),
+                 Paragraph(t["src_col_url"], hdr_style)]]
+        for i, url in enumerate(df.sources_consulted, 1):
+            rows.append([Paragraph(str(i), url_style), Paragraph(url, url_style)])
+
+        table = Table(rows, colWidths=[28, 422], repeatRows=1)
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_LIGHT_BG),
+            ("LINEBELOW", (0, 0), (-1, 0), 0.75, COLOR_BORDER),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, COLOR_LIGHT_BG]),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("ALIGN", (0, 0), (0, -1), "CENTER"),
+            ("ALIGN", (1, 0), (1, -1), "LEFT"),  # URLs read LTR even in RTL reports
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(table)
+        return elements
 
     def _build_business_summary(self, cr) -> list:
         """Executive business summary page."""

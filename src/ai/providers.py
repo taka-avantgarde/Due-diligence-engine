@@ -7,12 +7,47 @@ Claude / Gemini / ChatGPT の3社を統一インターフェースで呼び出�
 
 from __future__ import annotations
 
+import importlib
 import json
 import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# BYOK ("bring your own key") provider SDKs are optional extras — see the
+# [byok] group in pyproject.toml. They are imported lazily so the flagship
+# local-only `dde prompt --pdf` flow works with none of them installed.
+_BYOK_MODULE_TO_PACKAGE = {
+    "anthropic": "anthropic",
+    "google.generativeai": "google-generativeai",
+    "openai": "openai",
+}
+
+
+def _byok_missing_message(module: str) -> str:
+    """未インストールの BYOK プロバイダー SDK 向けの二言語エラーメッセージ。"""
+    package = _BYOK_MODULE_TO_PACKAGE.get(module, module)
+    return (
+        f"BYOK AI プロバイダー SDK が見つかりません（未インストール: {package}）。\n"
+        "`dde prompt` / `dde prompt --pdf` などのローカル解析は API キー不要で動作しますが、\n"
+        "AI クロス検証（Claude / Gemini / ChatGPT の呼び出し）には各社 SDK が必要です。\n"
+        "次を実行してインストールしてください:\n"
+        '    pip install "due-diligence-engine[byok]"\n\n'
+        f"BYOK AI provider SDK not found (missing package: {package}).\n"
+        "Local-only flows such as `dde prompt` / `dde prompt --pdf` need no API keys,\n"
+        "but AI cross-verification (Claude / Gemini / ChatGPT) requires the provider SDKs.\n"
+        "Install them with:\n"
+        '    pip install "due-diligence-engine[byok]"'
+    )
+
+
+def _require_sdk(module: str):
+    """BYOK プロバイダー SDK を遅延インポート。未インストール時は明確なエラーを送出。"""
+    try:
+        return importlib.import_module(module)
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError(_byok_missing_message(module)) from exc
 
 # --- 6軸分析プロンプトテンプレート ---
 _ANALYSIS_PROMPT = """You are a senior technical due diligence analyst evaluating an AI startup
@@ -117,7 +152,7 @@ class AnthropicProvider(AIProvider):
 
     def analyze(self, summary: str, context: str) -> dict[str, Any]:
         """Claude APIで分析を実行。"""
-        import anthropic
+        anthropic = _require_sdk("anthropic")
 
         client = anthropic.Anthropic(api_key=self._api_key)
         prompt = self._build_prompt(summary, context)
@@ -150,7 +185,7 @@ class GoogleProvider(AIProvider):
 
     def analyze(self, summary: str, context: str) -> dict[str, Any]:
         """Gemini APIで分析を実行。"""
-        import google.generativeai as genai
+        genai = _require_sdk("google.generativeai")
 
         genai.configure(api_key=self._api_key)
         model = genai.GenerativeModel(self._model_id)
@@ -183,7 +218,7 @@ class OpenAIProvider(AIProvider):
 
     def analyze(self, summary: str, context: str) -> dict[str, Any]:
         """ChatGPT APIで分析を実行。"""
-        import openai
+        openai = _require_sdk("openai")
 
         client = openai.OpenAI(api_key=self._api_key)
         prompt = self._build_prompt(summary, context)

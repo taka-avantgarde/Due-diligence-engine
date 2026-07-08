@@ -33,7 +33,7 @@
 
 ## テスト / Tests
 
-- 変更後は必ず `python3 -m pip install -e .` 済みの環境で `python3 -m pytest tests/ -q` を実行（63 件 pass が基準）。
+- 変更後は必ず `python3 -m pip install -e .` 済みの環境で `python3 -m pytest tests/ -q` を実行（114 件 pass が基準）。
 - CI（`.github/workflows/tests.yml`）が push/PR ごとに pytest を実行する（ubuntu / Python 3.11・3.12）。
 - レポート対応 14 言語は `tests/test_consulting_pdf.py::TestMultilingualReports` がスモークテストで保護（キー整合 + 全言語 PDF 生成）。言語を追加したら `ALL_REPORT_LANGS` にも追加すること。
 

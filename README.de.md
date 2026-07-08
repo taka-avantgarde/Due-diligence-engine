@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.5.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -326,12 +326,16 @@ dde prompt --pdf --lang ja
 # GitHub repo with stage context
 dde prompt owner/repo --pdf --lang ja --stage seed
 
+# Check your environment is ready (git, fonts, reportlab, ~/Downloads, AI SDKs)
+dde doctor
+
 # Non-interactive (for AI terminals without prompt support)
 dde prompt --pdf --lang ja \
   --url https://example.com \
   --url https://docs.example.com
 
-# Direct BYOK multi-AI cross-verification (optional)
+# Direct BYOK multi-AI cross-verification (optional — needs the [byok] extra)
+pip install "due-diligence-engine[byok]"
 export ANTHROPIC_API_KEY=sk-ant-...
 export GOOGLE_AI_API_KEY=AIza...
 export OPENAI_API_KEY=sk-...
@@ -397,6 +401,7 @@ A: DDE bewertet den Quellcode, nicht das Abzeichen. Ein SOC2-zertifizierter Dien
 ## 🗺️ Roadmap
 
 **Kürzlich ausgeliefert (v0.3.x)**
+- ✅ **PyPI-fähiges Packaging, `dde doctor`, visuelle Zusammenfassungsseite & Quellenanhang** (2026-07, v0.6.0): Die KI-Anbieter-SDKs wurden in ein optionales `[byok]`-Extra verschoben, sodass die Basisinstallation wirklich ohne API-Schlüssel auskommt (behebt einen Fehler, bei dem `dde prompt` abstürzte, wenn `anthropic` fehlte); neuer Umgebungs-Selbsttest `dde doctor`; das Radar-Diagramm erhält eine eigene **Visuelle-Zusammenfassung**-Seite und ein neuer **Quellenanhang** listet jede konsultierte Live-Web-URL auf (14 Sprachen); echter Sicherheitsfix, damit das Laden von Archiven keine Klartext-Extraktionskopie mehr auf der Festplatte hinterlässt; erste Tests für die Module secure-loader/secure-purge; CI-Matrix auf macOS + Windows 3.12 erweitert, mit Coverage. Der PyPI-Veröffentlichungs-Workflow (OIDC Trusted Publishing) ist eingerichtet; die erste Veröffentlichung steht noch aus (PyPI-Einrichtung auf Organisationsseite).
 - ✅ **Radar-Diagramm + Datenherkunft + Windows-Härtung** (2026-07, v0.5.0): 5-Dimensionen-Radar-Diagramm im Bewertungs-Dashboard; STEP-0-Webrecherche-Herkunftsbox im PDF (Suchdatum, Anzahl Anfragen/Quellen oder deutliche Nur-Trainingsdaten-Warnung); Windows-NTFS-ACL-Sperre für das sichere Temp-Verzeichnis (icacls, nur Eigentümer); Windows zur CI-Testmatrix hinzugefügt
 - ✅ **PDF-Berichte in 14 Sprachen** (2026-06, v0.4.0): Das Beratungs-PDF wird über `--lang` in 14 Sprachen erzeugt — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية (Arabisch mit kontextueller RTL-Formung). Gebündelte Noto-Schriften, keine Einrichtung.
 - ✅ **Windows-Kompatibilitätskorrekturen** (2026-06, v0.3.8): plattformübergreifender temporärer Pfad für den `--pdf`-Beratungsablauf (zuvor fest codiertes `/tmp`) und Windows-Zwischenablage-Unterstützung (`clip`) für `--copy`
@@ -473,6 +478,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.5.0` — 🌍 READMEs in 6 Sprachen · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live-Websuche · 5-Dimensionen-Bewertung
+`v0.6.0` — 🌍 READMEs in 6 Sprachen · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live-Websuche · 5-Dimensionen-Bewertung
 
 </div>

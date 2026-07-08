@@ -41,3 +41,8 @@ data/tmp/
 # DO NOT gitignore: output/purge_certificates/
 dde_output/
 .firebase/
+
+# Coverage
+.coverage
+coverage.xml
+htmlcov/

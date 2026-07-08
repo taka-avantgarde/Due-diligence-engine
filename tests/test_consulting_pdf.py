@@ -931,3 +931,79 @@ class TestDataFreshnessAndRadar:
                   "df_sources", "df_no_web_warning"}
         for lang in ALL_REPORT_LANGS:
             assert needed <= set(_PDF_I18N[lang]), f"missing df keys in {lang}"
+
+
+# ── Visual Summary page + Source Appendix (v0.6.0) ───────────────────────────
+
+
+def _gen_for(lang: str = "en") -> PDFReportGenerator:
+    """A generator with _lang/_styles/_t initialized (normally done in generate)."""
+    from src.report.pdf_generator import _PDF_I18N, _build_styles
+
+    gen = PDFReportGenerator()
+    gen._lang = lang if lang in _PDF_I18N else "en"
+    gen._styles = _build_styles(gen._lang)
+    gen._t = _PDF_I18N[gen._lang]
+    return gen
+
+
+class TestVisualSummaryAndSourceAppendix:
+    """Guards the v0.6.0 visual-summary page and the source-URL appendix."""
+
+    def test_visual_summary_page_has_radar_and_provenance(self):
+        from reportlab.graphics.shapes import Drawing
+        from reportlab.platypus import Table
+
+        cr = _make_consulting_report()  # 5 dims + data_freshness with 3 sources
+        elements = _gen_for("en")._build_visual_summary_page(cr)
+        assert any(isinstance(e, Drawing) for e in elements)   # radar
+        assert any(isinstance(e, Table) for e in elements)     # provenance box
+
+    def test_source_appendix_lists_every_url(self):
+        from reportlab.platypus import Table
+
+        cr = _make_consulting_report()  # 3 sources_consulted
+        elements = _gen_for("en")._build_source_appendix_page(cr)
+        tables = [e for e in elements if isinstance(e, Table)]
+        assert len(tables) == 1
+        assert tables[0]._nrows == 1 + 3  # header + one row per source
+
+    def test_source_appendix_uses_latin_font_for_urls(self):
+        """URLs must render in Helvetica so they stay visible in `ar` reports
+        (the Arabic font has no Latin glyphs)."""
+        cr = _make_consulting_report()
+        gen = _gen_for("ar")
+        # Should build without error and include the URL table.
+        from reportlab.platypus import Table
+        elements = gen._build_source_appendix_page(cr)
+        assert any(isinstance(e, Table) for e in elements)
+
+    def test_source_appendix_empty_when_no_web_search(self):
+        cr = _make_consulting_report()
+        cr.data_freshness = DataFreshness(web_search_performed=False)
+        assert _gen_for("en")._build_source_appendix_page(cr) == []
+
+    def test_source_appendix_absent_when_no_data_freshness(self):
+        cr = _make_consulting_report()
+        cr.data_freshness = None
+        assert _gen_for("en")._build_source_appendix_page(cr) == []
+
+    def test_source_appendix_none_message_when_searched_but_no_urls(self):
+        cr = _make_consulting_report()
+        cr.data_freshness = DataFreshness(
+            web_search_performed=True, search_date="2026-07-01",
+            queries_executed=["q"], sources_consulted=[],
+        )
+        elements = _gen_for("en")._build_source_appendix_page(cr)
+        assert elements  # a page IS produced (title + "no sources" line)
+        from reportlab.platypus import Table
+        assert not any(isinstance(e, Table) for e in elements)  # but no URL table
+
+    def test_i18n_has_v060_keys_in_all_langs(self):
+        from src.report.pdf_generator import _PDF_I18N
+
+        needed = {"visual_summary", "visual_summary_subtitle",
+                  "source_appendix_title", "source_appendix_subtitle",
+                  "src_verified_on", "src_col_num", "src_col_url", "src_none"}
+        for lang in ALL_REPORT_LANGS:
+            assert needed <= set(_PDF_I18N[lang]), f"missing v0.6.0 keys in {lang}"
