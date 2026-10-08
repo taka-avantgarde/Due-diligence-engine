@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.6.1-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.2-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -90,7 +90,7 @@ macOS Homebrew users: use `python3 -m pip` — the bare `pip` command is no long
 
 **Recommended setup:**
 
-- **Spin up the most capable model available** in your IDE (Claude Fable 5, GPT-5, Gemini 2.5 Pro, etc.)
+- **Spin up the most capable model available** in your IDE (Claude Fable 5.1, Claude Opus 5.5, GPT-5, Gemini 2.5 Pro, etc.)
 - **Paste `dde prompt --pdf`** into the terminal
 - **Go grab a coffee** ☕ — the AI will read hundreds of files, evaluate across
   9+ dimensions, research 5-10 competitors globally, and build a 24-page consulting PDF
@@ -401,6 +401,7 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 ## 🗺️ Roadmap
 
 **Recently shipped (v0.3.x)**
+- ✅ **Claude 5.5-generation model refresh + Python 3.13** (2026-10, v0.6.2): all three BYOK tiers moved to the current lineup — scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, $0.10/$0.50 per MTok, 10× cheaper), analyze **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, $2/$10, down from $3/$15), judge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, same $10/$50). The site-verification scorer no longer hardcodes a dated Haiku snapshot and the BYOK Claude default/cost table now derive from `config.MODELS`, guarded by a new `tests/test_model_ids.py`. Deprecated `datetime.utcnow()` replaced (silences Python 3.12+ warnings); Python 3.13 added to the CI matrix and classifiers.
 - ✅ **Package renamed `src` → `due_diligence_engine`** (2026-07, v0.6.1): the importable package no longer uses the generic top-level name `src`, avoiding `sys.path` collisions once pip-installed. The `dde` command is unchanged; only `import` paths change (`from due_diligence_engine...`).
 - ✅ **PyPI-ready packaging, `dde doctor`, visual-summary page & source appendix** (2026-07, v0.6.0): AI-provider SDKs moved to an optional `[byok]` extra so the base install is truly zero-API-key (fixes a bug where `dde prompt` crashed when `anthropic` was absent); new `dde doctor` environment self-check; the radar chart now gets its own **Visual Summary** page and a new **Source Appendix** lists every live-web URL consulted (14 languages); a real security fix so archive loading no longer leaves a plaintext staging copy on disk; first tests for the secure-loader/secure-purge modules; CI matrix extended to macOS + Windows 3.12 with coverage. Distribution stays via the documented `git+https` install; a PyPI release was evaluated and deferred.
 - ✅ **Radar chart + data provenance + Windows hardening** (2026-07, v0.5.0): 5-dimension radar (spider) chart on the score dashboard; STEP 0 web-research provenance box in the PDF (search date, query/source counts, or a clearly marked training-data-only warning); Windows NTFS ACL lock for the secure temp dir (`icacls`, owner-only); Windows added to the CI test matrix
@@ -479,6 +480,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.1` — 🌍 6-language READMEs · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Live web research · 5-dimension scoring
+`v0.6.2` — 🌍 6-language READMEs · 🆕 Claude Fable 5.1 / Sonnet 5.5 / Haiku 5.5 · 🌐 Live web research · 5-dimension scoring
 
 </div>

@@ -13,6 +13,8 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
+from due_diligence_engine.config import MODELS
+
 logger = logging.getLogger(__name__)
 
 # BYOK ("bring your own key") provider SDKs are optional extras — see the
@@ -250,14 +252,17 @@ class OpenAIProvider(AIProvider):
 
 # デフォルトモデルID定義
 _DEFAULT_MODELS = {
-    "claude": "claude-sonnet-4-6",  # 2026-05 更新 (claude-sonnet-4-20250514 は 2026-06-15 retire)
+    "claude": MODELS["sonnet"].model_id,  # config.MODELS で一元管理 (現行: Sonnet 5.5)
     "gemini": "gemini-2.0-flash",
     "chatgpt": "gpt-4o",
 }
 
 # コスト定義 (USD per million tokens)
 PROVIDER_COSTS: dict[str, dict[str, float]] = {
-    "claude": {"input": 3.00, "output": 15.00},
+    "claude": {
+        "input": MODELS["sonnet"].input_cost_per_mtok,
+        "output": MODELS["sonnet"].output_cost_per_mtok,
+    },
     "gemini": {"input": 0.10, "output": 0.40},
     "chatgpt": {"input": 2.50, "output": 10.00},
 }

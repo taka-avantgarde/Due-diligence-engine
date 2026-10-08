@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+
+def _utcnow() -> datetime:
+    """Naive UTC timestamp (replaces deprecated ``datetime.utcnow`` on Python 3.12+)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class Severity(str, Enum):
@@ -61,7 +66,7 @@ class Score(BaseModel):
     overall_score: float = 0.0
     grade: str = ""
     recommendation: str = ""
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=_utcnow)
 
     def compute(self) -> None:
         """Compute overall score and grade from dimensions."""
@@ -208,7 +213,7 @@ class AnalysisResult(BaseModel):
 
     project_name: str
     analysis_id: str = Field(default_factory=lambda: uuid.uuid4().hex[:16])
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=_utcnow)
     code_analysis: CodeAnalysisResult = Field(default_factory=CodeAnalysisResult)
     doc_analysis: DocAnalysisResult = Field(default_factory=DocAnalysisResult)
     git_forensics: GitForensicsResult = Field(default_factory=GitForensicsResult)
@@ -252,7 +257,7 @@ class PurgeCertificate(BaseModel):
     certificate_id: str = Field(default_factory=lambda: uuid.uuid4().hex)
     analysis_id: str
     project_name: str
-    purge_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    purge_timestamp: datetime = Field(default_factory=_utcnow)
     files_purged: int = 0
     bytes_overwritten: int = 0
     method: str = "cryptographic_erasure"

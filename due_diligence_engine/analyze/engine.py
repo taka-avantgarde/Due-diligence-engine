@@ -280,7 +280,7 @@ class AnalysisEngine:
         logger.info("  Tier 2: Sonnet deep analysis...")
         findings["sonnet_analysis"] = self._sonnet_analyze(summary, findings["haiku_scan"])
 
-        logger.info("  Tier 3: Opus final judgment...")
+        logger.info("  Tier 3: Fable final judgment...")
         findings["fable_judgment"] = self._fable_judge(summary, findings["sonnet_analysis"])
 
         return findings
@@ -391,7 +391,7 @@ Respond in JSON format:
             return {"error": str(e)}
 
     def _fable_judge(self, summary: str, sonnet_result: dict) -> dict[str, Any]:
-        """Tier 3: Fable 5 による最終判定。"""
+        """Tier 3: Fable 5.1 による最終判定。"""
         model = MODELS["fable"]
 
         prompt = f"""You are the final arbiter in a technical due diligence process for an

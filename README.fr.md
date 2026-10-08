@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.6.1-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.2-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -90,7 +90,7 @@ Utilisateurs de macOS Homebrew : utilisez `python3 -m pip` — la commande `pip`
 
 **Configuration recommandée :**
 
-- **Démarrez le modèle le plus capable disponible** dans votre IDE (Claude Fable 5, GPT-5, Gemini 2.5 Pro, etc.)
+- **Démarrez le modèle le plus capable disponible** dans votre IDE (Claude Fable 5.1, Claude Opus 5.5, GPT-5, Gemini 2.5 Pro, etc.)
 - **Collez `dde prompt --pdf`** dans le terminal
 - **Allez chercher un café** ☕ — l'IA lira des centaines de fichiers, évaluera selon
   9+ dimensions, étudiera 5 à 10 concurrents au niveau mondial, et bâtira un PDF de conseil de 24 pages
@@ -401,6 +401,7 @@ R : DDE évalue le code source, pas le badge. Un service de stockage en clair ce
 ## 🗺️ Feuille de route
 
 **Livré récemment (v0.3.x)**
+- ✅ **Mise à niveau des modèles vers la génération Claude 5.5 + Python 3.13** (2026-10, v0.6.2) : les trois paliers BYOK passent à la gamme actuelle — scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, 0,10 $/0,50 $ par MTok, 10× moins cher), analyse **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, 2 $/10 $, contre 3 $/15 $), juge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, toujours 10 $/50 $). Le scoreur de vérification de site n'embarque plus de snapshot Haiku daté et le modèle/tableau de coûts Claude par défaut en BYOK dérivent désormais de `config.MODELS`, protégés par le nouveau `tests/test_model_ids.py`. `datetime.utcnow()` obsolète remplacé (plus d'avertissements sur Python 3.12+) ; Python 3.13 ajouté à la matrice de CI et aux classifiers.
 - ✅ **Paquet renommé `src` → `due_diligence_engine`** (2026-07, v0.6.1) : le paquet importable n'utilise plus le nom générique de premier niveau `src`, évitant les collisions sur `sys.path` une fois installé via pip. La commande `dde` est inchangée ; seuls les chemins d'`import` changent (`from due_diligence_engine...`).
 - ✅ **Empaquetage prêt pour PyPI, `dde doctor`, page de résumé visuel et annexe des sources** (2026-07, v0.6.0) : les SDK des fournisseurs d'IA sont déplacés vers un extra optionnel `[byok]`, de sorte que l'installation de base est vraiment sans clé d'API (corrige un bug où `dde prompt` plantait si `anthropic` était absent) ; nouveau autodiagnostic `dde doctor` ; le graphique radar a désormais sa propre page **Résumé Visuel** et une nouvelle **Annexe des Sources** liste chaque URL web en direct consultée (14 langues) ; correctif de sécurité réel afin que le chargement d'archive ne laisse plus de copie d'extraction en clair sur le disque ; premiers tests des modules secure-loader/secure-purge ; matrice de CI étendue à macOS + Windows 3.12 avec couverture. La distribution se poursuit via l'installation `git+https` documentée ; une publication PyPI a été évaluée puis reportée.
 - ✅ **Graphique radar + provenance des données + durcissement Windows** (2026-07, v0.5.0) : graphique radar à 5 dimensions sur le tableau de bord ; encadré de provenance de la recherche web STEP 0 dans le PDF (date de recherche, nombre de requêtes/sources, ou avertissement explicite données-d'entraînement-uniquement) ; verrouillage ACL NTFS Windows du répertoire temporaire sécurisé (icacls, propriétaire uniquement) ; Windows ajouté à la matrice de CI
@@ -479,6 +480,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.1` — 🌍 READMEs en 6 langues · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 · 🌐 Recherche web en direct · notation à 5 dimensions
+`v0.6.2` — 🌍 READMEs en 6 langues · 🆕 Claude Fable 5.1 / Sonnet 5.5 / Haiku 5.5 · 🌐 Recherche web en direct · notation à 5 dimensions
 
 </div>

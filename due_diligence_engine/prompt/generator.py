@@ -2158,7 +2158,7 @@ Do not add markdown formatting around it — output raw JSON only.
   "glossary_additions": [
     { "term": "technical term", "definition": "plain-language explanation" }
   ],
-  "ai_model_used": "your model name (e.g. Claude Sonnet 4, GPT-4o, etc.)",
+  "ai_model_used": "your model name (e.g. Claude Fable 5.1, Claude Opus 5.5, GPT-5, Gemini 2.5 Pro, etc.)",
   "site_verification": {
     "urls_analyzed": ["https://example.com", "..."],
     "items": [

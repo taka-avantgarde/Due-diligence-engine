@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.6.1-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.2-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -90,7 +90,7 @@ macOS Homebrew ユーザーは必ず `python3 -m pip` を使用してくださ�
 
 **推奨セットアップ:**
 
-- **IDE 内で利用可能な最高性能モデルを起動**（Claude Fable 5 / GPT-5 / Gemini 2.5 Pro 等）
+- **IDE 内で利用可能な最高性能モデルを起動**（Claude Fable 5.1 / Claude Opus 5.5 / GPT-5 / Gemini 2.5 Pro 等）
 - **`dde prompt --pdf --lang ja` をターミナルにペースト**
 - **コーヒー一杯の時間 ☕ を** — AI が数百のファイルを読み、9軸以上で評価し、
   世界の競合 5〜10 社を調査し、22 ページのコンサル PDF を構築します
@@ -398,6 +398,7 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 ## 🗺️ ロードマップ
 
 **最近リリース (v0.3.x)**
+- ✅ **Claude 5.5 世代へモデル更新 + Python 3.13 対応**（2026-10、v0.6.2）: BYOK の 3 ティアをすべて現行ラインナップへ移行 — スキャン **Haiku 4.5 → Haiku 5.5**（`claude-haiku-5-5`、$0.10/$0.50 per MTok、10 分の 1 のコスト）、分析 **Sonnet 4.6 → Sonnet 5.5**（`claude-sonnet-5-5`、$2/$10、従来 $3/$15 から値下げ）、判定 **Fable 5 → Fable 5.1**（`claude-fable-5-1`、$10/$50 は据え置き）。サイト検証スコアラーの日付付き Haiku スナップショットのハードコードを廃止し、BYOK の Claude デフォルト/コスト表も `config.MODELS` から導出するよう統一（新テスト `tests/test_model_ids.py` で保護）。非推奨の `datetime.utcnow()` を置換（Python 3.12+ の警告解消）。CI マトリクスと classifiers に Python 3.13 を追加。
 - ✅ **パッケージ名を `src` → `due_diligence_engine` に改名**（2026-07、v0.6.1）: import されるパッケージが汎用トップレベル名 `src` を使わなくなり、pip インストール時の `sys.path` 衝突を回避。`dde` コマンドは不変で、変わるのは `import` パスのみ（`from due_diligence_engine...`）。
 - ✅ **PyPI 公開対応・`dde doctor`・ビジュアルサマリーページ・出典付録**（2026-07、v0.6.0）: AI プロバイダー SDK を任意の `[byok]` extra へ分離し、標準インストールを真の「API キー不要」に（`anthropic` 未インストールで `dde prompt` が落ちる実バグも修正）。環境自己診断コマンド `dde doctor` を新設。レーダーチャートを専用の**ビジュアルサマリー**ページに分離し、参照した全ライブ Web URL を列挙する**出典付録**を追加（14 言語）。アーカイブ読み込み時に平文の展開コピーがディスクに残る**セキュリティ不具合を修正**。secure-loader / secure-purge モジュールの初テストを追加。CI マトリクスを macOS + Windows 3.12 へ拡張しカバレッジ計測を導入。配布は README 記載の `git+https` インストールで継続（PyPI 公開は検討の上で見送り）。
 - ✅ **レーダーチャート + データ出所 + Windows 強化**（2026-07、v0.5.0）: スコアダッシュボードに5次元レーダー（スパイダー）チャート追加。STEP 0 の Web 調査証跡を PDF に表示（検索日・クエリ/ソース数、未実施時は学習データのみ警告）。セキュア一時領域の Windows NTFS ACL ロック（icacls・所有者のみ）。CI テストマトリクスに Windows 追加
@@ -476,6 +477,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.1` — 🌍 6 言語 README · 🆕 Claude Fable 5 / Sonnet 4.6 / Haiku 4.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング
+`v0.6.2` — 🌍 6 言語 README · 🆕 Claude Fable 5.1 / Sonnet 5.5 / Haiku 5.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング
 
 </div>

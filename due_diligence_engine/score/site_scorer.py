@@ -21,6 +21,7 @@ import os
 import re
 
 from due_diligence_engine.analyze.site_analyzer import SiteAnalysisResult
+from due_diligence_engine.config import MODELS
 from due_diligence_engine.models import RedFlag, Score, ScoreDimension, Severity
 
 logger = logging.getLogger(__name__)
@@ -208,7 +209,7 @@ class SiteScorer:
 
         client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
-            model="claude-haiku-4-5-20251001",  # 高速・低コスト (pinned snapshot)
+            model=MODELS["haiku"].model_id,  # 高速・低コスト (config.MODELS で一元管理)
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}],
         )

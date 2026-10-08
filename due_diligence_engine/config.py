@@ -18,28 +18,29 @@ class ModelConfig:
     max_tokens: int = 4096
 
 
-# Pricing as of 2026-05 (公式ドキュメント準拠; Anthropic の値上げ/値下げに合わせて更新)
-# 注: 旧 Opus 4 / Sonnet 4 (20250514) は 2026-06-15 に retire されるため移行必須
+# Pricing as of 2026-10 (公式モデル一覧準拠: https://platform.claude.com/docs/en/about-claude/models/overview)
+# 4.6 世代以降の ID は日付なしでも固定スナップショット。日付サフィックスは付けないこと。
+# 旧ティア (Haiku 4.5 / Sonnet 4.6 / Fable 5) は "legacy" 扱い — 現行世代へ移行済み。
 MODELS = {
     "haiku": ModelConfig(
-        model_id="claude-haiku-4-5-20251001",
+        model_id="claude-haiku-5-5",
         purpose="scan",
-        input_cost_per_mtok=1.00,
-        output_cost_per_mtok=5.00,
+        input_cost_per_mtok=0.10,   # Haiku 5.5: $0.10 / MTok (≤100K 入力; それ以上は $0.50)
+        output_cost_per_mtok=0.50,  # Haiku 5.5: $0.50 / MTok (≤100K 入力; それ以上は $2.50)
         max_tokens=4096,
     ),
     "sonnet": ModelConfig(
-        model_id="claude-sonnet-4-6",
+        model_id="claude-sonnet-5-5",
         purpose="analyze",
-        input_cost_per_mtok=3.00,
-        output_cost_per_mtok=15.00,
+        input_cost_per_mtok=2.00,   # Sonnet 5.5: $2 / MTok (Sonnet 4.6 の $3 から値下げ)
+        output_cost_per_mtok=10.00, # Sonnet 5.5: $10 / MTok (Sonnet 4.6 の $15 から値下げ)
         max_tokens=8192,
     ),
     "fable": ModelConfig(
-        model_id="claude-fable-5",
+        model_id="claude-fable-5-1",
         purpose="judge",
-        input_cost_per_mtok=10.00,  # Fable 5: $10 / MTok（最高性能ティア、2026-06-09 GA）
-        output_cost_per_mtok=50.00, # Fable 5: $50 / MTok
+        input_cost_per_mtok=10.00,  # Fable 5.1: $10 / MTok (Fable 5 と同額、最高性能ティア)
+        output_cost_per_mtok=50.00, # Fable 5.1: $50 / MTok
         max_tokens=4096,
     ),
 }
