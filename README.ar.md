@@ -69,7 +69,7 @@ python3 -m pip install --no-cache-dir git+https://github.com/Atlas-Associates-In
 dde prompt --pdf
 ```
 
-استخدم أي طرفية لبيئة تطوير مدعومة بالذكاء الاصطناعي (Claude Code / Cursor / Copilot). يقرأ الذكاء الاصطناعي قاعدة الكود، ويقيّمها كمستشار تقني من الطراز العالمي، ويكتب ملف PDF من 24 صفحة إلى `~/Downloads/`. **بلا مفاتيح API. بلا سحابة. بلا تكلفة إضافية.**
+استخدم أي طرفية لبيئة تطوير مدعومة بالذكاء الاصطناعي (Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot). يقرأ الذكاء الاصطناعي قاعدة الكود، ويقيّمها كمستشار تقني من الطراز العالمي، ويكتب ملف PDF من 24 صفحة إلى `~/Downloads/`. **بلا مفاتيح API. بلا سحابة. بلا تكلفة إضافية.**
 
 <details>
 <summary><sub>خيارات تثبيت أخرى · ملاحظة حول macOS Homebrew</sub></summary>
@@ -92,7 +92,7 @@ pip3 install --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-dili
 
 **الإعداد الموصى به:**
 
-- **شغّل أقوى نموذج متاح** في بيئة التطوير لديك (Claude Fable 5.1 أو Claude Opus 5.5 أو GPT-5 أو Gemini 2.5 Pro، وما إلى ذلك)
+- **شغّل أقوى نموذج متاح** في بيئة التطوير لديك (Claude Fable 5.1 أو Claude Opus 5.5 أو GPT-5 أو Gemini 4 Argon، وما إلى ذلك)
 - **الصق `dde prompt --pdf`** في الطرفية
 - **اذهب لاحتساء قهوة** ☕ — سيقرأ الذكاء الاصطناعي مئات الملفات، ويقيّم عبر
   أكثر من 9 أبعاد، ويبحث عن 5 إلى 10 منافسين عالميًا، ويبني ملف PDF استشاري من 24 صفحة
@@ -116,8 +116,10 @@ pip3 install --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-dili
 
 يولّد DDE موجِّهًا (prompt) منظَّمًا. **أي وكيل ذكاء اصطناعي قادر على قراءة الملفات وتنفيذ أوامر الصدفة (shell)** يمكنه تشغيله. لا حاجة إلى تكامل أو إضافة أو تسجيل دخول خاص بـ DDE.
 
-**تم التحقق من عمله** (وثائق رسمية + اختبار، 2026-05):
+**تم التحقق من عمله** (وثائق رسمية + اختبار، 2026-10):
 - ✅ [**Claude Code**](https://code.claude.com/docs/en/overview) (CLI / VS Code / JetBrains / Desktop / Web — رسمي من Anthropic)
+- ✅ [**OpenAI Codex CLI**](https://github.com/openai/codex) (CLI / IDE — رسمي من OpenAI)
+- ✅ [**Google Gemini CLI**](https://github.com/google-gemini/gemini-cli) & **Antigravity** (CLI / IDE — رسمي من Google)
 - ✅ [**GitHub Copilot Agent Mode**](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide) (VS Code / Visual Studio / JetBrains / Xcode / Eclipse — متاح بشكل عام)
 
 **من المفترض أن يعمل** (المتطلبات: قراءة الملفات + تنفيذ الصدفة + ويُفضَّل البحث على الويب):
@@ -128,7 +130,7 @@ pip3 install --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-dili
 
 ### 💰 بلا تكلفة إضافية
 
-**تدفع فقط مقابل اشتراك الذكاء الاصطناعي الذي تملكه بالفعل.** Claude Code Pro / GitHub Copilot / Cursor Pro / Gemini Advanced — يعمل DDE ضمن حصة الذكاء الاصطناعي الموجودة لديك. لا مستويات تسعير لـ DDE، ولا مفاتيح API إضافية، ولا رسوم خفية، على الإطلاق.
+**تدفع فقط مقابل اشتراك الذكاء الاصطناعي الذي تملكه بالفعل.** Claude Code Pro / ChatGPT Plus·Pro (Codex) / Gemini Advanced / Antigravity / GitHub Copilot / Cursor Pro — يعمل DDE ضمن حصة الذكاء الاصطناعي الموجودة لديك. لا مستويات تسعير لـ DDE، ولا مفاتيح API إضافية، ولا رسوم خفية، على الإطلاق.
 
 ---
 
@@ -372,7 +374,7 @@ dde analyze owner/repo
 ج: لا. `dde prompt` يعمل محليًا بالكامل — يولّد موجِّهًا منظَّمًا يقرأه الذكاء الاصطناعي في بيئة التطوير لديك. يقيّم الذكاء الاصطناعي الكود في موضعه. أما `dde analyze` الاختياري (BYOK) فيرسل إلى مزوّدي الذكاء الاصطناعي باستخدام نقاط نهايتهم بلا احتفاظ فقط.
 
 **س: لماذا هو مجاني؟ ما المقابل الخفي؟**
-ج: لا يوجد مقابل خفي. DDE مفتوح المصدر (Apache 2.0) ويستخدم اشتراك الذكاء الاصطناعي الموجود لديك بالفعل في بيئة التطوير (Claude Code / Cursor / Copilot). لا قياس عن بُعد، ولا بيع إضافي.
+ج: لا يوجد مقابل خفي. DDE مفتوح المصدر (Apache 2.0) ويستخدم اشتراك الذكاء الاصطناعي الموجود لديك بالفعل في بيئة التطوير (Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot). لا قياس عن بُعد، ولا بيع إضافي.
 
 **س: هل يمكنني استخدامه في التكامل المستمر (CI)؟**
 ج: نعم — راجع [`action.yml`](action.yml). أضف GitHub Action إلى طلبات السحب للحصول على تقييم عناية واجبة آلي.
@@ -403,7 +405,7 @@ dde analyze owner/repo
 ## 🗺️ خريطة الطريق
 
 **أُطلق مؤخرًا (v0.3.x)**
-- ✅ **تحديث النماذج إلى جيل Claude 5.5 + دعم Python 3.13** (2026-10، v0.6.2): انتقلت طبقات BYOK الثلاث إلى التشكيلة الحالية — الفحص **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`، $0.10/$0.50 لكل مليون توكن، أرخص بعشر مرات)، التحليل **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`، $2/$10 بدلًا من $3/$15)، الحَكَم **Fable 5 → Fable 5.1** (`claude-fable-5-1`، بنفس السعر $10/$50). لم يعد مُقيِّم التحقق من المواقع يُضمّن لقطة Haiku مؤرَّخة، وأصبح النموذج الافتراضي وجدول التكلفة لـ Claude في BYOK مشتقَّين من `config.MODELS`، مع حماية بالاختبار الجديد `tests/test_model_ids.py`. استُبدل `datetime.utcnow()` المهمَل (إزالة تحذيرات Python 3.12+)؛ وأُضيف Python 3.13 إلى مصفوفة CI والـ classifiers.
+- ✅ **تحديث النماذج إلى جيل Claude 5.5 + دعم Python 3.13** (2026-10، v0.6.2): انتقلت طبقات BYOK الثلاث إلى التشكيلة الحالية — الفحص **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`، $0.10/$0.50 لكل مليون توكن، أرخص بعشر مرات)، التحليل **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`، $2/$10 بدلًا من $3/$15)، الحَكَم **Fable 5 → Fable 5.1** (`claude-fable-5-1`، بنفس السعر $10/$50). لم يعد مُقيِّم التحقق من المواقع يُضمّن لقطة Haiku مؤرَّخة، وأصبح النموذج الافتراضي وجدول التكلفة لـ Claude في BYOK مشتقَّين من `config.MODELS`، مع حماية بالاختبار الجديد `tests/test_model_ids.py`. وجرى ترحيل Gemini BYOK من حزمة SDK السابقة إلى `google-genai>=2.30.1` الحالية (Interactions API) مع `gemini-3.8-flash`، وتحديث نموذج OpenAI BYOK الافتراضي إلى `gpt-5`. وتوسيع كشف طرفيات الذكاء الاصطناعي في `dde doctor` ليشمل Codex CLI وGemini CLI وAntigravity. وتحديث إجراءات GitHub Actions للتكامل المستمر (`setup-python@v7`، `codeql-action@v4.37.4`، `osv-scanner-action@v2.5.0`). استُبدل `datetime.utcnow()` المهمَل (إزالة تحذيرات Python 3.12+)؛ وأُضيف Python 3.13 إلى مصفوفة CI والـ classifiers.
 - ✅ **إعادة تسمية الحزمة `src` ← `due_diligence_engine`** (2026-07، v0.6.1): لم تعد الحزمة القابلة للاستيراد تستخدم الاسم العام `src` على المستوى الأعلى، ما يتجنّب التعارضات على `sys.path` عند التثبيت عبر pip. أمر `dde` لم يتغيّر؛ تتغيّر فقط مسارات `import` (`from due_diligence_engine...`).
 - ✅ **تجهيز للنشر على PyPI و`dde doctor` وصفحة ملخص مرئي وملحق المصادر** (2026-07، v0.6.0): نُقِلت حِزم SDK لمزوّدي الذكاء الاصطناعي إلى إضافة اختيارية `[byok]`، لتصبح التثبيتة الأساسية بلا مفاتيح API فعليًا (مع إصلاح خلل كان يُعطِّل `dde prompt` عند غياب `anthropic`)؛ أمر تشخيص ذاتي جديد `dde doctor`؛ أصبح لمخطط الرادار صفحة **ملخص مرئي** خاصة به، وأُضيف **ملحق المصادر** الذي يسرد كل رابط ويب مباشر تمت استشارته (14 لغة)؛ إصلاح أمني حقيقي كي لا يُبقي تحميل الأرشيف نسخة استخراج بنص صريح على القرص؛ أول اختبارات لوحدتَي secure-loader/secure-purge؛ توسيع مصفوفة CI إلى macOS وWindows 3.12 مع قياس التغطية. يستمر التوزيع عبر تثبيت `git+https` الموثّق؛ جرى تقييم النشر على PyPI وتأجيله.
 - ✅ **مخطط رادار + مصدر البيانات + تعزيز Windows** (2026-07، v0.5.0): مخطط رادار خماسي الأبعاد في لوحة الدرجات؛ صندوق مصدر بحث الويب (STEP 0) داخل PDF (تاريخ البحث وعدد الاستعلامات/المصادر، أو تحذير واضح عند الاعتماد على بيانات التدريب فقط)؛ قفل NTFS ACL على مجلد العمل المؤقت في Windows (icacls، للمالك فقط)؛ إضافة Windows إلى مصفوفة اختبارات CI
@@ -484,6 +486,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.2` — 🌍 ملفات README بست لغات · 🆕 Claude Fable 5.1 / Sonnet 5.5 / Haiku 5.5 · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
+`v0.6.2` — 🌍 ملفات README بست لغات · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon & 3.8 Flash · GPT-5 · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
 
 </div>

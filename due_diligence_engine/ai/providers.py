@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # local-only `dde prompt --pdf` flow works with none of them installed.
 _BYOK_MODULE_TO_PACKAGE = {
     "anthropic": "anthropic",
-    "google.generativeai": "google-generativeai",
+    "google.genai": "google-genai",
     "openai": "openai",
 }
 
@@ -178,7 +178,7 @@ class AnthropicProvider(AIProvider):
 class GoogleProvider(AIProvider):
     """Google Gemini プロバイダー。
 
-    google-generativeai SDK を使用してGemini APIで分析を実行。
+    google-genai SDK (Interactions API) を使用してGemini APIで分析を実行。
     """
 
     @property
@@ -187,22 +187,27 @@ class GoogleProvider(AIProvider):
 
     def analyze(self, summary: str, context: str) -> dict[str, Any]:
         """Gemini APIで分析を実行。"""
-        genai = _require_sdk("google.generativeai")
+        genai = _require_sdk("google.genai")
 
-        genai.configure(api_key=self._api_key)
-        model = genai.GenerativeModel(self._model_id)
+        client = genai.Client(api_key=self._api_key)
         prompt = self._build_prompt(summary, context)
 
         try:
-            response = model.generate_content(prompt)
+            interaction = client.interactions.create(
+                model=self._model_id,
+                input=prompt,
+            )
 
             # トークン使用量の追跡
-            if hasattr(response, "usage_metadata"):
-                meta = response.usage_metadata
-                self._input_tokens += getattr(meta, "prompt_token_count", 0)
-                self._output_tokens += getattr(meta, "candidates_token_count", 0)
+            usage = getattr(interaction, "usage", None)
+            if usage is not None:
+                self._input_tokens += getattr(usage, "total_input_tokens", 0) or 0
+                self._output_tokens += (
+                    (getattr(usage, "total_output_tokens", 0) or 0)
+                    + (getattr(usage, "total_thought_tokens", 0) or 0)
+                )
 
-            return _parse_json_response(response.text)
+            return _parse_json_response(getattr(interaction, "output_text", "") or "")
         except Exception as e:
             logger.error(f"Gemini analysis failed: {e}")
             return {"error": str(e)}
@@ -253,8 +258,8 @@ class OpenAIProvider(AIProvider):
 # デフォルトモデルID定義
 _DEFAULT_MODELS = {
     "claude": MODELS["sonnet"].model_id,  # config.MODELS で一元管理 (現行: Sonnet 5.5)
-    "gemini": "gemini-2.0-flash",
-    "chatgpt": "gpt-4o",
+    "gemini": "gemini-3.8-flash",
+    "chatgpt": "gpt-5",
 }
 
 # コスト定義 (USD per million tokens)
@@ -263,8 +268,8 @@ PROVIDER_COSTS: dict[str, dict[str, float]] = {
         "input": MODELS["sonnet"].input_cost_per_mtok,
         "output": MODELS["sonnet"].output_cost_per_mtok,
     },
-    "gemini": {"input": 0.10, "output": 0.40},
-    "chatgpt": {"input": 2.50, "output": 10.00},
+    "gemini": {"input": 0.75, "output": 3.75},
+    "chatgpt": {"input": 1.25, "output": 10.00},
 }
 
 

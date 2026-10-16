@@ -6,7 +6,7 @@ import pathlib
 
 from click.testing import CliRunner
 
-from due_diligence_engine.cli import doctor
+from due_diligence_engine.cli import _detect_ai_terminal, doctor
 
 
 def test_doctor_runs_without_crashing():
@@ -29,3 +29,30 @@ def test_doctor_survives_unresolvable_home(monkeypatch):
     result = CliRunner().invoke(doctor, [])
     assert result.exception is None or isinstance(result.exception, SystemExit)
     assert "not resolvable/writable" in result.output  # WARN row, not a traceback
+
+
+def test_detect_ai_terminal_supports_claude_codex_gemini_antigravity(monkeypatch):
+    for env in (
+        "CLAUDE_CODE",
+        "CODEX_SANDBOX",
+        "CODEX_CI",
+        "GEMINI_CLI",
+        "ANTIGRAVITY_CLI_ALIAS",
+        "ANTIGRAVITY_AGENT",
+        "CURSOR_SESSION",
+        "TERM_PROGRAM",
+        "VSCODE_GIT_ASKPASS_NODE",
+    ):
+        monkeypatch.delenv(env, raising=False)
+
+    assert _detect_ai_terminal() is False
+
+    for var, val in [
+        ("CLAUDE_CODE", "1"),
+        ("CODEX_SANDBOX", "seatbelt"),
+        ("GEMINI_CLI", "1"),
+        ("ANTIGRAVITY_CLI_ALIAS", "agy"),
+    ]:
+        monkeypatch.setenv(var, val)
+        assert _detect_ai_terminal() is True
+        monkeypatch.delenv(var, raising=False)

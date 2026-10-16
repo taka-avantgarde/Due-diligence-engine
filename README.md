@@ -67,7 +67,7 @@ python3 -m pip install --no-cache-dir git+https://github.com/Atlas-Associates-In
 dde prompt --pdf
 ```
 
-Use any AI-powered IDE terminal (Claude Code / Cursor / Copilot). Your AI reads the codebase, evaluates it as a world-class technology consultant, and writes a 24-page PDF to `~/Downloads/`. **No API keys. No cloud. No extra cost.**
+Use any AI-powered IDE terminal (Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot). Your AI reads the codebase, evaluates it as a world-class technology consultant, and writes a 24-page PDF to `~/Downloads/`. **No API keys. No cloud. No extra cost.**
 
 <details>
 <summary><sub>Other install options · macOS Homebrew note</sub></summary>
@@ -90,7 +90,7 @@ macOS Homebrew users: use `python3 -m pip` — the bare `pip` command is no long
 
 **Recommended setup:**
 
-- **Spin up the most capable model available** in your IDE (Claude Fable 5.1, Claude Opus 5.5, GPT-5, Gemini 2.5 Pro, etc.)
+- **Spin up the most capable model available** in your IDE (Claude Fable 5.1, Claude Opus 5.5, GPT-5, Gemini 4 Argon, etc.)
 - **Paste `dde prompt --pdf`** into the terminal
 - **Go grab a coffee** ☕ — the AI will read hundreds of files, evaluate across
   9+ dimensions, research 5-10 competitors globally, and build a 24-page consulting PDF
@@ -114,8 +114,10 @@ macOS Homebrew users: use `python3 -m pip` — the bare `pip` command is no long
 
 DDE generates a structured prompt. **Any AI agent that can read files and execute shell commands** can run it. No DDE-specific integration, plugin, or login required.
 
-**Verified working** (official docs + tested, 2026-05):
+**Verified working** (official docs + tested, 2026-10):
 - ✅ [**Claude Code**](https://code.claude.com/docs/en/overview) (CLI / VS Code / JetBrains / Desktop / Web — Anthropic official)
+- ✅ [**OpenAI Codex CLI**](https://github.com/openai/codex) (CLI / IDE — OpenAI official)
+- ✅ [**Google Gemini CLI**](https://github.com/google-gemini/gemini-cli) & **Antigravity** (CLI / IDE — Google official)
 - ✅ [**GitHub Copilot Agent Mode**](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide) (VS Code / Visual Studio / JetBrains / Xcode / Eclipse — generally available)
 
 **Should work** (requirements: file read + shell exec + ideally web search):
@@ -126,7 +128,7 @@ DDE generates a structured prompt. **Any AI agent that can read files and execut
 
 ### 💰 Zero added cost
 
-**You only pay for the AI subscription you already have.** Claude Code Pro / GitHub Copilot / Cursor Pro / Gemini Advanced — DDE runs inside your existing AI's allowance. No DDE pricing tiers, no extra API keys, no hidden fees, ever.
+**You only pay for the AI subscription you already have.** Claude Code Pro / ChatGPT Plus·Pro (Codex) / Gemini Advanced / Antigravity / GitHub Copilot / Cursor Pro — DDE runs inside your existing AI's allowance. No DDE pricing tiers, no extra API keys, no hidden fees, ever.
 
 ---
 
@@ -370,7 +372,7 @@ This is the same philosophy as Signal and libsignal: **transparency *is* trust**
 A: No. `dde prompt` runs entirely locally — it generates a structured prompt that your IDE's AI reads. The AI evaluates the code in-place. The optional `dde analyze` (BYOK) sends to AI providers using their no-retention endpoints only.
 
 **Q: Why is it free? What's the catch?**
-A: There is no catch. DDE is OSS (Apache 2.0) and uses your existing IDE AI subscription (Claude Code / Cursor / Copilot). No telemetry, no upsell.
+A: There is no catch. DDE is OSS (Apache 2.0) and uses your existing IDE AI subscription (Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot). No telemetry, no upsell.
 
 **Q: Can I use it in CI?**
 A: Yes — see [`action.yml`](action.yml). Add the GitHub Action to PRs for automated DD scoring.
@@ -401,7 +403,7 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 ## 🗺️ Roadmap
 
 **Recently shipped (v0.3.x)**
-- ✅ **Claude 5.5-generation model refresh + Python 3.13** (2026-10, v0.6.2): all three BYOK tiers moved to the current lineup — scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, $0.10/$0.50 per MTok, 10× cheaper), analyze **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, $2/$10, down from $3/$15), judge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, same $10/$50). The site-verification scorer no longer hardcodes a dated Haiku snapshot and the BYOK Claude default/cost table now derive from `config.MODELS`, guarded by a new `tests/test_model_ids.py`. Deprecated `datetime.utcnow()` replaced (silences Python 3.12+ warnings); Python 3.13 added to the CI matrix and classifiers.
+- ✅ **Claude 5.5-generation model refresh + Python 3.13** (2026-10, v0.6.2): all three BYOK tiers moved to the current lineup — scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, $0.10/$0.50 per MTok, 10× cheaper), analyze **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, $2/$10, down from $3/$15), judge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, same $10/$50). The site-verification scorer no longer hardcodes a dated Haiku snapshot and the BYOK Claude default/cost table now derive from `config.MODELS`, guarded by a new `tests/test_model_ids.py`. Gemini BYOK migrated from legacy SDK to `google-genai>=2.30.1` (Interactions API) + `gemini-3.8-flash`; OpenAI BYOK default updated to `gpt-5`. AI terminal detection in `dde doctor` expanded to Codex CLI, Gemini CLI, and Antigravity. CI GitHub Actions refreshed (`setup-python@v7`, `codeql-action@v4.37.4`, `osv-scanner-action@v2.5.0`). Deprecated `datetime.utcnow()` replaced (silences Python 3.12+ warnings); Python 3.13 added to the CI matrix and classifiers.
 - ✅ **Package renamed `src` → `due_diligence_engine`** (2026-07, v0.6.1): the importable package no longer uses the generic top-level name `src`, avoiding `sys.path` collisions once pip-installed. The `dde` command is unchanged; only `import` paths change (`from due_diligence_engine...`).
 - ✅ **PyPI-ready packaging, `dde doctor`, visual-summary page & source appendix** (2026-07, v0.6.0): AI-provider SDKs moved to an optional `[byok]` extra so the base install is truly zero-API-key (fixes a bug where `dde prompt` crashed when `anthropic` was absent); new `dde doctor` environment self-check; the radar chart now gets its own **Visual Summary** page and a new **Source Appendix** lists every live-web URL consulted (14 languages); a real security fix so archive loading no longer leaves a plaintext staging copy on disk; first tests for the secure-loader/secure-purge modules; CI matrix extended to macOS + Windows 3.12 with coverage. Distribution stays via the documented `git+https` install; a PyPI release was evaluated and deferred.
 - ✅ **Radar chart + data provenance + Windows hardening** (2026-07, v0.5.0): 5-dimension radar (spider) chart on the score dashboard; STEP 0 web-research provenance box in the PDF (search date, query/source counts, or a clearly marked training-data-only warning); Windows NTFS ACL lock for the secure temp dir (`icacls`, owner-only); Windows added to the CI test matrix
@@ -480,6 +482,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.2` — 🌍 6-language READMEs · 🆕 Claude Fable 5.1 / Sonnet 5.5 / Haiku 5.5 · 🌐 Live web research · 5-dimension scoring
+`v0.6.2` — 🌍 6-language READMEs · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon & 3.8 Flash · GPT-5 · 🌐 Live web research · 5-dimension scoring
 
 </div>

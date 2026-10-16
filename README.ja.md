@@ -67,7 +67,7 @@ python3 -m pip install --no-cache-dir git+https://github.com/Atlas-Associates-In
 dde prompt --pdf --lang ja
 ```
 
-AI 搭載 IDE のターミナル（Claude Code / Cursor / Copilot 等）で実行してください。AI がコードベースを読み、世界トップクラスのテクノロジーコンサルタントとして評価し、24ページの PDF を `~/Downloads/` に書き出します。**APIキー不要・クラウド経由なし・追加コスト¥0。**
+AI 搭載 IDE のターミナル（Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot 等）で実行してください。AI がコードベースを読み、世界トップクラスのテクノロジーコンサルタントとして評価し、24ページの PDF を `~/Downloads/` に書き出します。**APIキー不要・クラウド経由なし・追加コスト¥0。**
 
 <details>
 <summary><sub>その他のインストール方法 · macOS Homebrew 注意点</sub></summary>
@@ -90,7 +90,7 @@ macOS Homebrew ユーザーは必ず `python3 -m pip` を使用してくださ�
 
 **推奨セットアップ:**
 
-- **IDE 内で利用可能な最高性能モデルを起動**（Claude Fable 5.1 / Claude Opus 5.5 / GPT-5 / Gemini 2.5 Pro 等）
+- **IDE 内で利用可能な最高性能モデルを起動**（Claude Fable 5.1 / Claude Opus 5.5 / GPT-5 / Gemini 4 Argon 等）
 - **`dde prompt --pdf --lang ja` をターミナルにペースト**
 - **コーヒー一杯の時間 ☕ を** — AI が数百のファイルを読み、9軸以上で評価し、
   世界の競合 5〜10 社を調査し、22 ページのコンサル PDF を構築します
@@ -114,8 +114,10 @@ macOS Homebrew ユーザーは必ず `python3 -m pip` を使用してくださ�
 
 DDE は構造化プロンプトを生成するだけのツールです。**ファイルを読めて、シェルコマンドを実行できる任意の AI エージェント**が、そのプロンプトを実行できます。DDE 専用の統合・プラグインは一切必要ありません。
 
-**動作確認済み**（公式ドキュメント確認 + 実機検証、2026-05）:
+**動作確認済み**（公式ドキュメント確認 + 実機検証、2026-10）:
 - ✅ [**Claude Code**](https://code.claude.com/docs/en/overview)（CLI / VS Code / JetBrains / Desktop / Web、Anthropic 公式）
+- ✅ [**OpenAI Codex CLI**](https://github.com/openai/codex)（CLI / IDE、OpenAI 公式）
+- ✅ [**Google Gemini CLI**](https://github.com/google-gemini/gemini-cli) & **Antigravity**（CLI / IDE、Google 公式）
 - ✅ [**GitHub Copilot Agent Mode**](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide)（VS Code / Visual Studio / JetBrains / Xcode / Eclipse、GA リリース済み）
 
 **原理的に動作（要件: ファイル読み取り + シェル実行 + できれば Web 検索）**:
@@ -126,7 +128,7 @@ DDE は構造化プロンプトを生成するだけのツールです。**フ�
 
 ### 💰 追加料金は一切ありません
 
-**あなたが既に契約している AI のサブスクリプションだけで完結します**。Claude Code Pro / GitHub Copilot / Cursor Pro / Gemini Advanced 等の月額に含まれる利用枠で動作。DDE のプラン購入も、追加 API キーも、隠れた課金も一切ありません。
+**あなたが既に契約している AI のサブスクリプションだけで完結します**。Claude Code Pro / ChatGPT Plus·Pro (Codex) / Gemini Advanced / Antigravity / GitHub Copilot / Cursor Pro 等の月額に含まれる利用枠で動作。DDE のプラン購入も、追加 API キーも、隠れた課金も一切ありません。
 
 ---
 
@@ -367,7 +369,7 @@ dde analyze owner/repo
 A: 送りません。`dde prompt` は完全にローカルで動作 — 構造化プロンプトを生成するだけで、実際のコードは IDE の AI が手元で読みます。オプションの `dde analyze`（BYOK）は AI プロバイダーの「無保持エンドポイント」のみ使用。
 
 **Q: なぜ無料? 何か裏がある?**
-A: 裏はありません。DDE は OSS（Apache 2.0）で、既存の IDE AI サブスク（Claude Code / Cursor / Copilot）を流用するだけ。テレメトリも追加課金もなし。
+A: 裏はありません。DDE は OSS（Apache 2.0）で、既存の IDE AI サブスク（Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot）を流用するだけ。テレメトリも追加課金もなし。
 
 **Q: CI で使えますか?**
 A: はい — [`action.yml`](action.yml) を参照。GitHub Actions として PR に組み込み、自動 DD スコアリングが可能。
@@ -398,7 +400,7 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 ## 🗺️ ロードマップ
 
 **最近リリース (v0.3.x)**
-- ✅ **Claude 5.5 世代へモデル更新 + Python 3.13 対応**（2026-10、v0.6.2）: BYOK の 3 ティアをすべて現行ラインナップへ移行 — スキャン **Haiku 4.5 → Haiku 5.5**（`claude-haiku-5-5`、$0.10/$0.50 per MTok、10 分の 1 のコスト）、分析 **Sonnet 4.6 → Sonnet 5.5**（`claude-sonnet-5-5`、$2/$10、従来 $3/$15 から値下げ）、判定 **Fable 5 → Fable 5.1**（`claude-fable-5-1`、$10/$50 は据え置き）。サイト検証スコアラーの日付付き Haiku スナップショットのハードコードを廃止し、BYOK の Claude デフォルト/コスト表も `config.MODELS` から導出するよう統一（新テスト `tests/test_model_ids.py` で保護）。非推奨の `datetime.utcnow()` を置換（Python 3.12+ の警告解消）。CI マトリクスと classifiers に Python 3.13 を追加。
+- ✅ **Claude 5.5 世代へモデル更新 + Python 3.13 対応**（2026-10、v0.6.2）: BYOK の 3 ティアをすべて現行ラインナップへ移行 — スキャン **Haiku 4.5 → Haiku 5.5**（`claude-haiku-5-5`、$0.10/$0.50 per MTok、10 分の 1 のコスト）、分析 **Sonnet 4.6 → Sonnet 5.5**（`claude-sonnet-5-5`、$2/$10、従来 $3/$15 から値下げ）、判定 **Fable 5 → Fable 5.1**（`claude-fable-5-1`、$10/$50 は据え置き）。サイト検証スコアラーの日付付き Haiku スナップショットのハードコードを廃止し、BYOK の Claude デフォルト/コスト表も `config.MODELS` から導出するよう統一（新テスト `tests/test_model_ids.py` で保護）。Gemini BYOK を旧 SDK から現行 `google-genai>=2.30.1`（Interactions API）+ `gemini-3.8-flash` へ移行、OpenAI BYOK デフォルトを `gpt-5` へ更新。`dde doctor` / AI ターミナル自動検出に Codex CLI・Gemini CLI・Antigravity を追加。CI GitHub Actions（`setup-python@v7`、`codeql-action@v4.37.4`、`osv-scanner-action@v2.5.0`）を最新化。非推奨の `datetime.utcnow()` を置換（Python 3.12+ の警告解消）。CI マトリクスと classifiers に Python 3.13 を追加。
 - ✅ **パッケージ名を `src` → `due_diligence_engine` に改名**（2026-07、v0.6.1）: import されるパッケージが汎用トップレベル名 `src` を使わなくなり、pip インストール時の `sys.path` 衝突を回避。`dde` コマンドは不変で、変わるのは `import` パスのみ（`from due_diligence_engine...`）。
 - ✅ **PyPI 公開対応・`dde doctor`・ビジュアルサマリーページ・出典付録**（2026-07、v0.6.0）: AI プロバイダー SDK を任意の `[byok]` extra へ分離し、標準インストールを真の「API キー不要」に（`anthropic` 未インストールで `dde prompt` が落ちる実バグも修正）。環境自己診断コマンド `dde doctor` を新設。レーダーチャートを専用の**ビジュアルサマリー**ページに分離し、参照した全ライブ Web URL を列挙する**出典付録**を追加（14 言語）。アーカイブ読み込み時に平文の展開コピーがディスクに残る**セキュリティ不具合を修正**。secure-loader / secure-purge モジュールの初テストを追加。CI マトリクスを macOS + Windows 3.12 へ拡張しカバレッジ計測を導入。配布は README 記載の `git+https` インストールで継続（PyPI 公開は検討の上で見送り）。
 - ✅ **レーダーチャート + データ出所 + Windows 強化**（2026-07、v0.5.0）: スコアダッシュボードに5次元レーダー（スパイダー）チャート追加。STEP 0 の Web 調査証跡を PDF に表示（検索日・クエリ/ソース数、未実施時は学習データのみ警告）。セキュア一時領域の Windows NTFS ACL ロック（icacls・所有者のみ）。CI テストマトリクスに Windows 追加
@@ -477,6 +479,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.2` — 🌍 6 言語 README · 🆕 Claude Fable 5.1 / Sonnet 5.5 / Haiku 5.5 対応 · 🌐 ライブ Web 調査 · 5 次元スコアリング
+`v0.6.2` — 🌍 6 言語 README · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon & 3.8 Flash · GPT-5 · 🌐 ライブ Web 調査 · 5 次元スコアリング
 
 </div>

@@ -48,6 +48,13 @@ def test_byok_claude_default_follows_registry():
     assert providers.PROVIDER_COSTS["claude"]["output"] == MODELS["sonnet"].output_cost_per_mtok
 
 
+def test_byok_defaults_are_current():
+    assert providers._DEFAULT_MODELS["gemini"] == "gemini-3.8-flash"
+    assert providers._DEFAULT_MODELS["chatgpt"] == "gpt-5"
+    assert providers._BYOK_MODULE_TO_PACKAGE["google.genai"] == "google-genai"
+    assert ("google" + ".generativeai") not in providers._BYOK_MODULE_TO_PACKAGE
+
+
 def test_no_hardcoded_claude_model_ids_outside_config():
     pattern = re.compile(r"""["']claude-(haiku|sonnet|opus|fable)-\d""")
     offenders = []

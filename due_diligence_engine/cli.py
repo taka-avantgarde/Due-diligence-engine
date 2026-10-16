@@ -741,7 +741,10 @@ def doctor() -> None:
 
     # 6. AI terminal — INFO only (reuse existing helper)
     if _detect_ai_terminal():
-        rows.append(("AI terminal", INFO, "detected (Claude Code / Cursor / VS Code)"))
+        rows.append((
+            "AI terminal", INFO,
+            "detected (Claude Code / Codex / Gemini CLI / Antigravity / Cursor / VS Code)",
+        ))
     else:
         rows.append((
             "AI terminal", INFO,
@@ -751,7 +754,7 @@ def doctor() -> None:
     # 7. Optional BYOK AI SDKs — INFO only (absence is NOT a failure)
     sdks = {
         "anthropic": "anthropic", "openai": "openai",
-        "google-generativeai": "google.generativeai",
+        "google-genai": "google.genai",
     }
     present = [d for d, m in sdks.items() if _has(m)]
     absent = [d for d in sdks if d not in present]
@@ -859,11 +862,21 @@ def _detect_ai_terminal() -> bool:
     # Claude Code sets CLAUDE_CODE or similar env vars
     if os.environ.get("CLAUDE_CODE"):
         return True
+    # Codex CLI
+    if os.environ.get("CODEX_SANDBOX") or os.environ.get("CODEX_CI"):
+        return True
+    # Gemini CLI / Antigravity
+    if (
+        os.environ.get("GEMINI_CLI")
+        or os.environ.get("ANTIGRAVITY_CLI_ALIAS")
+        or os.environ.get("ANTIGRAVITY_AGENT")
+    ):
+        return True
     # Cursor sets CURSOR_SESSION or TERM_PROGRAM contains "cursor"
     if os.environ.get("CURSOR_SESSION"):
         return True
     term_program = os.environ.get("TERM_PROGRAM", "").lower()
-    if "cursor" in term_program or "claude" in term_program:
+    if any(agent in term_program for agent in ("cursor", "claude", "codex", "gemini", "antigravity")):
         return True
     # Check if parent process name hints at AI terminal
     # (heuristic — not always reliable)
