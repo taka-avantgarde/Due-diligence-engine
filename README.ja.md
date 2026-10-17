@@ -303,7 +303,7 @@ SOC2 / MFA / WebAuthn 等の認証は参考情報のみ、スコア対象外。
 | 7 | 将来性評価 | 1/3/5 年予測（信頼度付き） |
 | 8 | 戦略アドバイス | 即座 / 中期 / 長期 |
 | 9 | 投資判断 | 推奨 / リスク / アップサイド / 類似企業 |
-| 10 | レッドフラグ | 深刻度別（Critical/High/Medium/Low） |
+| 10 | レッドフラグ | 実コード検証済みの欠陥のみ（`file:line` + 修正方針、誤検知ノイズ 0%） |
 | 11 | サイト検証 | 10項目の技術力監査（主張検証 4 + コード実測 6） |
 | 12-14 | 競合分析 | 7チャート × 6市場、軸説明キャプション付き |
 | 15 | **🆕 競合選定理由** | 各競合について 3-5 行で「なぜ選んだか」（本社・ポジション・カテゴリ付き） |
@@ -400,7 +400,7 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 ## 🗺️ ロードマップ
 
 **最近リリース (v0.3.x)**
-- ✅ **Claude 5.5 世代へモデル更新 + Python 3.13 対応**（2026-10、v0.6.2）: BYOK の 3 ティアをすべて現行ラインナップへ移行 — スキャン **Haiku 4.5 → Haiku 5.5**（`claude-haiku-5-5`、$0.10/$0.50 per MTok、10 分の 1 のコスト）、分析 **Sonnet 4.6 → Sonnet 5.5**（`claude-sonnet-5-5`、$2/$10、従来 $3/$15 から値下げ）、判定 **Fable 5 → Fable 5.1**（`claude-fable-5-1`、$10/$50 は据え置き）。サイト検証スコアラーの日付付き Haiku スナップショットのハードコードを廃止し、BYOK の Claude デフォルト/コスト表も `config.MODELS` から導出するよう統一（新テスト `tests/test_model_ids.py` で保護）。Gemini BYOK を旧 SDK から現行 `google-genai>=2.30.1`（Interactions API）+ `gemini-4-argon` へ移行、OpenAI BYOK デフォルトを `gpt-5` へ更新。`dde doctor` / AI ターミナル自動検出に Codex CLI・Gemini CLI・Antigravity を追加。CI GitHub Actions（`setup-python@v7`、`codeql-action@v4.37.4`、`osv-scanner-action@v2.5.0`）を最新化。非推奨の `datetime.utcnow()` を置換（Python 3.12+ の警告解消）。CI マトリクスと classifiers に Python 3.13 を追加。
+- ✅ **Claude 5.5 世代へモデル更新 + Python 3.13 対応**（2026-10、v0.6.2）: BYOK の 3 ティアをすべて現行ラインナップへ移行 — スキャン **Haiku 4.5 → Haiku 5.5**（`claude-haiku-5-5`、$0.10/$0.50 per MTok、10 分の 1 のコスト）、分析 **Sonnet 4.6 → Sonnet 5.5**（`claude-sonnet-5-5`、$2/$10、従来 $3/$15 から値下げ）、判定 **Fable 5 → Fable 5.1**（`claude-fable-5-1`、$10/$50 は据え置き）。サイト検証スコアラーの日付付き Haiku スナップショットのハードコードを廃止し、BYOK の Claude デフォルト/コスト表も `config.MODELS` から導出するよう統一（新テスト `tests/test_model_ids.py` で保護）。Gemini BYOK を旧 SDK から現行 `google-genai>=2.30.1`（Interactions API）+ `gemini-4-argon` へ移行、OpenAI BYOK デフォルトを `gpt-5` へ更新。`dde doctor` / AI ターミナル自動検出に Codex CLI・Gemini CLI・Antigravity を追加。CI GitHub Actions（`setup-python@v7`、`codeql-action@v4.37.4`、`osv-scanner-action@v2.5.0`）を最新化。PDF `red_flags` の誤検知ノイズ 0% 化を実施（`git rebase` 日時差や専門用語カウント等のヒューリスティック誤検知を参考値へ降格し、プロンプト＋パーサー安全弁 `_filter_red_flags` により `file:line` と修正方針を伴う本物のコード欠陥のみを出力、PDF ファイル名も正規名に一元化）。非推奨の `datetime.utcnow()` を置換（Python 3.12+ の警告解消）。CI マトリクスと classifiers に Python 3.13 を追加。
 - ✅ **パッケージ名を `src` → `due_diligence_engine` に改名**（2026-07、v0.6.1）: import されるパッケージが汎用トップレベル名 `src` を使わなくなり、pip インストール時の `sys.path` 衝突を回避。`dde` コマンドは不変で、変わるのは `import` パスのみ（`from due_diligence_engine...`）。
 - ✅ **PyPI 公開対応・`dde doctor`・ビジュアルサマリーページ・出典付録**（2026-07、v0.6.0）: AI プロバイダー SDK を任意の `[byok]` extra へ分離し、標準インストールを真の「API キー不要」に（`anthropic` 未インストールで `dde prompt` が落ちる実バグも修正）。環境自己診断コマンド `dde doctor` を新設。レーダーチャートを専用の**ビジュアルサマリー**ページに分離し、参照した全ライブ Web URL を列挙する**出典付録**を追加（14 言語）。アーカイブ読み込み時に平文の展開コピーがディスクに残る**セキュリティ不具合を修正**。secure-loader / secure-purge モジュールの初テストを追加。CI マトリクスを macOS + Windows 3.12 へ拡張しカバレッジ計測を導入。配布は README 記載の `git+https` インストールで継続（PyPI 公開は検討の上で見送り）。
 - ✅ **レーダーチャート + データ出所 + Windows 強化**（2026-07、v0.5.0）: スコアダッシュボードに5次元レーダー（スパイダー）チャート追加。STEP 0 の Web 調査証跡を PDF に表示（検索日・クエリ/ソース数、未実施時は学習データのみ警告）。セキュア一時領域の Windows NTFS ACL ロック（icacls・所有者のみ）。CI テストマトリクスに Windows 追加
