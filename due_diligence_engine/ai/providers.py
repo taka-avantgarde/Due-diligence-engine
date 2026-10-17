@@ -258,7 +258,7 @@ class OpenAIProvider(AIProvider):
 # デフォルトモデルID定義
 _DEFAULT_MODELS = {
     "claude": MODELS["sonnet"].model_id,  # config.MODELS で一元管理 (現行: Sonnet 5.5)
-    "gemini": "gemini-3.8-flash",
+    "gemini": "gemini-4-argon",
     "chatgpt": "gpt-5",
 }
 
