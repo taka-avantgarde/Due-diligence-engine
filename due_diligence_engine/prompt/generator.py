@@ -2016,7 +2016,10 @@ but **MUST NOT influence scoring** (positively or negatively):
 3. **Future Outlook** — product vision, viability, 1/3/5-year projections with confidence
 4. **Strategic Advice** — immediate actions, medium-term priorities, long-term vision
 5. **Investment Thesis** — recommendation with risks, upside, comparable companies
-6. **Red Flag Re-evaluation** — correct heuristic false positives (esp. commit-velocity ones)
+6. **Code-Verified Red Flags Only (Zero False-Positive Noise)**:
+   - **SILENTLY DISCARD** all heuristic false positives (e.g., git author/commit date diffs from rebase/cherry-pick, high-velocity commits, documentation buzzword counts, or any finding with no real technical risk). **NEVER output "[False Positive]", "[Dismissed]", or "no actual risk" items into the `red_flags` array.**
+   - Populate `red_flags` **ONLY** with genuine, code-verified defects discovered by reading the actual source code: security boundary gaps, logic bugs, race conditions, fail-open error handling, unhandled edge cases, or architectural flaws.
+   - Every `red_flags` entry MUST cite the exact file path and line numbers (or function name), explain the concrete failure mode, and provide an actionable code-level fix in `description` / `business_impact`.
 7. **Glossary Additions** — technical terms with plain-language definitions
 
 Guidelines: Evidence-based. Cite file paths. No filler. Clear language. Include your model name.
@@ -2070,7 +2073,10 @@ DDE は **純粋にソースコードのみから** 対象企業を評価する�
 3. **将来性評価** — ビジョン、実現可能性、1/3/5年予測（信頼度付き）
 4. **戦略アドバイス** — 即座/中期/長期
 5. **投資判断** — 推奨度＋根拠＋リスク/アップサイド＋類似企業
-6. **レッドフラグ再評価** — 誤検知の修正（特に commit 速度系は全て無効化）
+6. **実コード検証済みレッドフラグのみ出力（誤検知ノイズ 0% ルール）**:
+   - **ヒューリスティック分析の誤検知（Gitの日時差・高速コミット・バズワード数など、実質的リスクがないもの）は `red_flags` 配列から完全に除外（サイレント破棄）し、PDFに一切出力しないこと。「誤検知・無効化済」といった打ち消し項目を `red_flags` に入れることは厳禁。**
+   - **`red_flags` には、実コードを読み取って発見した「本物のコードレベルの欠陥・セキュリティ境界の穴・論理バグ・未処理エッジケース」のみを記載すること。**
+   - 各 `red_flags` エントリには必ず **具体的なファイルパス・行番号（または関数名）・何が起きるか・具体的な修正コード方針** を含めること。
 7. **追加用語集** — 技術用語の注釈
 
 ガイドライン: エビデンスベース。ファイルパス引用。冗長さ排除。明確な言葉。モデル名を含める。
@@ -2148,7 +2154,7 @@ Do not add markdown formatting around it — output raw JSON only.
     "suggested_valuation_factors": "what affects valuation"
   },
   "red_flags": [
-    { "title": "flag title", "description": "detail", "severity": "critical|high|medium|low", "business_impact": "impact" }
+    { "title": "Code-verified defect title (file_path:line — NEVER include false positives or dismissed items)", "description": "Exact file path, line numbers/function name, concrete failure mechanism, and specific code-level fix", "severity": "critical|high|medium|low", "business_impact": "Concrete security/reliability/business impact and actionable remediation steps" }
   ],
   "tech_level_summary": {
     "overall_level": 1-10,
@@ -2255,7 +2261,7 @@ Do not add markdown formatting around it — output raw JSON only.
 ```
 
 **IMPORTANT**:
-- `project_name` is **required** — use the target company/project name (e.g. "Arc Messenger", "Stripe", "OpenAI"). This is used as the PDF report title and filename
+- `project_name` is **required** — use the exact repository project name (as specified in execution steps below). This is used as the PDF report title and filename so filenames are deterministic and never split into variants (e.g. "Arc" vs "Arc Messenger")
 - If no URLs were provided for site verification, set `"site_verification": null`
 - The `competitive_analysis` section is **always required** — never set it to null
 - The `atlas_four_axis` section is **always required** (v2.0) — exactly 4 axes (performance/stability/lightweight/security), `security` axis must include 5 sub_items with the exact keys (encryption/privacy/posture/comms/layers)
@@ -2282,7 +2288,7 @@ def _consulting_pdf_command(result: AnalysisResult, lang: str) -> str:
     if lang == "ja":
         return f"""## 実行手順（質問せずに全て実行すること）
 
-**Step 1**: リポジトリのコードを読み取り、上記スキーマに従ったJSONを生成する
+**Step 1**: リポジトリのコードを読み取り、上記スキーマに従ったJSONを生成する（"project_name" には必ず "{result.project_name}" を指定すること）
 **Step 2**: JSONを `{temp_path}` に保存する（Write toolまたはcatコマンドで）
 **Step 3**: 以下のコマンドを実行する:
 
@@ -2301,7 +2307,7 @@ dde report --consulting "{temp_path}" --pdf --lang ja
     else:
         return f"""## Execution Steps (do NOT ask questions — just execute)
 
-**Step 1**: Read the repository code and generate JSON following the schema above
+**Step 1**: Read the repository code and generate JSON following the schema above (MUST use exact "{result.project_name}" for "project_name")
 **Step 2**: Save JSON to `{temp_path}` (via Write tool or cat command)
 **Step 3**: Run this command:
 

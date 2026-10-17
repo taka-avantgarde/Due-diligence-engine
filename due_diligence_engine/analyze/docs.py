@@ -107,17 +107,8 @@ class DocAnalyzer:
             for p in BUZZWORD_PATTERNS
         )
         if buzzword_count > 10:
-            result.red_flags.append(
-                RedFlag(
-                    category="documentation",
-                    title="Excessive buzzword usage",
-                    description=(
-                        f"Found {buzzword_count} buzzword instances across documents. "
-                        f"Heavy use of marketing language may obscure technical reality."
-                    ),
-                    severity=Severity.MEDIUM,
-                    evidence=[all_text[:200]],
-                )
+            result.findings.append(
+                f"Found {buzzword_count} marketing/buzzword terms across documentation (informational only)."
             )
 
         # Unsubstantiated performance claims

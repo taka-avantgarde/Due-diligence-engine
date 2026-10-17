@@ -1007,3 +1007,108 @@ class TestVisualSummaryAndSourceAppendix:
                   "src_verified_on", "src_col_num", "src_col_url", "src_none"}
         for lang in ALL_REPORT_LANGS:
             assert needed <= set(_PDF_I18N[lang]), f"missing v0.6.0 keys in {lang}"
+
+
+class TestRedFlagZeroFalsePositiveNoise:
+    """Guards against heuristic false-positive noise in PDF red_flags."""
+
+    def test_parse_consulting_dict_filters_false_positive_red_flags(self):
+        from due_diligence_engine.prompt.response_parser import parse_consulting_dict
+
+        data = {
+            "project_name": "TestCo",
+            "red_flags": [
+                {
+                    "title": "Gitコミット履歴の誤検知・無効化済",
+                    "description": "リベースによる日時ズレであり実質的リスクなし",
+                    "severity": "low",
+                    "business_impact": "なし",
+                },
+                {
+                    "title": "[Dismissed] False positive date discrepancy",
+                    "description": "No actual risk to production systems.",
+                    "severity": "medium",
+                    "business_impact": "none",
+                },
+                {
+                    "title": "Excessive buzzwords (実質的なリスクなし)",
+                    "description": "Marketing text only.",
+                    "severity": "low",
+                    "business_impact": "none",
+                },
+                {
+                    "title": "SQL Injection in auth/login.py:42",
+                    "description": "Raw string concatenation in SQL query causes auth bypass",
+                    "severity": "critical",
+                    "business_impact": "Full database breach",
+                },
+                {
+                    "title": "Unauthenticated admin endpoint in api/admin.py:88",
+                    "description": "Missing permission decorator allows anyone to delete accounts",
+                    "severity": "high",
+                    "business_impact": "Account takeover",
+                },
+            ],
+        }
+
+        report = parse_consulting_dict(data)
+        assert len(report.red_flags) == 2
+        titles = [rf["title"] for rf in report.red_flags]
+        assert "SQL Injection in auth/login.py:42" in titles
+        assert "Unauthenticated admin endpoint in api/admin.py:88" in titles
+        for bad_word in ["誤検知", "無効化済", "false positive", "dismissed", "実質的なリスクなし", "no actual risk"]:
+            assert not any(bad_word in rf["title"].lower() or bad_word in rf["description"].lower() for rf in report.red_flags)
+
+    def test_git_forensics_no_date_tampering_red_flag(self, monkeypatch, tmp_path):
+        from due_diligence_engine.analyze.git_forensics import GitForensicsAnalyzer
+        from due_diligence_engine.models import GitForensicsResult
+
+        analyzer = GitForensicsAnalyzer(tmp_path)
+        result = GitForensicsResult()
+
+        output_lines = "\n".join(["2026-01-01T00:00:00+00:00|2026-01-05T00:00:00+00:00"] * 10)
+
+        class MockCompletedProcess:
+            returncode = 0
+            stdout = output_lines
+
+        monkeypatch.setattr("subprocess.run", lambda *args, **kwargs: MockCompletedProcess())
+        analyzer._check_date_tampering(result)
+
+        assert not any(rf.title == "Possible date tampering" for rf in result.red_flags)
+        assert len(result.red_flags) == 0
+        assert any("author/commit date differences >24h" in f and "informational only" in f for f in result.findings)
+
+    def test_doc_analyzer_no_excessive_buzzwords_red_flag(self, tmp_path):
+        from due_diligence_engine.analyze.docs import DocAnalyzer
+        from due_diligence_engine.models import DocAnalysisResult
+
+        analyzer = DocAnalyzer(tmp_path)
+        result = DocAnalysisResult()
+        result.claims = [
+            {
+                "type": "technical",
+                "text": (
+                    "Our revolutionary platform is groundbreaking and disruptive, a true paradigm shift with "
+                    "world-class architecture. It is AI-powered, AI-driven, AI-native, and AI-first, leveraging "
+                    "blockchain, web3, metaverse, and quantum computing."
+                ),
+            }
+        ]
+
+        analyzer._generate_red_flags(result)
+
+        assert not any(rf.title == "Excessive buzzword usage" for rf in result.red_flags)
+        assert any("marketing/buzzword terms across documentation" in f and "informational only" in f for f in result.findings)
+
+    def test_consulting_eval_prompts_forbid_false_positives(self):
+        from due_diligence_engine.prompt.generator import _CONSULTING_EVAL_EN, _CONSULTING_EVAL_JA
+
+        assert "Code-Verified Red Flags Only (Zero False-Positive Noise)" in _CONSULTING_EVAL_EN
+        assert "SILENTLY DISCARD" in _CONSULTING_EVAL_EN
+        assert 'NEVER output "[False Positive]"' in _CONSULTING_EVAL_EN
+
+        assert "実コード検証済みレッドフラグのみ出力（誤検知ノイズ 0% ルール）" in _CONSULTING_EVAL_JA
+        assert "サイレント破棄" in _CONSULTING_EVAL_JA
+        assert "「誤検知・無効化済」といった打ち消し項目を `red_flags` に入れることは厳禁" in _CONSULTING_EVAL_JA
+

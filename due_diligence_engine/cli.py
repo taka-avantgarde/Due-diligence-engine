@@ -445,7 +445,9 @@ def report(
         result.consulting_report = cr
 
         pdf_gen = PDFReportGenerator()
-        safe_name = result.project_name.replace("/", "_").replace("\\", "_")
+        m_slug = re.match(r"^dde_consulting_(.+)_\d{8}\.json$", Path(consulting).name)
+        raw_name = m_slug.group(1) if m_slug else result.project_name
+        safe_name = raw_name.replace("/", "_").replace("\\", "_")
 
         # Date stamp in filename (ja: 2026年04月02日, en: 2026-04-02).
         # NOTE: no non-ASCII inside strftime — on Windows it delegates to the

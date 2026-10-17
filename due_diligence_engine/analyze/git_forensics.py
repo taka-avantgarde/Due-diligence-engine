@@ -229,17 +229,9 @@ class GitForensicsAnalyzer:
                 continue
 
         if tampered_count > 5:
-            result.red_flags.append(
-                RedFlag(
-                    category="git",
-                    title="Possible date tampering",
-                    description=(
-                        f"{tampered_count} commits have author dates differing from "
-                        f"commit dates by more than 24 hours, suggesting history rewriting."
-                    ),
-                    severity=Severity.HIGH,
-                    evidence=[f"{tampered_count} commits with date discrepancies"],
-                )
+            result.findings.append(
+                f"{tampered_count} commits have author/commit date differences >24h "
+                f"(common with git rebase or cherry-pick; informational only)."
             )
 
     def _detect_suspicious_messages(

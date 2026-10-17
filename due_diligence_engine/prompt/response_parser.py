@@ -104,6 +104,36 @@ def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
 
 
+_FALSE_POSITIVE_PATTERNS = (
+    "誤検知",
+    "無効化済",
+    "false positive",
+    "false-positive",
+    "[dismissed]",
+    "dismissed as false",
+    "実質的なリスクなし",
+    "実質的リスクなし",
+    "no actual risk",
+)
+
+
+def _filter_red_flags(raw_flags: Any) -> list[dict[str, Any]]:
+    """Filter out heuristic false-positive / dismissed items from red_flags."""
+    if not isinstance(raw_flags, list):
+        return []
+    filtered: list[dict[str, Any]] = []
+    for item in raw_flags:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title", "")).lower()
+        desc = str(item.get("description", "")).lower()
+        combined = f"{title} {desc}"
+        if any(pat in combined for pat in _FALSE_POSITIVE_PATTERNS):
+            continue
+        filtered.append(item)
+    return filtered
+
+
 def _build_report(data: dict[str, Any]) -> ConsultingReport:
     """Build and validate a ConsultingReport from a raw dict."""
 
@@ -248,7 +278,7 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
         future_outlook=future_outlook,
         strategic_advice=strategic_advice,
         investment_thesis=investment_thesis,
-        red_flags=data.get("red_flags", []),
+        red_flags=_filter_red_flags(data.get("red_flags", [])),
         tech_level_summary=data.get("tech_level_summary", {}),
         glossary_additions=data.get("glossary_additions", []),
         ai_model_used=str(data.get("ai_model_used", "")),
