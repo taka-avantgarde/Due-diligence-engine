@@ -76,11 +76,19 @@ class Score(BaseModel):
                 sum(d.weighted_score for d in self.dimensions) / total_weight, 1
             )
 
-        # Aggregate flags
-        all_flags = list(self.red_flags)
+        # Aggregate flags with deduplication by flag.id preserving order
+        seen_ids = set()
+        deduped_flags: list[RedFlag] = []
+        for f in self.red_flags:
+            if f.id not in seen_ids:
+                seen_ids.add(f.id)
+                deduped_flags.append(f)
         for dim in self.dimensions:
-            all_flags.extend(dim.flags)
-        self.red_flags = all_flags
+            for f in dim.flags:
+                if f.id not in seen_ids:
+                    seen_ids.add(f.id)
+                    deduped_flags.append(f)
+        self.red_flags = deduped_flags
 
         # Critical flags cap the score
         critical_count = sum(1 for f in self.red_flags if f.is_deal_breaker)
@@ -383,6 +391,8 @@ class CompetitorDataPoint(BaseModel):
     y: float = 0.0       # 0-100 range
     z: float = 0.0       # bubble size for 3D charts, 0 otherwise
     is_target: bool = False
+    sources: list[str] = Field(default_factory=list)
+    last_verified: str = ""
 
 
 class MarketChart(BaseModel):
@@ -532,6 +542,8 @@ class CompanyImplementationStatus(BaseModel):
     company_name: str = ""
     status: ImplementationStatus = ImplementationStatus.UNKNOWN
     evidence: str = ""  # URL / citation / reasoning
+    sources: list[str] = Field(default_factory=list)
+    last_verified: str = ""
 
 
 class MatrixItem(BaseModel):

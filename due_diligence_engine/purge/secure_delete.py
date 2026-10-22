@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import shutil
+import stat
 from datetime import datetime
 from pathlib import Path
 
@@ -54,6 +55,29 @@ class SecurePurger:
         Returns:
             PurgeCertificate documenting the purge.
         """
+        if directory.is_symlink():
+            try:
+                directory.unlink()
+                cert = PurgeCertificate(
+                    analysis_id=analysis_id,
+                    project_name=project_name,
+                    files_purged=1,
+                    bytes_overwritten=0,
+                    operator=operator,
+                    verification_hash=hashlib.sha256(f"{directory}:symlink".encode()).hexdigest(),
+                )
+                self._sign_certificate(cert)
+                return cert
+            except OSError:
+                return PurgeCertificate(
+                    analysis_id=analysis_id,
+                    project_name=project_name,
+                    files_purged=0,
+                    bytes_overwritten=0,
+                    operator=operator,
+                    verification_hash="purge_incomplete",
+                )
+
         if not directory.exists():
             return PurgeCertificate(
                 analysis_id=analysis_id,
@@ -67,26 +91,55 @@ class SecurePurger:
         files_purged = 0
         bytes_overwritten = 0
         file_hashes: list[str] = []
+        failed_files = 0
 
-        # Walk and securely overwrite all files
-        for root, _dirs, files in os.walk(str(directory)):
-            for fname in files:
-                fpath = Path(root) / fname
-                try:
-                    size = fpath.stat().st_size
-                    overwritten = self._secure_overwrite(fpath)
-                    bytes_overwritten += overwritten
+        if directory.is_file():
+            try:
+                st = directory.lstat()
+                size = st.st_size
+                overwritten = self._secure_overwrite(directory)
+                bytes_overwritten += overwritten
+                if not directory.exists():
                     files_purged += 1
-
-                    # Record hash of the overwritten data for verification
                     file_hashes.append(
-                        hashlib.sha256(f"{fpath}:{size}:{overwritten}".encode()).hexdigest()
+                        hashlib.sha256(f"{directory}:{size}:{overwritten}".encode()).hexdigest()
                     )
-                except OSError:
-                    continue
+                else:
+                    failed_files += 1
+            except OSError:
+                failed_files += 1
+        else:
+            for root, _dirs, files in os.walk(str(directory)):
+                for fname in files:
+                    fpath = Path(root) / fname
+                    try:
+                        st = fpath.lstat()
+                        size = st.st_size
+                        overwritten = self._secure_overwrite(fpath)
+                        bytes_overwritten += overwritten
+                        if not fpath.exists():
+                            files_purged += 1
+                            file_hashes.append(
+                                hashlib.sha256(f"{fpath}:{size}:{overwritten}".encode()).hexdigest()
+                            )
+                        else:
+                            failed_files += 1
+                    except OSError:
+                        failed_files += 1
 
-        # Remove directory structure
-        shutil.rmtree(str(directory), ignore_errors=True)
+            shutil.rmtree(str(directory), ignore_errors=True)
+            if directory.exists():
+                failed_files += 1
+
+        if failed_files > 0:
+            return PurgeCertificate(
+                analysis_id=analysis_id,
+                project_name=project_name,
+                files_purged=files_purged,
+                bytes_overwritten=bytes_overwritten,
+                operator=operator,
+                verification_hash="purge_incomplete",
+            )
 
         # Generate verification hash
         combined = "|".join(file_hashes)
@@ -115,29 +168,43 @@ class SecurePurger:
         Returns:
             Total bytes overwritten across all passes.
         """
-        size = file_path.stat().st_size
+        try:
+            st = file_path.lstat()
+        except OSError:
+            return 0
+
+        if stat.S_ISLNK(st.st_mode):
+            try:
+                file_path.unlink()
+            except OSError:
+                pass
+            return 0
+
+        size = st.st_size
         total_overwritten = 0
+        chunk_limit = 1024 * 1024  # 1 MB
 
         for pass_num in range(OVERWRITE_PASSES):
-            try:
-                with open(file_path, "wb") as f:
-                    if pass_num < OVERWRITE_PASSES - 1:
-                        # Random data passes
-                        f.write(os.urandom(size))
-                    else:
-                        # Final pass: zeros
-                        f.write(b"\x00" * size)
-                    f.flush()
-                    os.fsync(f.fileno())
-                total_overwritten += size
-            except OSError:
-                break
+            with open(file_path, "wb") as f:
+                remaining = size
+                if pass_num < OVERWRITE_PASSES - 1:
+                    # Random data passes
+                    while remaining > 0:
+                        chunk_size = min(chunk_limit, remaining)
+                        f.write(os.urandom(chunk_size))
+                        remaining -= chunk_size
+                else:
+                    # Final pass: zeros
+                    while remaining > 0:
+                        chunk_size = min(chunk_limit, remaining)
+                        f.write(b"\x00" * chunk_size)
+                        remaining -= chunk_size
+                f.flush()
+                os.fsync(f.fileno())
+            total_overwritten += size
 
         # Delete the file
-        try:
-            file_path.unlink()
-        except OSError:
-            pass
+        file_path.unlink()
 
         return total_overwritten
 
@@ -146,7 +213,7 @@ class SecurePurger:
         data = (
             f"{cert.certificate_id}|{cert.analysis_id}|{cert.project_name}|"
             f"{cert.purge_timestamp.isoformat()}|{cert.files_purged}|"
-            f"{cert.bytes_overwritten}|{cert.verification_hash}"
+            f"{cert.bytes_overwritten}|{cert.method}|{cert.operator}|{cert.verification_hash}"
         ).encode()
 
         signature = self._signing_key.sign(data, ec.ECDSA(hashes.SHA256()))

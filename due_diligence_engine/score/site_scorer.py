@@ -214,7 +214,15 @@ class SiteScorer:
             messages=[{"role": "user", "content": prompt}],
         )
 
-        raw_response = message.content[0].text.strip()
+        raw_text = ""
+        for block in getattr(message, "content", []):
+            if getattr(block, "type", None) == "text" and hasattr(block, "text"):
+                raw_text = block.text
+                break
+            elif getattr(block, "text", None) is not None:
+                raw_text = block.text
+                break
+        raw_response = raw_text.strip()
 
         # JSON抽出（```json...``` ブロックがある場合も対応）
         json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
@@ -507,14 +515,7 @@ class SiteScorer:
 
         raw = max(10, min(100, raw))
 
-        flags = []
-        if buzzword_count > 10:
-            flags.append(RedFlag(
-                category="site_innovation",
-                title="バズワード過多",
-                description=f"{buzzword_count}個のバズワードが検出。実態との乖離の可能性。",
-                severity=Severity.LOW,
-            ))
+        flags: list[RedFlag] = []
 
         return ScoreDimension(
             name=dim["name"],

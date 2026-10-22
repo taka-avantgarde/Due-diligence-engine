@@ -180,9 +180,15 @@ class Config:
     @classmethod
     def from_env(cls) -> Config:
         """Load configuration from environment variables."""
+        google_key = (
+            os.environ.get("GOOGLE_AI_API_KEY")
+            or os.environ.get("GOOGLE_API_KEY")
+            or os.environ.get("GEMINI_API_KEY")
+            or ""
+        )
         return cls(
             anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
-            google_ai_api_key=os.environ.get("GOOGLE_AI_API_KEY", ""),
+            google_ai_api_key=google_key,
             openai_api_key=os.environ.get("OPENAI_API_KEY", ""),
             stripe_api_key=os.environ.get("STRIPE_API_KEY", ""),
             stripe_webhook_secret=os.environ.get("STRIPE_WEBHOOK_SECRET", ""),
@@ -217,8 +223,8 @@ class Config:
     def validate(self) -> list[str]:
         """Validate configuration, return list of errors."""
         errors: list[str] = []
-        if not self.anthropic_api_key:
-            errors.append("ANTHROPIC_API_KEY is not set")
+        if not (self.anthropic_api_key or self.google_ai_api_key or self.openai_api_key):
+            errors.append("No AI API key configured (ANTHROPIC_API_KEY, GOOGLE_AI_API_KEY/GEMINI_API_KEY, or OPENAI_API_KEY required)")
         return errors
 
 

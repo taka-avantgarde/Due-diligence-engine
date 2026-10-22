@@ -9,17 +9,154 @@
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 import re
+import socket
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import httpx
+import contextlib
+import threading
 from pydantic import BaseModel, Field
 
 from due_diligence_engine.models import RedFlag, Severity
 
 logger = logging.getLogger(__name__)
+
+
+def _is_ip_safe(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    return not (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    )
+
+
+def _resolve_and_validate_url(url: str) -> tuple[bool, str | None, list]:
+    """Validate that URL uses http/https, does not target private IPs, and return resolved addr_info."""
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme.lower() not in ("http", "https"):
+            return False, None, []
+        hostname = (parsed.hostname or "").lower()
+        if not hostname or hostname in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+            return False, None, []
+        if hostname.endswith(".local") or hostname.endswith(".internal"):
+            return False, None, []
+
+        port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
+
+        # If hostname is an IP literal
+        try:
+            ip = ipaddress.ip_address(hostname)
+            if not _is_ip_safe(ip):
+                return False, None, []
+            fam = socket.AF_INET6 if ip.version == 6 else socket.AF_INET
+            saddr = (str(ip), port, 0, 0) if ip.version == 6 else (str(ip), port)
+            return True, hostname, [(fam, socket.SOCK_STREAM, 6, "", saddr)]
+        except ValueError:
+            pass
+
+        # Perform DNS lookup and validate every resolved IP
+        try:
+            addr_info = socket.getaddrinfo(hostname, port)
+            if not addr_info:
+                return False, None, []
+            for entry in addr_info:
+                sockaddr = entry[4]
+                ip_str = sockaddr[0]
+                ip = ipaddress.ip_address(ip_str)
+                if not _is_ip_safe(ip):
+                    return False, None, []
+            return True, hostname, addr_info
+        except (socket.gaierror, OSError):
+            return False, None, []
+    except Exception:
+        return False, None, []
+
+
+def _is_safe_url(url: str) -> bool:
+    """Validate that URL uses http/https and does not target localhost/private IPs (SSRF protection)."""
+    is_safe, _, _ = _resolve_and_validate_url(url)
+    return is_safe
+
+
+_DNS_LOCK = threading.RLock()
+_DNS_ACTIVE_COUNT: int = 0
+_DNS_ORIG_GETADDRINFO = None
+_DNS_PIN_STACK: list[tuple[str, list]] = []
+
+
+def _dispatch_safe_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    h_lower = (host or "").lower()
+    with _DNS_LOCK:
+        # Check active pinned hosts from top to bottom
+        for p_host, p_addr_info in reversed(_DNS_PIN_STACK):
+            if p_host and h_lower == p_host and p_addr_info:
+                req_port = port if isinstance(port, int) else (int(port) if str(port).isdigit() else 0)
+                result = []
+                for item in p_addr_info:
+                    fam, typ, pro, canon, saddr = item
+                    ip_str = saddr[0]
+                    if fam == socket.AF_INET:
+                        new_saddr = (ip_str, req_port)
+                    elif fam == socket.AF_INET6:
+                        flowinfo = saddr[2] if len(saddr) > 2 else 0
+                        scopeid = saddr[3] if len(saddr) > 3 else 0
+                        new_saddr = (ip_str, req_port, flowinfo, scopeid)
+                    else:
+                        new_saddr = saddr
+                    result.append((fam, typ, pro, canon, new_saddr))
+                return result
+        orig_fn = _DNS_ORIG_GETADDRINFO or socket.getaddrinfo
+
+    res = orig_fn(host, port, family, type, proto, flags)
+    for item in res:
+        saddr = item[4]
+        ip_str = saddr[0]
+        try:
+            ip = ipaddress.ip_address(ip_str)
+            if not _is_ip_safe(ip):
+                raise socket.gaierror("Blocked non-public IP")
+        except ValueError:
+            raise socket.gaierror("Blocked non-public IP")
+    return res
+
+
+@contextlib.contextmanager
+def _pinned_dns_context(pinned_host: str | None, pinned_addr_info: list):
+    """Context manager that pins DNS resolution for pinned_host to pinned_addr_info,
+
+    preventing DNS rebinding / TOCTOU attacks while verifying any other host resolution.
+    Thread-safe and supporting nested or concurrent pinned contexts.
+    """
+    global _DNS_ACTIVE_COUNT, _DNS_ORIG_GETADDRINFO
+    token = ((pinned_host or "").lower(), list(pinned_addr_info or []))
+
+    with _DNS_LOCK:
+        if _DNS_ACTIVE_COUNT == 0:
+            _DNS_ORIG_GETADDRINFO = socket.getaddrinfo
+            socket.getaddrinfo = _dispatch_safe_getaddrinfo
+        _DNS_ACTIVE_COUNT += 1
+        _DNS_PIN_STACK.append(token)
+
+    try:
+        yield
+    finally:
+        with _DNS_LOCK:
+            if token in _DNS_PIN_STACK:
+                _DNS_PIN_STACK.remove(token)
+            _DNS_ACTIVE_COUNT -= 1
+            if _DNS_ACTIVE_COUNT <= 0:
+                _DNS_ACTIVE_COUNT = 0
+                if _DNS_ORIG_GETADDRINFO is not None:
+                    socket.getaddrinfo = _DNS_ORIG_GETADDRINFO
+                    _DNS_ORIG_GETADDRINFO = None
 
 # スクレイピング対象外のURL拡張子
 _SKIP_EXTENSIONS = {
@@ -195,11 +332,24 @@ class SiteAnalyzer:
         Returns:
             サイト分析結果
         """
-        result = SiteAnalysisResult(site_url=site_url)
+        self._visited = set()
+        self._texts = {}
 
         # URLの正規化
         if not site_url.startswith("http"):
             site_url = "https://" + site_url
+
+        if not _is_safe_url(site_url):
+            result = SiteAnalysisResult(site_url=site_url)
+            result.red_flags.append(RedFlag(
+                category="site_analysis",
+                title="不正なURL",
+                description=f"安全ではないURLまたはローカル/プライベートアドレスです: {site_url}",
+                severity=Severity.HIGH,
+            ))
+            return result
+
+        result = SiteAnalysisResult(site_url=site_url)
 
         # クロール
         self._crawl(site_url, max_depth=2)
@@ -248,19 +398,39 @@ class SiteAnalyzer:
         """再帰的にページをクロール。"""
         if depth > max_depth or len(self._visited) >= _MAX_PAGES:
             return
-        if url in self._visited:
+        is_safe, host, addr_info = _resolve_and_validate_url(url)
+        if url in self._visited or not is_safe:
             return
 
         self._visited.add(url)
 
         try:
-            with httpx.Client(timeout=_TIMEOUT_SEC, follow_redirects=True) as client:
-                resp = client.get(url, headers={
-                    "User-Agent": "DDE-SiteAnalyzer/1.0 (Due Diligence Engine)",
-                    "Accept": "text/html,application/xhtml+xml",
-                })
-                if resp.status_code != 200:
-                    logger.warning(f"HTTP {resp.status_code} for {url}")
+            current_url = url
+            with httpx.Client(timeout=_TIMEOUT_SEC, follow_redirects=False) as client:
+                resp = None
+                for _ in range(6):  # max 5 redirects
+                    if not is_safe:
+                        logger.warning(f"Unsafe URL rejected during fetch/redirect: {current_url}")
+                        return
+                    with _pinned_dns_context(host, addr_info):
+                        resp = client.get(current_url, headers={
+                            "User-Agent": "DDE-SiteAnalyzer/1.0 (Due Diligence Engine)",
+                            "Accept": "text/html,application/xhtml+xml",
+                        })
+                    if resp.status_code in (301, 302, 303, 307, 308) and "location" in resp.headers:
+                        location = resp.headers["location"]
+                        next_url = urljoin(current_url, location)
+                        is_safe, host, addr_info = _resolve_and_validate_url(next_url)
+                        if not is_safe:
+                            logger.warning(f"Unsafe redirect target blocked: {next_url}")
+                            return
+                        current_url = next_url
+                        continue
+                    break
+
+                if resp is None or resp.status_code != 200:
+                    status = resp.status_code if resp is not None else "no response"
+                    logger.warning(f"HTTP {status} for {url}")
                     return
                 content_type = resp.headers.get("content-type", "")
                 if "text/html" not in content_type:
@@ -410,19 +580,6 @@ class SiteAnalyzer:
                 severity=Severity.MEDIUM,
             ))
 
-        # バズワード密度が高い
-        buzzwords = re.findall(
-            r"\b(revolutionary|game[-\s]?changing|disruptive|world[-\s]?first|industry[-\s]?leading|cutting[-\s]?edge|breakthrough|unprecedented)\b",
-            text, re.IGNORECASE,
-        )
-        if len(buzzwords) > 8:
-            flags.append(RedFlag(
-                category="site_credibility",
-                title="バズワードの過剰使用",
-                description=f"{len(buzzwords)}個のマーケティングバズワードが検出されました。実態よりも誇張されている可能性があります。",
-                severity=Severity.LOW,
-            ))
-
         # 技術的な詳細が欠如
         tech_depth_indicators = re.findall(
             r"\b(API|SDK|documentation|docs|open[-\s]?source|GitHub|architecture|whitepaper|RFC)\b",
@@ -464,15 +621,32 @@ def cross_validate_site_vs_code(
     """
     result = CrossValidationResult()
 
+    lang_to_exts = {
+        "python": [".py"],
+        "typescript": [".ts", ".tsx"],
+        "javascript": [".js", ".jsx"],
+        "rust": [".rs"],
+        "go": [".go"],
+        "java": [".java"],
+        "kotlin": [".kt"],
+        "swift": [".swift"],
+        "dart": [".dart"],
+        "c++": [".cpp"],
+        "c#": [".cs"],
+        "ruby": [".rb"],
+        "php": [".php"],
+    }
+
     # 1. 技術スタックの検証: サイトで謳っている技術がコードに存在するか
     code_langs_lower = {k.lower() for k in code_languages.keys()}
     code_findings_text = " ".join(code_findings).lower()
 
     for tech in site_result.technologies_mentioned:
         tech_lower = tech.lower()
-        # コード内に存在するか確認
+        # コード内に存在するか確認 (拡張子マッピング含む)
         found_in_code = (
             tech_lower in code_langs_lower
+            or (tech_lower in lang_to_exts and any(ext in code_langs_lower for ext in lang_to_exts[tech_lower]))
             or tech_lower in code_findings_text
         )
         if found_in_code:
@@ -541,14 +715,14 @@ def cross_validate_site_vs_code(
     # 4. 誇張度の計算
     perf_claims = [c for c in site_result.claims if c.category == "performance"]
     for claim in perf_claims:
-        # 数値が非常に大きい場合は誇張の可能性
-        numbers = re.findall(r"(\d+)", claim.claim)
-        for num_str in numbers:
-            num = int(num_str)
-            if num > 100:  # 100x以上の改善は疑わしい
+        # 倍率表現 (x, 倍, times) のみを対象とし、ミリ秒等のレイテンシ数値は除外
+        multiplier_matches = re.findall(r"(\d+(?:\.\d+)?)\s*(?:x|倍|times)\b", claim.claim, re.IGNORECASE)
+        for mult_str in multiplier_matches:
+            mult = float(mult_str)
+            if mult > 100:  # 100x以上の改善は疑わしい
                 result.exaggerations.append({
                     "claim": claim.claim,
-                    "note": f"Extremely large improvement claim ({num})",
+                    "note": f"Extremely large improvement multiplier claim ({mult_str})",
                 })
 
     # 5. 信頼性スコア計算

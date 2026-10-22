@@ -23,3 +23,16 @@ jobs:
           echo "Score: ${{ steps.dde.outputs.score }}"
           echo "Grade: ${{ steps.dde.outputs.grade }}"
           echo "Red Flags: ${{ steps.dde.outputs.red_flags }}"
+
+      - name: Validate Outputs
+        run: |
+          score="${{ steps.dde.outputs.score }}"
+          grade="${{ steps.dde.outputs.grade }}"
+          if [ -z "$score" ]; then
+            echo "::error::Score output is empty"
+            exit 1
+          fi
+          if [[ ! "$grade" =~ ^[ABCDF]$ ]]; then
+            echo "::error::Invalid grade: $grade (expected A|B|C|D|F)"
+            exit 1
+          fi

@@ -26,12 +26,16 @@ inputs:
 outputs:
   score:
     description: 'Overall DD score (0-100)'
+    value: ${{ steps.run_dde.outputs.score }}
   grade:
     description: 'Grade (A/B/C/D/F)'
+    value: ${{ steps.run_dde.outputs.grade }}
   report_path:
     description: 'Path to the generated report'
+    value: ${{ steps.run_dde.outputs.report_path }}
   red_flags:
     description: 'Number of red flags detected'
+    value: ${{ steps.run_dde.outputs.red_flags }}
 
 runs:
   using: 'composite'
@@ -47,12 +51,15 @@ runs:
         pip install -e ${{ github.action_path }}
 
     - name: Run Analysis
+      id: run_dde
       shell: bash
       env:
         ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
+        INPUT_SKIP_AI: ${{ inputs.skip_ai }}
+        INPUT_OUTPUT_FORMAT: ${{ inputs.output_format }}
       run: |
-        ARGS="--format ${{ inputs.output_format }}"
-        if [ "${{ inputs.skip_ai }}" = "true" ] || [ -z "${{ inputs.anthropic_api_key }}" ]; then
+        ARGS="--format $INPUT_OUTPUT_FORMAT"
+        if [ "$INPUT_SKIP_AI" = "true" ] || [ -z "$ANTHROPIC_API_KEY" ]; then
           ARGS="$ARGS --skip-ai"
         fi
 
@@ -67,9 +74,16 @@ runs:
           GRADE="?"
           FLAGS="0"
         else
-          SCORE=$(grep -oP 'Overall Score:\*\*\s*\K[0-9]+' "$REPORT" 2>/dev/null | head -1) || SCORE=""
-          GRADE=$(grep -oP 'Grade:\s*\K[A-F]' "$REPORT" 2>/dev/null | head -1) || GRADE=""
-          FLAGS=$(grep -cE '^\- \*\*[^:*]+\*\*' "$REPORT" 2>/dev/null) || FLAGS="0"
+          SCORE=$(grep -oE '\*\*Overall Score:\*\*\s*[0-9]+' "$REPORT" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+          if [ -z "$SCORE" ]; then
+            SCORE=$(grep -oE 'Overall Score:\s*[0-9]+' "$REPORT" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+          fi
+          GRADE=$(grep -oE '\(Grade:\s*[A-F]\)' "$REPORT" 2>/dev/null | grep -oE '[A-F]' | head -1)
+          if [ -z "$GRADE" ]; then
+            GRADE=$(grep -oE 'Grade:\s*[A-F]' "$REPORT" 2>/dev/null | grep -oE '[A-F]' | head -1)
+          fi
+          FLAGS=$(grep -cE '^\s*-\s*\*\*\[(CRITICAL|HIGH|MEDIUM|LOW|INFO)\]\*\*' "$REPORT" 2>/dev/null) || FLAGS="0"
+
           # Defaults if grep returned empty
           SCORE="${SCORE:-0}"
           GRADE="${GRADE:-?}"
@@ -94,12 +108,12 @@ runs:
     - name: Score Threshold Check
       shell: bash
       if: ${{ inputs.fail_below != '0' }}
+      env:
+        FAIL_BELOW: ${{ inputs.fail_below }}
+        SCORE: ${{ steps.run_dde.outputs.score }}
       run: |
-        REPORT=$(ls dde_output/dde_report_*.md 2>/dev/null | head -1)
-        SCORE=$(grep -oP 'Overall Score:\*\*\s*\K[0-9]+' "$REPORT" 2>/dev/null | head -1) || SCORE=""
         SCORE="${SCORE:-0}"
-        THRESHOLD=${{ inputs.fail_below }}
-        if [ "$SCORE" -lt "$THRESHOLD" ]; then
-          echo "::error::DDE Score ($SCORE) is below threshold ($THRESHOLD)"
+        if [ "$SCORE" -lt "$FAIL_BELOW" ]; then
+          echo "::error::DDE Score ($SCORE) is below threshold ($FAIL_BELOW)"
           exit 1
         fi

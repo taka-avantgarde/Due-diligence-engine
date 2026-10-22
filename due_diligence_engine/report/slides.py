@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import html
+
 from due_diligence_engine.models import AnalysisResult
 
 
@@ -29,11 +31,15 @@ class SlideGenerator:
         grade = score.grade if score else "N/A"
         recommendation = score.recommendation if score else "No score computed."
 
-        html = f"""<!DOCTYPE html>
+        esc_proj = html.escape(result.project_name)
+        esc_id = html.escape(result.analysis_id)
+        esc_rec = html.escape(recommendation)
+
+        html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>DDE Analysis: {result.project_name}</title>
+<title>DDE Analysis: {esc_proj}</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <style>
   body {{ font-family: system-ui, sans-serif; margin: 0; padding: 0; background: #0f172a; color: #e2e8f0; }}
@@ -61,13 +67,13 @@ class SlideGenerator:
 <!-- Slide 1: Title -->
 <div class="slide">
   <h1>Technical Due Diligence Report</h1>
-  <h2>{result.project_name}</h2>
-  <p>Analysis ID: <code>{result.analysis_id}</code></p>
+  <h2>{esc_proj}</h2>
+  <p>Analysis ID: <code>{esc_id}</code></p>
   <p>{result.timestamp.strftime('%Y-%m-%d %H:%M UTC')}</p>
   <div>
     <span class="score-badge grade-{grade}">{overall:.0f}/100 ({grade})</span>
   </div>
-  <p style="margin-top: 1rem; font-size: 1.2rem;">{recommendation}</p>
+  <p style="margin-top: 1rem; font-size: 1.2rem;">{esc_rec}</p>
 </div>
 
 <!-- Slide 2: Score Breakdown -->
@@ -114,7 +120,7 @@ class SlideGenerator:
 </body>
 </html>"""
 
-        return html
+        return html_content
 
     def _build_score_radar(self, result: AnalysisResult) -> str:
         """Build a bar chart of dimension scores using Mermaid xychart."""

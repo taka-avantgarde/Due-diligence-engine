@@ -15,6 +15,8 @@ Dimensions (weights sum to 1.0):
 
 from __future__ import annotations
 
+import math
+
 from due_diligence_engine.models import (
     AnalysisResult,
     RedFlag,
@@ -171,7 +173,7 @@ class Scorer:
         all_flags.extend(result.consistency.red_flags)
 
         # Compute tech level ratings
-        tech_ratings = self._compute_tech_ratings(result)
+        tech_ratings = self._compute_tech_ratings(result, dimensions)
 
         score = Score(
             dimensions=dimensions,
@@ -179,6 +181,7 @@ class Scorer:
             tech_ratings=tech_ratings,
         )
         score.compute()
+        score.tech_ratings = self._compute_tech_ratings(result, score.dimensions)
         return score
 
     def _integrate_ai_scores(
@@ -209,6 +212,11 @@ class Scorer:
         if not valid_ai:
             return heuristic_dims
 
+        def _clean_score(val: Any) -> float | None:
+            if not isinstance(val, (int, float)) or not math.isfinite(val):
+                return None
+            return max(0.0, min(100.0, float(val)))
+
         integrated: list[ScoreDimension] = []
         for dim in heuristic_dims:
             ai_key = dim_key_map.get(dim.name)
@@ -216,21 +224,33 @@ class Scorer:
                 integrated.append(dim)
                 continue
 
-            ai_scores = [
-                r.dimension_scores.get(ai_key, 0)
-                for r in valid_ai
-                if ai_key in r.dimension_scores
-            ]
+            ai_scores: list[float] = []
+            provider_details_list: list[str] = []
+
+            for r in valid_ai:
+                if ai_key == "architecture_quality":
+                    arch_val = _clean_score(r.dimension_scores.get("architecture_quality"))
+                    sec_val = _clean_score(r.dimension_scores.get("security_posture"))
+                    if arch_val is not None and sec_val is not None:
+                        score_val = arch_val * 0.6 + sec_val * 0.4
+                    elif arch_val is not None:
+                        score_val = arch_val
+                    elif sec_val is not None:
+                        score_val = sec_val
+                    else:
+                        score_val = None
+                else:
+                    score_val = _clean_score(r.dimension_scores.get(ai_key))
+
+                if score_val is not None:
+                    ai_scores.append(score_val)
+                    provider_details_list.append(f"{r.provider.capitalize()}: {score_val:.0f}")
 
             if ai_scores:
                 ai_avg = sum(ai_scores) / len(ai_scores)
                 blended = dim.score * 0.3 + ai_avg * 0.7
 
-                provider_details = ", ".join(
-                    f"{r.provider.capitalize()}: {r.dimension_scores.get(ai_key, 0):.0f}"
-                    for r in valid_ai
-                    if ai_key in r.dimension_scores
-                )
+                provider_details = ", ".join(provider_details_list)
                 rationale = (
                     f"{dim.rationale} "
                     f"[AI avg: {ai_avg:.0f} ({provider_details}) | "
@@ -254,12 +274,32 @@ class Scorer:
         """Get the 10-level criteria for a given dimension."""
         return TECH_LEVEL_CRITERIA.get(dimension_key, [])
 
-    def _compute_tech_ratings(self, result: AnalysisResult) -> list[TechLevelRating]:
+    def _compute_tech_ratings(
+        self,
+        result: AnalysisResult,
+        dimensions: list[ScoreDimension] | None = None,
+    ) -> list[TechLevelRating]:
         """Compute 10-level ratings for all dimensions."""
         ratings: list[TechLevelRating] = []
 
+        dim_scores: dict[str, float] = {}
+        if dimensions:
+            for d in dimensions:
+                for k in (
+                    "technical_originality",
+                    "technology_advancement",
+                    "implementation_depth",
+                    "architecture_quality",
+                    "claim_consistency",
+                ):
+                    if DIMENSIONS[k]["name"] == d.name:
+                        dim_scores[k] = d.score
+
         # Technical Originality
-        orig_level = self._determine_originality_level(result)
+        if "technical_originality" in dim_scores:
+            orig_level = max(1, min(10, int(round(dim_scores["technical_originality"] / 10.0))))
+        else:
+            orig_level = self._determine_originality_level(result)
         criteria = TECH_LEVEL_CRITERIA["technical_originality"]
         ratings.append(TechLevelRating(
             dimension="Technical Originality",
@@ -271,7 +311,10 @@ class Scorer:
         ))
 
         # Technology Advancement
-        adv_level = self._determine_advancement_level(result)
+        if "technology_advancement" in dim_scores:
+            adv_level = max(1, min(10, int(round(dim_scores["technology_advancement"] / 10.0))))
+        else:
+            adv_level = self._determine_advancement_level(result)
         criteria = TECH_LEVEL_CRITERIA["technology_advancement"]
         ratings.append(TechLevelRating(
             dimension="Technology Advancement",
@@ -283,7 +326,10 @@ class Scorer:
         ))
 
         # Implementation Depth
-        impl_level = self._determine_implementation_level(result)
+        if "implementation_depth" in dim_scores:
+            impl_level = max(1, min(10, int(round(dim_scores["implementation_depth"] / 10.0))))
+        else:
+            impl_level = self._determine_implementation_level(result)
         criteria = TECH_LEVEL_CRITERIA["implementation_depth"]
         ratings.append(TechLevelRating(
             dimension="Implementation Depth",
@@ -295,7 +341,10 @@ class Scorer:
         ))
 
         # Architecture Quality
-        arch_level = self._determine_architecture_level(result)
+        if "architecture_quality" in dim_scores:
+            arch_level = max(1, min(10, int(round(dim_scores["architecture_quality"] / 10.0))))
+        else:
+            arch_level = self._determine_architecture_level(result)
         criteria = TECH_LEVEL_CRITERIA["architecture_quality"]
         ratings.append(TechLevelRating(
             dimension="Architecture Quality",
@@ -307,7 +356,10 @@ class Scorer:
         ))
 
         # Claim Consistency
-        claim_level = self._determine_claim_level(result)
+        if "claim_consistency" in dim_scores:
+            claim_level = max(1, min(10, int(round(dim_scores["claim_consistency"] / 10.0))))
+        else:
+            claim_level = self._determine_claim_level(result)
         criteria = TECH_LEVEL_CRITERIA["claim_consistency"]
         ratings.append(TechLevelRating(
             dimension="Claim Consistency",

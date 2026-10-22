@@ -90,6 +90,7 @@ class AnalysisEngine:
         project_name: str,
         repo_path: Path | None = None,
         skip_git: bool = False,
+        skip_ai: bool = False,
     ) -> AnalysisResult:
         """分析パイプラインを実行。
 
@@ -97,6 +98,7 @@ class AnalysisEngine:
             project_name: 分析対象プロジェクト名。
             repo_path: gitリポジトリのパス（省略時はgit分析をスキップ）。
             skip_git: Trueの場合、gitフォレンジックをスキップ。
+            skip_ai: Trueの場合、AI分析を完全スキップ（環境変数も読み込まない）。
 
         Returns:
             スコアと所見を含む AnalysisResult。
@@ -121,18 +123,23 @@ class AnalysisEngine:
         )
 
         # Phase 2: AI分析（マルチプロバイダー対応）
-        effective_keys = self._get_effective_api_keys()
+        if skip_ai:
+            effective_keys: dict[str, str] = {}
+            logger.info("skip_ai=True: Skipping AI analysis (local-only mode).")
+        else:
+            effective_keys = self._get_effective_api_keys()
 
         if effective_keys:
             logger.info(f"Phase 2: Running AI analysis with {len(effective_keys)} provider(s): {list(effective_keys.keys())}")
             self._run_multi_provider_analysis(result, effective_keys)
-        elif self._config.anthropic_api_key:
+        elif not skip_ai and self._config.anthropic_api_key:
             # 後方互換: 環境変数のAnthropicキーのみの場合は従来の3段階パイプライン
             logger.info("Phase 2: Running legacy AI-enhanced analysis (Haiku→Sonnet→Opus)...")
             ai_findings = self._run_ai_analysis(result)
             self._merge_ai_findings(result, ai_findings)
         else:
-            logger.warning("No API key configured. Skipping AI-enhanced analysis.")
+            if not skip_ai:
+                logger.warning("No API key configured. Skipping AI-enhanced analysis.")
 
         # Phase 3: スコアリング
         logger.info("Phase 3: Computing scores...")
@@ -211,13 +218,20 @@ class AnalysisEngine:
     ) -> AIProviderResult:
         """単一プロバイダーの分析を実行し、AIProviderResultに変換。"""
         raw = provider.analyze(summary, context)
+        usage = provider.usage or {}
+        cost = estimate_provider_cost(
+            provider.provider_name,
+            usage.get("input_tokens", 0),
+            usage.get("output_tokens", 0),
+        )
 
         if raw.get("error") or raw.get("parse_error"):
             return AIProviderResult(
                 provider=provider.provider_name,
                 model_id=provider.model_id,
                 error=raw.get("error", "JSON parse error"),
-                usage=provider.usage,
+                usage=usage,
+                cost_usd=cost,
             )
 
         # dimension_scores の正規化
@@ -242,14 +256,6 @@ class AnalysisEngine:
                     ),
                 ))
 
-        # コスト計算
-        usage = provider.usage
-        cost = estimate_provider_cost(
-            provider.provider_name,
-            usage.get("input_tokens", 0),
-            usage.get("output_tokens", 0),
-        )
-
         return AIProviderResult(
             provider=provider.provider_name,
             model_id=provider.model_id,
@@ -261,6 +267,8 @@ class AnalysisEngine:
             usage=usage,
             cost_usd=cost,
         )
+
+    _run_single_provider = _execute_provider
 
     # --- 従来の3段階パイプライン（後方互換） ---
 
@@ -311,7 +319,7 @@ Respond in JSON format:
                 messages=[{"role": "user", "content": prompt}],
             )
             self._track_usage("haiku", response.usage)
-            return _parse_json_response(response.content[0].text)
+            return _parse_json_response(_call_claude(response))
         except Exception as e:
             logger.error(f"Haiku scan failed: {e}")
             return {"error": str(e)}
@@ -385,7 +393,7 @@ Respond in JSON format:
                 messages=[{"role": "user", "content": prompt}],
             )
             self._track_usage("sonnet", response.usage)
-            return _parse_json_response(response.content[0].text)
+            return _parse_json_response(_call_claude(response))
         except Exception as e:
             logger.error(f"Sonnet analysis failed: {e}")
             return {"error": str(e)}
@@ -428,7 +436,7 @@ Respond in JSON format:
                 messages=[{"role": "user", "content": prompt}],
             )
             self._track_usage("fable", response.usage)
-            return _parse_json_response(response.content[0].text)
+            return _parse_json_response(_call_claude(response))
         except Exception as e:
             logger.error(f"Fable judgment failed: {e}")
             return {"error": str(e)}
@@ -533,6 +541,21 @@ Respond in JSON format:
             total += ai_result.cost_usd
 
         return round(total, 4)
+
+
+def _call_claude(response: Any) -> str:
+    """Extract text safely from Claude response content."""
+    content = getattr(response, "content", [])
+    if isinstance(content, str):
+        return content
+    return next(
+        (
+            getattr(b, "text", "")
+            for b in content
+            if getattr(b, "type", None) == "text" or hasattr(b, "text")
+        ),
+        "",
+    )
 
 
 def _parse_json_response(text: str) -> dict[str, Any]:

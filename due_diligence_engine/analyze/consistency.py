@@ -39,7 +39,11 @@ class ConsistencyAnalyzer:
         self._check_proprietary_claims(code_result, doc_result, result)
 
         # Compute consistency score
-        total = len(result.verified_claims) + len(result.unverified_claims)
+        total = (
+            len(result.verified_claims)
+            + len(result.unverified_claims)
+            + len(result.contradictions)
+        )
         if total > 0:
             result.consistency_score = (
                 len(result.verified_claims) / total * 100
@@ -71,9 +75,13 @@ class ConsistencyAnalyzer:
         result: ConsistencyResult,
     ) -> None:
         """Verify claims about testing."""
+        test_pattern = re.compile(
+            r"\b(?:unit\s+test\w*|integration\s+test\w*|test\s+suite|test\s+coverage|pytest|jest|end-to-end\s+test\w*)\b",
+            re.IGNORECASE,
+        )
         test_claims = [
             c for c in docs.technical_claims
-            if re.search(r"test|coverage|CI|continuous", c, re.IGNORECASE)
+            if test_pattern.search(c)
         ]
 
         for claim in test_claims:
@@ -124,9 +132,13 @@ class ConsistencyAnalyzer:
         result: ConsistencyResult,
     ) -> None:
         """Verify CI/CD claims."""
+        ci_pattern = re.compile(
+            r"\b(?:ci/cd|continuous\s+integration|continuous\s+delivery|github\s+actions)\b",
+            re.IGNORECASE,
+        )
         ci_claims = [
             c for c in docs.technical_claims
-            if re.search(r"CI/CD|continuous (integration|deployment|delivery)", c, re.IGNORECASE)
+            if ci_pattern.search(c)
         ]
 
         for claim in ci_claims:

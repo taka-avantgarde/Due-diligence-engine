@@ -154,7 +154,7 @@ def test_certificate_signature_verifies_with_exported_key(tmp_path):
     signed = (
         f"{cert.certificate_id}|{cert.analysis_id}|{cert.project_name}|"
         f"{cert.purge_timestamp.isoformat()}|{cert.files_purged}|"
-        f"{cert.bytes_overwritten}|{digest}"
+        f"{cert.bytes_overwritten}|{cert.method}|{cert.operator}|{digest}"
     ).encode()
     # Raises cryptography.exceptions.InvalidSignature if verification fails.
     pubkey.verify(bytes.fromhex(sig_hex), signed, ec.ECDSA(hashes.SHA256()))

@@ -57,9 +57,11 @@ class SecureLoader:
 
     def __init__(self, config: Config) -> None:
         self._config = config
-        self._encryption_key = Fernet.generate_key()
-        self._fernet = Fernet(self._encryption_key)
+        self._encryption_key: bytes | None = Fernet.generate_key()
+        self._fernet: Fernet | None = Fernet(self._encryption_key)
         self._work_dir: Path | None = None
+        self._clone_dir: Path | None = None
+        self._git_repo_path: Path | None = None
         self._manifest: list[dict[str, str]] = []
 
     @property
@@ -72,7 +74,7 @@ class SecureLoader:
     def manifest(self) -> list[dict[str, str]]:
         return list(self._manifest)
 
-    def _create_secure_temp(self) -> Path:
+    def _create_secure_temp(self, prefix: str = "dde_secure_") -> Path:
         """Create a temporary directory with restricted permissions.
 
         Unix/macOS: chmod 0o700 (owner-only). Windows: chmod does not map to
@@ -82,7 +84,7 @@ class SecureLoader:
         """
         base = self._config.temp_dir
         base.mkdir(parents=True, exist_ok=True)
-        tmp = Path(tempfile.mkdtemp(prefix="dde_", dir=str(base)))
+        tmp = Path(tempfile.mkdtemp(prefix=prefix, dir=str(base)))
         # Restrict to owner only
         tmp.chmod(stat.S_IRWXU)
         if sys.platform == "win32":
@@ -122,6 +124,7 @@ class SecureLoader:
                  - https://github.com/owner/repo/tree/branch
                  - github.com/owner/repo
                  - owner/repo (assumes GitHub)
+                 - git@github.com:owner/repo.git
 
         Returns:
             Path to the secure working directory.
@@ -130,14 +133,18 @@ class SecureLoader:
             ValueError: If the URL is invalid.
             RuntimeError: If git clone fails.
         """
+        if self._work_dir is not None or self._clone_dir is not None:
+            self.destroy()
+
         normalized = self._normalize_github_url(url)
         branch = self._extract_branch(url)
 
-        clone_dir = Path(tempfile.mkdtemp(prefix="dde_clone_", dir=str(self._config.temp_dir)))
+        clone_dir = self._create_secure_temp(prefix="dde_clone_")
+        self._clone_dir = clone_dir
 
         try:
             logger.info(f"Cloning {normalized} ...")
-            cmd = ["git", "clone", "--depth", "1"]
+            cmd = ["git", "clone", "--depth", "50"]
             if branch:
                 cmd.extend(["--branch", branch])
             cmd.extend([normalized, str(clone_dir / "repo")])
@@ -160,12 +167,15 @@ class SecureLoader:
             return self.load_directory(repo_dir)
 
         except subprocess.TimeoutExpired:
+            if self._clone_dir is not None and self._clone_dir.exists():
+                self._shred_tree(self._clone_dir)
+            self._clone_dir = None
             raise RuntimeError(f"git clone timed out after 5 minutes: {normalized}")
-        finally:
-            # Remove .git directory immediately (large, not needed for analysis)
-            git_dir = clone_dir / "repo" / ".git"
-            if git_dir.exists():
-                shutil.rmtree(str(git_dir), ignore_errors=True)
+        except Exception:
+            if self._clone_dir is not None and self._clone_dir.exists():
+                self._shred_tree(self._clone_dir)
+            self._clone_dir = None
+            raise
 
     @property
     def cloned_repo_path(self) -> Path | None:
@@ -178,30 +188,39 @@ class SecureLoader:
 
         Accepts:
             owner/repo              → https://github.com/owner/repo.git
+            owner/repo.git          → https://github.com/owner/repo.git
             github.com/owner/repo   → https://github.com/owner/repo.git
+            git@github.com:o/r.git  → https://github.com/o/r.git
             https://github.com/...  → https://github.com/owner/repo.git
         """
         url = url.strip().rstrip("/")
 
-        # Remove tree/branch suffix: .../tree/main → ...
-        url = re.sub(r"/tree/[^/]+/?$", "", url)
+        # SSH format: git@github.com:owner/repo(.git) -> https://github.com/owner/repo.git
+        ssh_match = re.match(r"^git@github\.com:([^/]+)/(.+?)(?:\.git)?$", url)
+        if ssh_match:
+            return f"https://github.com/{ssh_match.group(1)}/{ssh_match.group(2)}.git"
 
-        # Short form: owner/repo
-        if re.match(r"^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$", url):
-            return f"https://github.com/{url}.git"
+        # Remove tree/branch suffix: .../tree/branch or .../tree/feature/fix -> ...
+        url = re.sub(r"/tree/.*$", "", url).rstrip("/")
+
+        # Short form: owner/repo or owner/repo.git
+        short_match = re.match(r"^([a-zA-Z0-9._-]+)/([a-zA-Z0-9._-]+?)(?:\.git)?$", url)
+        if short_match:
+            return f"https://github.com/{short_match.group(1)}/{short_match.group(2)}.git"
 
         # Missing scheme: github.com/owner/repo
         if url.startswith("github.com/"):
             url = "https://" + url
 
         parsed = urlparse(url)
-        if not parsed.scheme:
+        if not parsed.scheme or not parsed.netloc:
             raise ValueError(f"Invalid URL format: {url}")
 
-        # Ensure .git suffix for clone
+        # Ensure .git suffix for clone without double .git
         path = parsed.path.rstrip("/")
-        if not path.endswith(".git"):
-            path += ".git"
+        if path.endswith(".git"):
+            path = path[:-4]
+        path += ".git"
 
         return f"{parsed.scheme}://{parsed.netloc}{path}"
 
@@ -210,9 +229,15 @@ class SecureLoader:
         """Extract branch name from GitHub URL if present.
 
         e.g., https://github.com/owner/repo/tree/develop → 'develop'
+        e.g., https://github.com/owner/repo/tree/feature/fix → 'feature/fix'
         """
-        match = re.search(r"/tree/([^/]+)/?$", url.strip().rstrip("/"))
-        return match.group(1) if match else None
+        match = re.search(r"/tree/(.+)$", url.strip().rstrip("/"))
+        if match:
+            branch = match.group(1).rstrip("/")
+            if branch.endswith(".git"):
+                branch = branch[:-4]
+            return branch
+        return None
 
     def load_directory(self, source: Path) -> Path:
         """Load a project directory into the secure workspace.
@@ -232,7 +257,21 @@ class SecureLoader:
         if not source.is_dir():
             raise ValueError(f"Source is not a directory: {source}")
 
-        self._work_dir = self._create_secure_temp()
+        is_from_clone = False
+        if self._clone_dir is not None:
+            try:
+                is_from_clone = source.resolve().is_relative_to(self._clone_dir.resolve())
+            except (ValueError, OSError):
+                is_from_clone = False
+
+        if self._work_dir is not None or (self._clone_dir is not None and not is_from_clone):
+            self.destroy()
+
+        if self._fernet is None:
+            self._encryption_key = Fernet.generate_key()
+            self._fernet = Fernet(self._encryption_key)
+
+        self._work_dir = self._create_secure_temp(prefix="dde_secure_")
 
         for file_path in self._walk_files(source):
             rel_path = file_path.relative_to(source)
@@ -240,9 +279,13 @@ class SecureLoader:
             dest.parent.mkdir(parents=True, exist_ok=True)
 
             try:
-                content = file_path.read_bytes()
-                if len(content) > MAX_FILE_SIZE_BYTES:
+                st = file_path.stat(follow_symlinks=False)
+                if not stat.S_ISREG(st.st_mode):
                     continue
+                if st.st_size > MAX_FILE_SIZE_BYTES:
+                    continue
+
+                content = file_path.read_bytes()
 
                 # Encrypt at rest
                 encrypted = self._fernet.encrypt(content)
@@ -272,21 +315,29 @@ class SecureLoader:
         if not archive_path.exists():
             raise FileNotFoundError(f"Archive not found: {archive_path}")
 
-        # Extract to a throwaway staging dir. This holds the PLAINTEXT archive
-        # contents, so it must be shredded once load_directory() has re-ingested
-        # them into a fresh, encrypted workspace — otherwise the plaintext copy
-        # would survive destroy() (which only knows about the encrypted _work_dir).
-        staging = self._create_secure_temp()
+        if self._work_dir is not None or self._clone_dir is not None:
+            self.destroy()
+
+        staging = self._create_secure_temp(prefix="dde_staging_")
         try:
             extract_dir = staging / "_extracted"
             extract_dir.mkdir()
+            extract_root = extract_dir.resolve()
+            total_uncompressed = 0
+            max_uncompressed = 500 * 1024 * 1024  # 500 MB
 
             with zipfile.ZipFile(str(archive_path), "r") as zf:
-                # Security: check for path traversal
-                for member in zf.namelist():
-                    resolved = (extract_dir / member).resolve()
-                    if not str(resolved).startswith(str(extract_dir.resolve())):
-                        raise ValueError(f"Zip path traversal detected: {member}")
+                for member in zf.infolist():
+                    # Reject symlinks
+                    if ((member.external_attr >> 16) & 0o170000) == 0o120000:
+                        raise ValueError(f"Zip symlink rejected: {member.filename}")
+                    # Security: check for path traversal
+                    target = (extract_dir / member.filename).resolve()
+                    if not target.is_relative_to(extract_root):
+                        raise ValueError(f"Zip path traversal detected: {member.filename}")
+                    total_uncompressed += member.file_size
+                    if total_uncompressed > max_uncompressed:
+                        raise ValueError(f"Zip uncompressed size exceeds limit: {total_uncompressed}")
                 zf.extractall(str(extract_dir))
 
             # Re-process extracted files through secure loading (sets _work_dir
@@ -304,6 +355,8 @@ class SecureLoader:
         Returns:
             Decrypted file content as a string.
         """
+        if self._fernet is None or self._work_dir is None:
+            raise RuntimeError("Workspace not initialized. Call load_* first.")
         enc_path = self.work_dir / (relative_path + ".enc")
         if not enc_path.exists():
             raise FileNotFoundError(f"File not found in workspace: {relative_path}")
@@ -314,6 +367,8 @@ class SecureLoader:
 
     def read_file_bytes(self, relative_path: str) -> bytes:
         """Read and decrypt a file as raw bytes."""
+        if self._fernet is None or self._work_dir is None:
+            raise RuntimeError("Workspace not initialized. Call load_* first.")
         enc_path = self.work_dir / (relative_path + ".enc")
         if not enc_path.exists():
             raise FileNotFoundError(f"File not found in workspace: {relative_path}")
@@ -331,14 +386,37 @@ class SecureLoader:
 
     def destroy(self) -> int:
         """Securely destroy the workspace. Returns bytes overwritten."""
-        if self._work_dir is None or not self._work_dir.exists():
-            return 0
+        total_bytes = 0
+        errors: list[Exception] = []
+        try:
+            if self._work_dir is not None and self._work_dir.exists():
+                try:
+                    total_bytes += self._shred_tree(self._work_dir)
+                    if not self._work_dir.exists():
+                        self._work_dir = None
+                except Exception as exc:
+                    errors.append(exc)
+            else:
+                self._work_dir = None
 
-        bytes_overwritten = self._shred_tree(self._work_dir)
-        self._work_dir = None
-        self._encryption_key = b""
-        self._manifest.clear()
-        return bytes_overwritten
+            if self._clone_dir is not None and self._clone_dir.exists():
+                try:
+                    total_bytes += self._shred_tree(self._clone_dir)
+                    if not self._clone_dir.exists():
+                        self._clone_dir = None
+                except Exception as exc:
+                    errors.append(exc)
+            else:
+                self._clone_dir = None
+
+            self._git_repo_path = None
+            if errors:
+                raise errors[0]
+            return total_bytes
+        finally:
+            self._encryption_key = b""
+            self._fernet = None
+            self._manifest.clear()
 
     @staticmethod
     def _shred_tree(target: Path) -> int:
@@ -350,42 +428,101 @@ class SecureLoader:
         best-effort only — see the README security notes on SSD/COW media.)
         """
         bytes_overwritten = 0
-        for root, _dirs, files in os.walk(str(target)):
+        shred_errors: list[OSError] = []
+
+        for root, _dirs, files in os.walk(str(target), onerror=shred_errors.append):
             for fname in files:
                 fpath = Path(root) / fname
                 try:
-                    size = fpath.stat().st_size
+                    if fpath.is_symlink():
+                        fpath.unlink()
+                        continue
+
+                    # Clear read-only attributes (e.g. git pack objects)
+                    try:
+                        fpath.chmod(stat.S_IRUSR | stat.S_IWUSR)
+                    except OSError:
+                        pass
+
+                    st = fpath.stat(follow_symlinks=False)
+                    if not stat.S_ISREG(st.st_mode):
+                        try:
+                            fpath.unlink()
+                        except OSError as e:
+                            shred_errors.append(e)
+                        continue
+
+                    size = st.st_size
                     with open(fpath, "wb") as f:
                         f.write(os.urandom(size))
                         f.flush()
                         os.fsync(f.fileno())
                     bytes_overwritten += size
                     fpath.unlink()
-                except OSError:
-                    pass
+                except OSError as exc:
+                    shred_errors.append(exc)
+        # Only remove tree if all files were successfully overwritten/unlinked
+        if not shred_errors:
+            if sys.version_info >= (3, 12):
+                def _on_rmtree_exc(func, path, exc):
+                    try:
+                        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+                        func(path)
+                    except OSError as e:
+                        shred_errors.append(e)
 
-        shutil.rmtree(str(target), ignore_errors=True)
+                shutil.rmtree(str(target), onexc=_on_rmtree_exc)
+            else:
+                def _on_rmtree_error(func, path, exc_info):
+                    try:
+                        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+                        func(path)
+                    except OSError as e:
+                        shred_errors.append(e)
+
+                shutil.rmtree(str(target), onerror=_on_rmtree_error)
+
+        if shred_errors or target.exists():
+            err_msg = f"Failed to securely shred {target}: {len(shred_errors)} error(s), remaining={target.exists()}"
+            logger.error(err_msg)
+            if shred_errors:
+                raise shred_errors[0]
+            raise OSError(err_msg)
+
         return bytes_overwritten
 
-    def _walk_files(self, root: Path) -> Iterator[Path]:
+    def _walk_files(self, source: Path) -> Iterator[Path]:
         """Walk directory yielding analyzable files, skipping ignored dirs."""
-        for entry in sorted(root.iterdir()):
-            if entry.name.startswith(".") and entry.name != ".github":
-                if entry.is_dir() and entry.name == ".git":
-                    # We skip .git contents but note its presence
+        root_resolved = source.resolve()
+        for root, dirs, files in os.walk(str(source), followlinks=False):
+            dirs[:] = [
+                d for d in dirs
+                if d not in IGNORED_DIRS
+                and not (d.startswith(".") and d not in {".github", ".circleci"})
+                and not (Path(root) / d).is_symlink()
+            ]
+            for fname in files:
+                file_path = Path(root) / fname
+                if file_path.is_symlink():
                     continue
-                continue
-            if entry.is_dir():
-                if entry.name in IGNORED_DIRS:
+                try:
+                    if not file_path.resolve().is_relative_to(root_resolved):
+                        continue
+                    st = file_path.stat(follow_symlinks=False)
+                    if not stat.S_ISREG(st.st_mode):
+                        continue
+                    if st.st_size > MAX_FILE_SIZE_BYTES:
+                        continue
+                except (OSError, ValueError):
                     continue
-                yield from self._walk_files(entry)
-            elif entry.is_file():
-                if entry.suffix in CODE_EXTENSIONS | DOC_EXTENSIONS:
-                    yield entry
+                if file_path.suffix in CODE_EXTENSIONS | DOC_EXTENSIONS or _classify_file(file_path) in {"code", "doc"}:
+                    yield file_path
 
 
 def _classify_file(path: Path) -> str:
     """Classify a file as code, doc, or other."""
+    if path.name in {"Jenkinsfile", "Dockerfile", "Makefile", ".gitlab-ci.yml", ".travis.yml"}:
+        return "code"
     if path.suffix in CODE_EXTENSIONS:
         return "code"
     if path.suffix in DOC_EXTENSIONS:

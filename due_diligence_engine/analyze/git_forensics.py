@@ -126,22 +126,21 @@ class GitForensicsAnalyzer:
 
         # Sort dates and find clusters
         sorted_dates = sorted(dates)
+        dates_aware = [
+            d.replace(tzinfo=timezone.utc) if d.tzinfo is None else d
+            for d in sorted_dates
+        ]
         rush_windows: list[tuple[datetime, datetime, int]] = []
 
-        # Sliding window: find 24-hour windows with high commit density
-        for i, start in enumerate(sorted_dates):
-            window_end = start.replace(tzinfo=timezone.utc) if start.tzinfo is None else start
-            count = 0
-            for j in range(i, len(sorted_dates)):
-                d = sorted_dates[j]
-                d_aware = d.replace(tzinfo=timezone.utc) if d.tzinfo is None else d
-                delta = (d_aware - window_end).total_seconds()
-                if delta <= 86400:  # 24 hours
-                    count += 1
-                else:
-                    break
+        # O(n) two-pointer sliding window: find 24-hour windows with high commit density
+        right = 0
+        n = len(dates_aware)
+        for left in range(n):
+            while right < n and (dates_aware[right] - dates_aware[left]).total_seconds() <= 86400:
+                right += 1
+            count = right - left
             if count >= 20:
-                rush_windows.append((start, sorted_dates[min(i + count - 1, len(sorted_dates) - 1)], count))
+                rush_windows.append((sorted_dates[left], sorted_dates[right - 1], count))
 
         if rush_windows:
             # Record metric but DO NOT flag as red — AIDD high-velocity is expected

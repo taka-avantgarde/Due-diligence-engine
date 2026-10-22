@@ -11,6 +11,7 @@ Commands:
 from __future__ import annotations
 
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -100,77 +101,82 @@ def analyze(
         name = _extract_project_name(target)
 
     loader = SecureLoader(config)
+    saved: list[Path] = []
+    result = None
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console,
-    ) as progress:
-        # Ingest
-        task = progress.add_task("Ingesting project data...", total=None)
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            # Ingest
+            task = progress.add_task("Ingesting project data...", total=None)
 
-        try:
-            if is_url:
-                progress.update(task, description=f"Cloning {target} ...")
-                loader.load_from_url(target)
-                repo_path = loader.cloned_repo_path
-            else:
-                source = Path(target)
-                if not source.exists():
-                    console.print(f"[red]Path not found: {target}[/red]")
-                    console.print("[yellow]Tip: Did you mean a GitHub URL? Try: dde analyze owner/repo[/yellow]")
-                    sys.exit(1)
-                if source.suffix == ".zip":
-                    loader.load_archive(source)
-                    repo_path = None
+            try:
+                if is_url:
+                    progress.update(task, description=f"Cloning {target} ...")
+                    loader.load_from_url(target)
+                    repo_path = loader.cloned_repo_path
                 else:
-                    loader.load_directory(source)
-                    repo_path = source if source.is_dir() else None
-        except (FileNotFoundError, ValueError, RuntimeError) as e:
-            console.print(f"[red]Ingestion error: {e}[/red]")
-            sys.exit(1)
+                    source = Path(target)
+                    if not source.exists():
+                        console.print(f"[red]Path not found: {target}[/red]")
+                        console.print("[yellow]Tip: Did you mean a GitHub URL? Try: dde analyze owner/repo[/yellow]")
+                        sys.exit(1)
+                    if source.suffix == ".zip":
+                        loader.load_archive(source)
+                        repo_path = None
+                    else:
+                        loader.load_directory(source)
+                        repo_path = source if source.is_dir() else None
+            except (FileNotFoundError, ValueError, RuntimeError) as e:
+                console.print(f"[red]Ingestion error: {e}[/red]")
+                sys.exit(1)
 
-        progress.update(task, description=f"Ingested {len(loader.manifest)} files")
+            progress.update(task, description=f"Ingested {len(loader.manifest)} files")
 
-        # Analyze
-        progress.update(task, description="Running analysis...")
-        engine = AnalysisEngine(config, loader)
-        result = engine.run(
-            project_name=name,
-            repo_path=repo_path,
-            skip_git=skip_git,
-        )
-        progress.update(task, description="Analysis complete")
+            # Analyze
+            progress.update(task, description="Running analysis...")
+            engine = AnalysisEngine(config, loader)
+            result = engine.run(
+                project_name=name,
+                repo_path=repo_path,
+                skip_git=skip_git,
+                skip_ai=skip_ai,
+            )
+            progress.update(task, description="Analysis complete")
 
-        # Generate reports
-        progress.update(task, description="Generating reports...")
-        report_gen = ReportGenerator()
-        saved = report_gen.save_report(result, output_dir, formats=list(formats))
+            # Generate reports
+            progress.update(task, description="Generating reports...")
+            report_gen = ReportGenerator()
+            saved = report_gen.save_report(result, output_dir, formats=list(formats))
 
-        # Generate slides
-        slide_gen = SlideGenerator()
-        safe_name = name.replace("/", "_").replace("\\", "_")
-        slide_path = output_dir / f"dde_slides_{safe_name}_{result.analysis_id}.html"
-        slide_gen.save(result, slide_path)
-        saved.append(slide_path)
+            # Generate slides
+            slide_gen = SlideGenerator()
+            safe_name = name.replace("/", "_").replace("\\", "_")
+            slide_path = output_dir / f"dde_slides_{safe_name}_{result.analysis_id}.html"
+            slide_gen.save(result, slide_path)
+            saved.append(slide_path)
 
-        progress.update(task, description="Done!")
-
-    # Cleanup workspace (cryptographic purge)
-    loader.destroy()
+            progress.update(task, description="Done!")
+    finally:
+        # Cleanup workspace (cryptographic purge)
+        loader.destroy()
 
     # Display results
-    score = result.score
-    if score:
-        _display_score_summary(result, score)
+    if result:
+        score = result.score
+        if score:
+            _display_score_summary(result, score)
 
-    console.print()
-    console.print("[bold]Generated Reports:[/bold]")
-    for p in saved:
-        console.print(f"  [cyan]{p}[/cyan]")
+        console.print()
+        console.print("[bold]Generated Reports:[/bold]")
+        for p in saved:
+            console.print(f"  [cyan]{p}[/cyan]")
 
-    if result.total_cost_usd > 0:
-        console.print(f"\n[dim]API cost: ${result.total_cost_usd:.4f}[/dim]")
+        if result.total_cost_usd > 0:
+            console.print(f"\n[dim]API cost: ${result.total_cost_usd:.4f}[/dim]")
 
 
 @cli.command()
@@ -285,45 +291,48 @@ def prompt(
         name = _extract_project_name(target)
 
     loader = SecureLoader(config)
+    result = None
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console,
-    ) as progress:
-        task = progress.add_task("Collecting project data...", total=None)
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Collecting project data...", total=None)
 
-        try:
-            if is_url:
-                progress.update(task, description=f"Cloning {target} ...")
-                loader.load_from_url(target)
-                repo_path = loader.cloned_repo_path
-            else:
-                source = Path(target)
-                if not source.exists():
-                    console.print(f"[red]Path not found: {target}[/red]")
-                    sys.exit(1)
-                if source.suffix == ".zip":
-                    loader.load_archive(source)
-                    repo_path = None
+            try:
+                if is_url:
+                    progress.update(task, description=f"Cloning {target} ...")
+                    loader.load_from_url(target)
+                    repo_path = loader.cloned_repo_path
                 else:
-                    loader.load_directory(source)
-                    repo_path = source if source.is_dir() else None
-        except (FileNotFoundError, ValueError, RuntimeError) as e:
-            console.print(f"[red]Ingestion error: {e}[/red]")
-            sys.exit(1)
+                    source = Path(target)
+                    if not source.exists():
+                        console.print(f"[red]Path not found: {target}[/red]")
+                        sys.exit(1)
+                    if source.suffix == ".zip":
+                        loader.load_archive(source)
+                        repo_path = None
+                    else:
+                        loader.load_directory(source)
+                        repo_path = source if source.is_dir() else None
+            except (FileNotFoundError, ValueError, RuntimeError) as e:
+                console.print(f"[red]Ingestion error: {e}[/red]")
+                sys.exit(1)
 
-        progress.update(task, description="Running heuristic analysis...")
-        engine = AnalysisEngine(config, loader)
-        result = engine.run(
-            project_name=name,
-            repo_path=repo_path,
-            skip_git=skip_git,
-        )
-        progress.update(task, description="Generating prompt...")
-
-    # Cleanup
-    loader.destroy()
+            progress.update(task, description="Running heuristic analysis...")
+            engine = AnalysisEngine(config, loader)
+            result = engine.run(
+                project_name=name,
+                repo_path=repo_path,
+                skip_git=skip_git,
+                skip_ai=True,
+            )
+            progress.update(task, description="Generating prompt...")
+    finally:
+        # Cleanup
+        loader.destroy()
 
     # Generate the structured prompt
     if pdf:
@@ -891,11 +900,15 @@ def _detect_ai_terminal() -> bool:
 def _is_github_url(target: str) -> bool:
     """Determine if the target looks like a GitHub URL or owner/repo shorthand."""
     target = target.strip()
+    try:
+        if Path(target).exists():
+            return False
+    except OSError:
+        pass
     # Explicit URLs
     if target.startswith(("https://", "http://", "git@", "github.com/")):
         return True
     # Short form: owner/repo (no dots, no path separators beyond one slash)
-    import re
     if re.match(r"^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$", target):
         # Exclude local paths like ./foo or ../bar
         if not target.startswith((".", "/")):
@@ -905,15 +918,15 @@ def _is_github_url(target: str) -> bool:
 
 def _extract_project_name(target: str) -> str:
     """Extract a human-readable project name from URL or path."""
-    import re
     target = target.strip().rstrip("/")
     # Remove .git suffix
     target = re.sub(r"\.git$", "", target)
     # Remove /tree/branch suffix
-    target = re.sub(r"/tree/[^/]+/?$", "", target)
+    target = re.sub(r"/tree/.*$", "", target)
     # Get last path component
     name = target.rstrip("/").split("/")[-1]
-    # Remove .zip suffix
+    # Remove .git or .zip suffix again if present
+    name = re.sub(r"\.git$", "", name)
     name = re.sub(r"\.zip$", "", name)
     return name or "unknown"
 

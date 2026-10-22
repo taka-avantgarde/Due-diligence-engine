@@ -8,6 +8,7 @@ Claude / Gemini / ChatGPT の3社を統一インターフェースで呼び出�
 from __future__ import annotations
 
 import importlib
+import inspect
 import json
 import logging
 from abc import ABC, abstractmethod
@@ -51,7 +52,7 @@ def _require_sdk(module: str):
     except ModuleNotFoundError as exc:
         raise ModuleNotFoundError(_byok_missing_message(module)) from exc
 
-# --- 6軸分析プロンプトテンプレート ---
+# --- 5軸分析プロンプトテンプレート (v0.3) ---
 _ANALYSIS_PROMPT = """You are a senior technical due diligence analyst evaluating an AI startup
 for investment. Analyze the following project summary and provide scores for each dimension.
 
@@ -61,13 +62,12 @@ PROJECT ANALYSIS SUMMARY:
 ADDITIONAL CONTEXT (from local analysis):
 {context}
 
-Score the following 6 dimensions (0-100 scale) with rationale and evidence:
+Score the following 5 dimensions (0-100 scale) with rationale and evidence:
 1. Technical Originality: Is this genuine IP or an API wrapper?
 2. Technology Advancement: How cutting-edge is the technology?
 3. Implementation Depth: Is the implementation production-grade?
-4. Architecture Quality: Is the architecture scalable and well-designed?
+4. Architecture Quality: Is the architecture scalable, well-designed, and secure (including security posture)?
 5. Claim Consistency: Do documentation claims match code evidence?
-6. Security Posture: Are there security concerns?
 
 Also provide:
 - An executive summary (2-3 sentences for investment committee)
@@ -82,8 +82,7 @@ Respond in JSON format:
     "technology_advancement": 0-100,
     "implementation_depth": 0-100,
     "architecture_quality": 0-100,
-    "claim_consistency": 0-100,
-    "security_posture": 0-100
+    "claim_consistency": 0-100
   }},
   "red_flags": [
     {{"title": "...", "description": "...", "severity": "critical|high|medium|low"}}
@@ -169,7 +168,15 @@ class AnthropicProvider(AIProvider):
                 self._input_tokens += response.usage.input_tokens
                 self._output_tokens += response.usage.output_tokens
 
-            return _parse_json_response(response.content[0].text)
+            text = ""
+            for block in getattr(response, "content", []):
+                if getattr(block, "type", None) == "text" and hasattr(block, "text"):
+                    text = block.text
+                    break
+                elif getattr(block, "text", None) is not None:
+                    text = block.text
+                    break
+            return _parse_json_response(text)
         except Exception as e:
             logger.error(f"Claude analysis failed: {e}")
             return {"error": str(e)}
@@ -193,10 +200,28 @@ class GoogleProvider(AIProvider):
         prompt = self._build_prompt(summary, context)
 
         try:
-            interaction = client.interactions.create(
-                model=self._model_id,
-                input=prompt,
-            )
+            create_func = client.interactions.create
+            supports_store = True
+            try:
+                sig = inspect.signature(create_func)
+                params = sig.parameters
+                has_store = "store" in params
+                has_var_kw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
+                supports_store = has_store or has_var_kw
+            except (ValueError, TypeError):
+                supports_store = True
+
+            if supports_store:
+                interaction = client.interactions.create(
+                    model=self._model_id,
+                    input=prompt,
+                    store=False,
+                )
+            else:
+                interaction = client.interactions.create(
+                    model=self._model_id,
+                    input=prompt,
+                )
 
             # トークン使用量の追跡
             usage = getattr(interaction, "usage", None)
@@ -231,15 +256,30 @@ class OpenAIProvider(AIProvider):
         prompt = self._build_prompt(summary, context)
 
         try:
-            response = client.chat.completions.create(
-                model=self._model_id,
-                messages=[
-                    {"role": "system", "content": "You are a senior technical due diligence analyst. Always respond in valid JSON."},
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=8192,
-                temperature=0.1,
-            )
+            messages = [
+                {"role": "system", "content": "You are a senior technical due diligence analyst. Always respond in valid JSON."},
+                {"role": "user", "content": prompt},
+            ]
+            if self._model_id.startswith(("gpt-5", "o1", "o3", "o4")):
+                try:
+                    response = client.chat.completions.create(
+                        model=self._model_id,
+                        messages=messages,
+                        max_completion_tokens=8192,
+                    )
+                except TypeError:
+                    response = client.chat.completions.create(
+                        model=self._model_id,
+                        messages=messages,
+                        max_tokens=8192,
+                    )
+            else:
+                response = client.chat.completions.create(
+                    model=self._model_id,
+                    messages=messages,
+                    max_tokens=8192,
+                    temperature=0.1,
+                )
 
             # トークン使用量の追跡
             if response.usage:
@@ -268,7 +308,7 @@ PROVIDER_COSTS: dict[str, dict[str, float]] = {
         "input": MODELS["sonnet"].input_cost_per_mtok,
         "output": MODELS["sonnet"].output_cost_per_mtok,
     },
-    "gemini": {"input": 0.75, "output": 3.75},
+    "gemini": {"input": 2.00, "output": 10.00},
     "chatgpt": {"input": 1.25, "output": 10.00},
 }
 

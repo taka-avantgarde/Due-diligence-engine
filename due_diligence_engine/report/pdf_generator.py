@@ -16,10 +16,14 @@ Only findings, scores, and recommendations are reported.
 
 from __future__ import annotations
 
+import copy
 import io
 import logging
+import re
+import xml.sax.saxutils
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
@@ -124,6 +128,23 @@ def _deep_reshape_inplace(obj):
     if isinstance(obj, str):
         return _reshape_ar(obj)
     return obj
+
+
+def _esc(text: Any) -> str:
+    """Escape dynamic text for safe inclusion in ReportLab Paragraph markup."""
+    return xml.sax.saxutils.escape(str(text if text is not None else ""))
+
+
+def _wrap_latin_in_ar(text: str) -> str:
+    """Wrap Latin/ASCII word runs in <font name="Helvetica">...</font> so they render under NotoNaskhArabic."""
+    def _repl(match):
+        val = match.group(0)
+        if val.startswith("&") and val.endswith(";"):
+            return val
+        return f'<font name="Helvetica">{val}</font>'
+
+    return re.sub(r'(&[a-zA-Z]+;)|([A-Za-z0-9][A-Za-z0-9_./:+%&=-]*)', _repl, text)
+
 
 # Language → (normal, bold) font family. CJK CID fonts have no separate bold
 # face, so the same face is used for both weights. Latin-script languages use
@@ -1146,12 +1167,14 @@ class PDFReportGenerator:
         self._lang = lang if lang in _PDF_I18N else "en"
         self._styles = _build_styles(self._lang)
         self._t = _PDF_I18N.get(self._lang, _PDF_I18N["en"])
+        cr = result.consulting_report
         if self._lang == "ar":
             # Pre-shape chrome labels + all report content for RTL rendering.
             self._t = {k: (_reshape_ar(v) if isinstance(v, str) else v)
                        for k, v in self._t.items()}
-            if getattr(result, "consulting_report", None) is not None:
-                _deep_reshape_inplace(result.consulting_report)
+            if cr is not None:
+                cr = copy.deepcopy(cr)
+                _deep_reshape_inplace(cr)
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
@@ -1167,10 +1190,8 @@ class PDFReportGenerator:
 
         story: list = []
 
-        cr = result.consulting_report
-
         # Cover page
-        story.extend(self._build_cover_page(result))
+        story.extend(self._build_cover_page(result, cr=cr))
 
         # --- Consulting report sections (if available) ---
         if cr is not None:
@@ -1334,6 +1355,27 @@ class PDFReportGenerator:
         """Shape Arabic chrome/content strings for RTL; no-op for other languages."""
         return _reshape_ar(text) if self._lang == "ar" else text
 
+    def _esc_text(self, text: Any) -> str:
+        """Escape text for ReportLab Paragraph, and wrap Latin runs if in Arabic mode."""
+        raw = str(text if text is not None else "")
+        if self._lang != "ar":
+            return _esc(raw)
+
+        # Arabic mode: split raw string by Latin/ASCII runs BEFORE XML escaping
+        # so entities like &amp; are never sliced across <font> tags.
+        pattern = re.compile(r"[A-Za-z0-9][A-Za-z0-9_./:+%&=@#?~,\-]*")
+        result_parts = []
+        last_end = 0
+        for m in pattern.finditer(raw):
+            start, end = m.span()
+            if start > last_end:
+                result_parts.append(_esc(raw[last_end:start]))
+            result_parts.append(f'<font name="Helvetica">{_esc(m.group(0))}</font>')
+            last_end = end
+        if last_end < len(raw):
+            result_parts.append(_esc(raw[last_end:]))
+        return "".join(result_parts)
+
     def _dim_name(self, name: str) -> str:
         """Get dimension name in the current language."""
         return self._maybe_reshape(_DIM_NAME_MAPS.get(self._lang, {}).get(name, name))
@@ -1346,7 +1388,7 @@ class PDFReportGenerator:
         """Bold-weight font for the current language (CJK-aware)."""
         return _FONTS_FOR_LANG.get(self._lang, _DEFAULT_FONTS)[1]
 
-    def _build_cover_page(self, result: AnalysisResult) -> list:
+    def _build_cover_page(self, result: AnalysisResult, cr: ConsultingReport | None = None) -> list:
         """Build the cover page — dark theme with Atlas Associates branding."""
         s = self._styles
         t = self._t
@@ -1405,7 +1447,7 @@ class PDFReportGenerator:
         elements.append(Spacer(1, 2 * mm))
 
         # Project name — with horizontal rule accent
-        elements.append(Paragraph(result.project_name, cover_subtitle))
+        elements.append(Paragraph(self._esc_text(result.project_name), cover_subtitle))
         elements.append(Spacer(1, 3 * mm))
 
         # Thin accent line below project name
@@ -1420,7 +1462,8 @@ class PDFReportGenerator:
         elements.append(Spacer(1, 6 * mm))
 
         # Score display (consulting report)
-        cr = result.consulting_report
+        if cr is None:
+            cr = result.consulting_report
         if cr and cr.overall_score > 0:
             grade = cr.grade or "?"
             grade_color = GRADE_COLORS.get(grade, colors.HexColor("#9ca3af"))
@@ -1431,8 +1474,8 @@ class PDFReportGenerator:
             recommendation = self._maybe_reshape(rec.get(grade, ""))
             elements.append(
                 Paragraph(
-                    f'<font color="#5271FF" size="14"><b>{grade_label}</b></font>'
-                    f'  <font color="#9ca3af" size="10">{recommendation}</font>',
+                    f'<font color="#5271FF" size="14"><b>{self._esc_text(grade_label)}</b></font>'
+                    f'  <font color="#9ca3af" size="10">{self._esc_text(recommendation)}</font>',
                     cover_center,
                 )
             )
@@ -1457,7 +1500,7 @@ class PDFReportGenerator:
             grade_text = f'{t["grade_prefix"]}: {score.grade}'
             elements.append(
                 Paragraph(
-                    f'<font color="#5271FF" size="14"><b>{grade_text}</b></font>',
+                    f'<font color="#5271FF" size="14"><b>{self._esc_text(grade_text)}</b></font>',
                     cover_center,
                 )
             )
@@ -1479,7 +1522,7 @@ class PDFReportGenerator:
             elements.append(
                 Paragraph(
                     f'<font color="#5271FF" size="11">'
-                    f'<b>{t["ai_model"]}: {cr.ai_model_used}</b></font>',
+                    f'<b>{t["ai_model"]}: {self._esc_text(cr.ai_model_used)}</b></font>',
                     cover_center,
                 )
             )
@@ -1488,7 +1531,7 @@ class PDFReportGenerator:
         # Metadata
         elements.append(
             Paragraph(
-                f"{t['analysis_id']}: {result.analysis_id}",
+                f"{t['analysis_id']}: {self._esc_text(result.analysis_id)}",
                 cover_small,
             )
         )
@@ -1533,7 +1576,7 @@ class PDFReportGenerator:
         if score is not None:
             rec = _PDF_GRADE_REC.get(self._lang, _PDF_GRADE_REC["en"])
             recommendation = self._maybe_reshape(rec.get(score.grade, score.recommendation))
-            elements.append(Paragraph(recommendation, s["body"]))
+            elements.append(Paragraph(self._esc_text(recommendation), s["body"]))
 
             # Key metrics summary
             critical_count = sum(1 for f in score.red_flags if f.is_deal_breaker)
@@ -1625,7 +1668,7 @@ class PDFReportGenerator:
             elements.append(
                 Paragraph(f"<b>{self._dim_name(dim.name)}</b> ({dim.score:.0f}/100)", s["body"])
             )
-            elements.append(Paragraph(dim.rationale, s["body_small"]))
+            elements.append(Paragraph(self._esc_text(dim.rationale), s["body_small"]))
 
         return elements
 
@@ -1652,7 +1695,7 @@ class PDFReportGenerator:
         for name, ai_result in result.ai_results.items():
             if ai_result.error:
                 elements.append(Paragraph(
-                    f"<b>{name.capitalize()}</b>: Error - {ai_result.error}",
+                    f"<b>{name.capitalize()}</b>: Error - {self._esc_text(ai_result.error)}",
                     s["body_small"],
                 ))
                 continue
@@ -1660,13 +1703,13 @@ class PDFReportGenerator:
             color = provider_colors.get(name, COLOR_TEXT)
             elements.append(Paragraph(
                 f'<font color="{color.hexval()}"><b>{name.capitalize()}</b></font>'
-                f' ({ai_result.model_id}) — '
-                f'Verdict: <b>{ai_result.verdict}</b> | '
+                f' ({self._esc_text(ai_result.model_id)}) — '
+                f'Verdict: <b>{self._esc_text(ai_result.verdict)}</b> | '
                 f'Confidence: {ai_result.confidence:.0f}%',
                 s["body"],
             ))
             if ai_result.executive_summary:
-                elements.append(Paragraph(ai_result.executive_summary, s["body_small"]))
+                elements.append(Paragraph(self._esc_text(ai_result.executive_summary), s["body_small"]))
             elements.append(Spacer(1, 3 * mm))
 
         # プロバイダー比較テーブル
@@ -1791,17 +1834,17 @@ class PDFReportGenerator:
             for flag in flags:
                 elements.append(
                     Paragraph(
-                        f'<font color="{severity_color.hexval()}">[{flag.severity.value.upper()}]</font> '
-                        f"<b>{flag.title}</b> ({flag.category})",
+                        f'<font color="{severity_color.hexval()}">[{self._esc_text(flag.severity.value.upper())}]</font> '
+                        f"<b>{self._esc_text(flag.title)}</b> ({self._esc_text(flag.category)})",
                         s["flag_title"],
                     )
                 )
-                elements.append(Paragraph(flag.description, s["flag_desc"]))
+                elements.append(Paragraph(self._esc_text(flag.description), s["flag_desc"]))
 
                 if flag.evidence:
                     evidence_label = "Evidence" if self._lang == "en" else "\u8a3c\u62e0"
                     evidence_text = f"{evidence_label}: " + "; ".join(flag.evidence[:3])
-                    elements.append(Paragraph(evidence_text, s["flag_desc"]))
+                    elements.append(Paragraph(self._esc_text(evidence_text), s["flag_desc"]))
 
         return elements
 
@@ -1855,7 +1898,7 @@ class PDFReportGenerator:
             elements.append(Paragraph(t["key_findings"], s["heading2"]))
             for finding in code.findings[:20]:  # Limit to 20 findings
                 elements.append(
-                    Paragraph(f"&bull; {finding}", s["body_small"])
+                    Paragraph(f"&bull; {self._esc_text(finding)}", s["body_small"])
                 )
 
         return elements
@@ -1892,6 +1935,7 @@ class PDFReportGenerator:
             ("FONTNAME", (0, 0), (-1, 0), font_header),
             ("FONTNAME", (0, 1), (-1, -1), font_body),
             ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
             ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [COLOR_WHITE, COLOR_LIGHT_BG]),
             ("TOPPADDING", (0, 0), (-1, -1), 6),
@@ -1905,7 +1949,7 @@ class PDFReportGenerator:
             elements.append(Paragraph(t["suspicious_patterns"], s["heading2"]))
             for pattern in git.suspicious_patterns:
                 elements.append(
-                    Paragraph(f"&bull; {pattern}", s["body_small"])
+                    Paragraph(f"&bull; {self._esc_text(pattern)}", s["body_small"])
                 )
 
         return elements
@@ -1941,6 +1985,7 @@ class PDFReportGenerator:
             ("FONTNAME", (0, 0), (-1, 0), font_header),
             ("FONTNAME", (0, 1), (-1, -1), font_body),
             ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
             ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [COLOR_WHITE, COLOR_LIGHT_BG]),
             ("TOPPADDING", (0, 0), (-1, -1), 6),
@@ -1954,7 +1999,7 @@ class PDFReportGenerator:
             elements.append(Paragraph(t["contradictions_found"], s["heading2"]))
             for contradiction in consistency.contradictions:
                 elements.append(
-                    Paragraph(f"&bull; {contradiction}", s["body_small"])
+                    Paragraph(f"&bull; {self._esc_text(contradiction)}", s["body_small"])
                 )
 
         return elements
@@ -2448,7 +2493,7 @@ class PDFReportGenerator:
         if df.web_search_performed:
             parts = []
             if df.search_date:
-                parts.append(f"{t['df_search_date']}: {df.search_date}")
+                parts.append(f"{t['df_search_date']}: {self._esc_text(df.search_date)}")
             parts.append(f"{t['df_queries']}: {len(df.queries_executed)}")
             parts.append(f"{t['df_sources']}: {len(df.sources_consulted)}")
             detail = Paragraph("   ·   ".join(parts), s["body_small"])
@@ -2456,7 +2501,7 @@ class PDFReportGenerator:
         else:
             warn = df.data_cutoff_warning or t["df_no_web_warning"]
             detail = Paragraph(
-                f'<font color="{COLOR_RED.hexval()}">{warn}</font>', s["body_small"],
+                f'<font color="{COLOR_RED.hexval()}">{self._esc_text(warn)}</font>', s["body_small"],
             )
             edge = COLOR_RED
 
@@ -2526,7 +2571,7 @@ class PDFReportGenerator:
         if df.search_date:
             elements.append(Spacer(1, 2 * mm))
             elements.append(
-                Paragraph(f"{t['src_verified_on']}: {df.search_date}", s["body_small"])
+                Paragraph(f"{t['src_verified_on']}: {self._esc_text(df.search_date)}", s["body_small"])
             )
         elements.append(Spacer(1, 4 * mm))
 
@@ -2548,7 +2593,7 @@ class PDFReportGenerator:
         rows = [[Paragraph(t["src_col_num"], hdr_style),
                  Paragraph(t["src_col_url"], hdr_style)]]
         for i, url in enumerate(df.sources_consulted, 1):
-            rows.append([Paragraph(str(i), url_style), Paragraph(url, url_style)])
+            rows.append([Paragraph(str(i), url_style), Paragraph(_esc(url), url_style)])
 
         table = Table(rows, colWidths=[28, 422], repeatRows=1)
         table.setStyle(TableStyle([
@@ -2580,7 +2625,7 @@ class PDFReportGenerator:
         # AI model attribution
         if cr.ai_model_used:
             elements.append(
-                Paragraph(f"{t['ai_model']}: {cr.ai_model_used}", s["body_dim"])
+                Paragraph(f"{t['ai_model']}: {self._esc_text(cr.ai_model_used)}", s["body_dim"])
             )
             elements.append(Spacer(1, 4 * mm))
 
@@ -2590,7 +2635,7 @@ class PDFReportGenerator:
         score_text = f"{cr.overall_score:.0f}/100 — {t['grade_prefix']}: {grade}"
         elements.append(
             Paragraph(
-                f'<font color="{grade_color.hexval()}">{score_text}</font>',
+                f'<font color="{grade_color.hexval()}">{self._esc_text(score_text)}</font>',
                 s["heading2"],
             )
         )
@@ -2601,7 +2646,7 @@ class PDFReportGenerator:
             for para in cr.executive_summary_business.split("\n\n"):
                 para = para.strip()
                 if para:
-                    elements.append(Paragraph(para, s["body"]))
+                    elements.append(Paragraph(self._esc_text(para), s["body"]))
                     elements.append(Spacer(1, 3 * mm))
 
         # Technical summary
@@ -2614,7 +2659,7 @@ class PDFReportGenerator:
             for para in cr.executive_summary.split("\n\n"):
                 para = para.strip()
                 if para:
-                    elements.append(Paragraph(para, s["body"]))
+                    elements.append(Paragraph(self._esc_text(para), s["body"]))
                     elements.append(Spacer(1, 3 * mm))
 
         return elements
@@ -2702,7 +2747,7 @@ class PDFReportGenerator:
                 for item in items[:3]:
                     point = _truncate(item.point, 80)
                     explanation = _truncate(item.explanation, 180)
-                    bullet = f"<b>{point}</b>: {explanation}"
+                    bullet = f"<b>{self._esc_text(point)}</b>: {self._esc_text(explanation)}"
                     cell_flow.append(Paragraph(f"• {bullet}", cell_item_style))
 
                     extra = (
@@ -2713,7 +2758,7 @@ class PDFReportGenerator:
                     )
                     if extra:
                         cell_flow.append(
-                            Paragraph(f"<i>{_truncate(extra, 140)}</i>", cell_extra_style)
+                            Paragraph(f"<i>{self._esc_text(_truncate(extra, 140))}</i>", cell_extra_style)
                         )
 
             # KeepInFrame clips content to fit cell (mode="shrink" → auto-scale down if overflow)
@@ -2839,13 +2884,13 @@ class PDFReportGenerator:
             name = self._dim_name(dim_name_map[key])
 
             block: list = [
-                Paragraph(f"<b>{name}</b> — Lv.{dim.level} {dim.label}", s["body"]),
-                Paragraph(dim.rationale, s["body"]),
+                Paragraph(f"<b>{self._esc_text(name)}</b> — Lv.{dim.level} {self._esc_text(dim.label)}", s["body"]),
+                Paragraph(self._esc_text(dim.rationale), s["body"]),
             ]
             if dim.business_explanation:
-                block.append(Paragraph(f"<i>{dim.business_explanation}</i>", s["body_dim"]))
+                block.append(Paragraph(f"<i>{self._esc_text(dim.business_explanation)}</i>", s["body_dim"]))
             if dim.enables:
-                block.append(Paragraph(f"{t['enables']}: {dim.enables}", s["body_dim"]))
+                block.append(Paragraph(f"{t['enables']}: {self._esc_text(dim.enables)}", s["body_dim"]))
             block.append(Spacer(1, 4 * mm))
             elements.append(KeepTogether(block))
 
@@ -2867,7 +2912,10 @@ class PDFReportGenerator:
         if not tls:
             return elements
 
-        level = int(tls.get("overall_level", 0))
+        try:
+            level = int(float(tls.get("overall_level", 0) or 0))
+        except (ValueError, TypeError):
+            level = 0
         label = tls.get("overall_label", "")
         explanation = tls.get("plain_explanation", "")
 
@@ -2924,8 +2972,8 @@ class PDFReportGenerator:
             elements.append(Spacer(1, 6 * mm))
 
         # ── Overall tech level gauge (larger, summary) ──
-        overall_label = t.get("overall_label", "Overall Tech Level") if self._lang == "en" else "総合テックレベル"
-        elements.append(Paragraph(f"<b>{overall_label}</b>", s["heading2"]))
+        overall_label = t.get("tech_level", "Overall Tech Level")
+        elements.append(Paragraph(f"<b>{self._esc_text(overall_label)}</b>", s["heading2"]))
 
         gauge_w = 380
         gauge_h = 30
@@ -2952,10 +3000,10 @@ class PDFReportGenerator:
         elements.append(Spacer(1, 4 * mm))
 
         if label:
-            elements.append(Paragraph(f"<b>{label}</b>", s["body"]))
+            elements.append(Paragraph(f"<b>{self._esc_text(label)}</b>", s["body"]))
 
         if explanation:
-            elements.append(Paragraph(explanation, s["body"]))
+            elements.append(Paragraph(self._esc_text(explanation), s["body"]))
 
         return elements
 
@@ -2972,12 +3020,12 @@ class PDFReportGenerator:
 
         if fo.product_vision:
             elements.append(Paragraph(f"<b>{t['product_vision']}</b>", s["body"]))
-            elements.append(Paragraph(fo.product_vision, s["body"]))
+            elements.append(Paragraph(self._esc_text(fo.product_vision), s["body"]))
             elements.append(Spacer(1, 4 * mm))
 
         if fo.viability_assessment:
             elements.append(Paragraph(f"<b>{t['viability']}</b>", s["body"]))
-            elements.append(Paragraph(fo.viability_assessment, s["body"]))
+            elements.append(Paragraph(self._esc_text(fo.viability_assessment), s["body"]))
             elements.append(Spacer(1, 6 * mm))
 
         # Projections
@@ -2999,17 +3047,17 @@ class PDFReportGenerator:
                 Paragraph(
                     f"<b>{t[label_key]}</b> "
                     f'({t["confidence"]}: <font color="{conf_color.hexval()}">'
-                    f"{proj.confidence}</font>)",
+                    f"{self._esc_text(proj.confidence)}</font>)",
                     s["heading2"],
                 )
             )
-            elements.append(Paragraph(proj.projection, s["body"]))
+            elements.append(Paragraph(self._esc_text(proj.projection), s["body"]))
             if proj.key_milestones:
                 elements.append(
                     Paragraph(f"<b>{t['milestones']}:</b>", s["body"])
                 )
                 for ms in proj.key_milestones:
-                    elements.append(Paragraph(f"• {ms}", s["body"]))
+                    elements.append(Paragraph(f"• {self._esc_text(ms)}", s["body"]))
             elements.append(Spacer(1, 4 * mm))
 
         return elements
@@ -3050,9 +3098,9 @@ class PDFReportGenerator:
             rows = [header]
             for act in actions:
                 rows.append([
-                    Paragraph(act.action, cell_style),
-                    Paragraph(act.rationale, cell_style),
-                    Paragraph(act.expected_impact, cell_style),
+                    Paragraph(self._esc_text(act.action), cell_style),
+                    Paragraph(self._esc_text(act.rationale), cell_style),
+                    Paragraph(self._esc_text(act.expected_impact), cell_style),
                 ])
 
             col_w = 150
@@ -3071,7 +3119,7 @@ class PDFReportGenerator:
         if sa.long_term_vision:
             elements.append(Paragraph(t["long_term_vision"], s["heading2"]))
             elements.append(Spacer(1, 3 * mm))
-            elements.append(Paragraph(sa.long_term_vision, s["body"]))
+            elements.append(Paragraph(self._esc_text(sa.long_term_vision), s["body"]))
 
         return elements
 
@@ -3101,7 +3149,7 @@ class PDFReportGenerator:
         elements.append(
             Paragraph(
                 f'{t["recommendation"]}: '
-                f'<font color="{rec_color.hexval()}" size="14"><b>{rec_label}</b></font>',
+                f'<font color="{rec_color.hexval()}" size="14"><b>{self._esc_text(rec_label)}</b></font>',
                 s["body"],
             )
         )
@@ -3109,12 +3157,18 @@ class PDFReportGenerator:
 
         # Rationale
         if thesis.rationale:
-            elements.append(Paragraph(thesis.rationale, s["body"]))
+            elements.append(Paragraph(self._esc_text(thesis.rationale), s["body"]))
             elements.append(Spacer(1, 6 * mm))
 
-        # Two-column: Risks vs Upside
-        risk_items = "".join(f"• {r}<br/>" for r in thesis.key_risks) if thesis.key_risks else "—"
-        upside_items = "".join(f"• {u}<br/>" for u in thesis.key_upside) if thesis.key_upside else "—"
+        # Two-column: Risks vs Upside (capped to avoid LayoutError on long strings)
+        def _cap(txt: str, max_len: int = 500) -> str:
+            val = str(txt or "").strip()
+            if len(val) > max_len:
+                return val[:max_len] + "..."
+            return val
+
+        risk_items = "".join(f"• {self._esc_text(_cap(r))}<br/>" for r in thesis.key_risks) if thesis.key_risks else "—"
+        upside_items = "".join(f"• {self._esc_text(_cap(u))}<br/>" for u in thesis.key_upside) if thesis.key_upside else "—"
 
         risk_upside = Table(
             [
@@ -3138,7 +3192,7 @@ class PDFReportGenerator:
             elements.append(
                 Paragraph(
                     f"<b>{t['comparable_companies']}:</b> "
-                    + ", ".join(thesis.comparable_companies),
+                    + ", ".join(self._esc_text(c) for c in thesis.comparable_companies),
                     s["body"],
                 )
             )
@@ -3149,7 +3203,7 @@ class PDFReportGenerator:
             elements.append(
                 Paragraph(
                     f"<b>{t['valuation_factors']}:</b> "
-                    + thesis.suggested_valuation_factors,
+                    + self._esc_text(thesis.suggested_valuation_factors),
                     s["body"],
                 )
             )
@@ -3223,16 +3277,16 @@ class PDFReportGenerator:
 
             elements.append(
                 Paragraph(
-                    f'<font color="{sev_color.hexval()}"><b>[{sev.upper()}]</b></font> '
-                    f"<b>{title}</b>",
+                    f'<font color="{sev_color.hexval()}"><b>[{self._esc_text(sev.upper())}]</b></font> '
+                    f"<b>{self._esc_text(title)}</b>",
                     s["body"],
                 )
             )
             if desc:
-                elements.append(Paragraph(desc, s["body"]))
+                elements.append(Paragraph(self._esc_text(desc), s["body"]))
             if impact:
                 elements.append(
-                    Paragraph(f"<i>{impact}</i>", s["body_dim"])
+                    Paragraph(f"<i>{self._esc_text(impact)}</i>", s["body_dim"])
                 )
             elements.append(Spacer(1, 3 * mm))
 
@@ -3270,8 +3324,8 @@ class PDFReportGenerator:
         for entry in glossary:
             if isinstance(entry, dict):
                 rows.append([
-                    Paragraph(entry.get("term", ""), cell_style_bold),
-                    Paragraph(entry.get("definition", ""), cell_style),
+                    Paragraph(self._esc_text(entry.get("term", "")), cell_style_bold),
+                    Paragraph(self._esc_text(entry.get("definition", "")), cell_style),
                 ])
 
         if len(rows) > 1:
@@ -3316,7 +3370,7 @@ class PDFReportGenerator:
                 Paragraph(f"<b>{t['sv_urls_analyzed']}:</b>", s["body"])
             )
             for url in sv.urls_analyzed:
-                elements.append(Paragraph(f"  {url}", s["body_small"]))
+                elements.append(Paragraph(f"  {self._esc_text(url)}", s["body_small"]))
             elements.append(Spacer(1, 4 * mm))
 
         # Overall credibility score — Arc brand coloring
@@ -3403,7 +3457,7 @@ class PDFReportGenerator:
         # Summary text
         if sv.summary:
             elements.append(Paragraph(f"<b>{t['sv_summary']}</b>", s["body"]))
-            elements.append(Paragraph(sv.summary, s["body"]))
+            elements.append(Paragraph(self._esc_text(sv.summary), s["body"]))
 
         return elements
 
@@ -3418,7 +3472,7 @@ class PDFReportGenerator:
 
     # Cell size for mini charts (fits 2 per row within A4 margins)
     _CELL_W = 235
-    _CELL_H = 180
+    _CELL_H = 152
 
     def _mini_chart(self, chart, ctype: str, quadrant_labels: list[str] | None = None) -> Drawing:
         """Render a single Forrester-style mini chart as a standalone Drawing."""
@@ -3603,7 +3657,7 @@ class PDFReportGenerator:
         if afa.industry_context:
             ind_text = (
                 f'<font color="{COLOR_TEXT_DIM.hexval()}" size="9">'
-                f'{t["atlas_industry_context"]}: <b>{afa.industry_context}</b></font>'
+                f'{t["atlas_industry_context"]}: <b>{self._esc_text(afa.industry_context)}</b></font>'
             )
             elements.append(Paragraph(ind_text, s["center"]))
             elements.append(Spacer(1, 3 * mm))
@@ -3688,9 +3742,9 @@ class PDFReportGenerator:
             rationale = axis.rationale or ""
 
             # Cell 1: label + full rationale (auto-wrap, NO truncation)
-            label_cell = [Paragraph(f"<b>{name}</b>", label_para_style)]
+            label_cell = [Paragraph(f"<b>{self._esc_text(name)}</b>", label_para_style)]
             if rationale:
-                label_cell.append(Paragraph(rationale, rationale_para_style))
+                label_cell.append(Paragraph(self._esc_text(rationale), rationale_para_style))
 
             # Cell 2: bar drawing
             bar_cell = _bar_drawing(axis.score)
@@ -3721,7 +3775,7 @@ class PDFReportGenerator:
         # Summary text
         summary = afa.summary_ja if self._lang == "ja" and afa.summary_ja else afa.summary
         if summary:
-            elements.append(Paragraph(summary, s["body"]))
+            elements.append(Paragraph(self._esc_text(summary), s["body"]))
 
         return elements
 
@@ -3799,9 +3853,9 @@ class PDFReportGenerator:
             name = subitem_labels.get(si.key, si.name_ja if self._lang == "ja" else si.name_en)
             rationale = si.rationale or ""
 
-            label_cell = [Paragraph(f"<b>{name}</b>", sub_label_style)]
+            label_cell = [Paragraph(f"<b>{self._esc_text(name)}</b>", sub_label_style)]
             if rationale:
-                label_cell.append(Paragraph(rationale, sub_rationale_style))
+                label_cell.append(Paragraph(self._esc_text(rationale), sub_rationale_style))
 
             bar_cell = _sub_bar(si.score)
 
@@ -3960,10 +4014,10 @@ class PDFReportGenerator:
             block: list = []
 
             # Header row: company name + category + estimated score
-            header_bits: list[str] = [f'<b>{r.name}</b>']
+            header_bits: list[str] = [f'<b>{self._esc_text(r.name)}</b>']
             if r.category:
                 header_bits.append(
-                    f'<font color="{COLOR_ACCENT.hexval()}" size="9">[{r.category}]</font>'
+                    f'<font color="{COLOR_ACCENT.hexval()}" size="9">[{self._esc_text(r.category)}]</font>'
                 )
             # Estimated score — always shown (even if 0), clearly labeled as estimate
             score_label = "推定" if self._lang == "ja" else "est."
@@ -3976,9 +4030,9 @@ class PDFReportGenerator:
             # Meta line: HQ + market position
             meta_parts: list[str] = []
             if r.hq_country:
-                meta_parts.append(f'{t["rationale_hq"]}: {r.hq_country}')
+                meta_parts.append(f'{t["rationale_hq"]}: {self._esc_text(r.hq_country)}')
             if r.market_position:
-                meta_parts.append(f'{t["rationale_position"]}: {r.market_position}')
+                meta_parts.append(f'{t["rationale_position"]}: {self._esc_text(r.market_position)}')
             if meta_parts:
                 block.append(Paragraph(" · ".join(meta_parts), s["body_dim"]))
 
@@ -3986,7 +4040,7 @@ class PDFReportGenerator:
             rationale_text = (r.rationale_ja if self._lang == "ja" and r.rationale_ja
                               else r.rationale_en)
             if rationale_text:
-                block.append(Paragraph(rationale_text, s["body"]))
+                block.append(Paragraph(self._esc_text(rationale_text), s["body"]))
 
             block.append(Spacer(1, 4 * mm))
             elements.append(KeepTogether(block))
@@ -4060,7 +4114,7 @@ class PDFReportGenerator:
         for c in all_companies:
             # Truncate long names
             short_name = c[:14] + "…" if len(c) > 14 else c
-            header_row.append(Paragraph(short_name, header_para_style))
+            header_row.append(Paragraph(self._esc_text(short_name), header_para_style))
 
         # Group items by category
         category_order = [
@@ -4122,14 +4176,14 @@ class PDFReportGenerator:
             # Category header row (full-width via merged-style: just put label in col 0)
             cat_label = cat_label_map.get(cat, cat)
             cat_row_index = len(table_data)
-            cat_row = [Paragraph(f"<b>{cat_label}</b>", cat_para_style)] + [""] * len(all_companies)
+            cat_row = [Paragraph(f"<b>{self._esc_text(cat_label)}</b>", cat_para_style)] + [""] * len(all_companies)
             table_data.append(cat_row)
             cat_row_indices.append(cat_row_index)
 
             # Item rows
             for item in cat_items:
                 item_label = item.item_ja if self._lang == "ja" and item.item_ja else item.item_en
-                row = [Paragraph(item_label, item_para_style)]
+                row = [Paragraph(self._esc_text(item_label), item_para_style)]
                 # Build status lookup for this item
                 status_by_company: dict[str, str] = {}
                 for st in item.statuses:
@@ -4282,13 +4336,13 @@ class PDFReportGenerator:
                     cap_parts = []
                     if x_label and x_rat:
                         cap_parts.append(
-                            f'<font name="{cap_bold}" size="7" color="#5271FF">X: {x_label}</font>'
-                            f'<font name="{cap_font}" size="7" color="#6b7280"> — {x_rat}</font>'
+                            f'<font name="{cap_bold}" size="7" color="#5271FF">X: {self._esc_text(x_label)}</font>'
+                            f'<font name="{cap_font}" size="7" color="#6b7280"> — {self._esc_text(x_rat)}</font>'
                         )
                     if y_label and y_rat:
                         cap_parts.append(
-                            f'<font name="{cap_bold}" size="7" color="#5271FF">Y: {y_label}</font>'
-                            f'<font name="{cap_font}" size="7" color="#6b7280"> — {y_rat}</font>'
+                            f'<font name="{cap_bold}" size="7" color="#5271FF">Y: {self._esc_text(y_label)}</font>'
+                            f'<font name="{cap_font}" size="7" color="#6b7280"> — {self._esc_text(y_rat)}</font>'
                         )
                     for cap in cap_parts:
                         elements.append(Paragraph(cap, s["body"]))
@@ -4298,22 +4352,18 @@ class PDFReportGenerator:
                 elements.append(Paragraph(t["competitive_subtitle"], s["body_dim"]))
             elements.append(Spacer(1, 1.5 * mm))
 
-            # Build Table data: alternating label-row + chart-row
+            # Build Table data: 3 rows × 2 cols, each cell has [Paragraph(market_label), chart_drawing]
             table_data = []
             body_font = self._font_bold()
 
             for m_left, m_right in grid_rows:
-                # Label row
-                left_label = self._MARKET_ORDER_JA.get(m_left, m_left) if self._lang == "ja" else m_left
-                right_label = self._MARKET_ORDER_JA.get(m_right, m_right) if self._lang == "ja" else m_right
-                table_data.append([
-                    Paragraph(f'<font name="{body_font}" size="8" color="#5271FF">{left_label}</font>', s["body"]),
-                    Paragraph(f'<font name="{body_font}" size="8" color="#5271FF">{right_label}</font>', s["body"]),
-                ])
-
-                # Chart row
-                row_charts = []
+                row_cells = []
                 for mname in (m_left, m_right):
+                    label = self._MARKET_ORDER_JA.get(mname, mname) if self._lang == "ja" else mname
+                    label_para = Paragraph(
+                        f'<font name="{body_font}" size="8" color="#5271FF">{self._esc_text(label)}</font>',
+                        s["body"],
+                    )
                     chart = market_charts.get(mname, {}).get(ctype)
                     if chart is None:
                         # Empty placeholder drawing
@@ -4324,21 +4374,17 @@ class PDFReportGenerator:
                         nf = self._font_normal()
                         placeholder.add(String(cw / 2 - 12, ch / 2, "No data",
                                                fontName=nf, fontSize=7, fillColor=COLOR_TEXT_DIM))
-                        row_charts.append(placeholder)
+                        chart_drawing = placeholder
                     else:
                         qlabels = None
                         if ctype in quadrant_map:
                             qlabels = [t.get(k, k) for k in quadrant_map[ctype]]
-                        row_charts.append(self._mini_chart(chart, ctype, qlabels))
-                table_data.append(row_charts)
+                        chart_drawing = self._mini_chart(chart, ctype, qlabels)
 
-            # Create Table with 6 rows (3 label + 3 chart), 2 cols
-            row_heights = []
-            for _ in grid_rows:
-                row_heights.append(label_h)
-                row_heights.append(ch)
+                    row_cells.append([label_para, chart_drawing])
+                table_data.append(row_cells)
 
-            tbl = RLTable(table_data, colWidths=[cw, cw], rowHeights=row_heights)
+            tbl = RLTable(table_data, colWidths=[cw, cw])
             tbl.setStyle(RLTableStyle([
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 2),

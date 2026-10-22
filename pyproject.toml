@@ -85,8 +85,11 @@ dde = "due_diligence_engine.cli:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["due_diligence_engine"]
-# Bundle the Noto TTF fonts (Vietnamese / Thai report rendering) into the wheel.
-artifacts = ["due_diligence_engine/report/fonts/*.ttf"]
+# Bundle the Noto TTF fonts (Vietnamese / Thai report rendering) and templates into the wheel.
+artifacts = [
+    "due_diligence_engine/report/fonts/*.ttf",
+    "due_diligence_engine/report/templates/*.html",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

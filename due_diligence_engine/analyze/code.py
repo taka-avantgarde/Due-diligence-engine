@@ -157,14 +157,15 @@ class CodeAnalyzer:
         ci_indicators = [
             ".github/workflows",
             ".gitlab-ci.yml",
-            "Jenkinsfile",
+            "jenkinsfile",
             ".circleci/config.yml",
             "azure-pipelines.yml",
             ".travis.yml",
         ]
         for entry in self._loader.manifest:
+            path_norm = entry["path"].replace("\\", "/").lower()
             for indicator in ci_indicators:
-                if indicator in entry["path"]:
+                if indicator in path_norm:
                     return True
         return False
 
