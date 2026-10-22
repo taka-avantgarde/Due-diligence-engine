@@ -260,7 +260,7 @@ class OpenAIProvider(AIProvider):
                 {"role": "system", "content": "You are a senior technical due diligence analyst. Always respond in valid JSON."},
                 {"role": "user", "content": prompt},
             ]
-            if self._model_id.startswith(("gpt-5", "o1", "o3", "o4")):
+            if self._model_id.startswith(("gpt-6", "gpt-5", "o1", "o3", "o4")) or "astra" in self._model_id.lower():
                 try:
                     response = client.chat.completions.create(
                         model=self._model_id,
@@ -299,7 +299,7 @@ class OpenAIProvider(AIProvider):
 _DEFAULT_MODELS = {
     "claude": MODELS["sonnet"].model_id,  # config.MODELS で一元管理 (現行: Sonnet 5.5)
     "gemini": "gemini-4-argon",
-    "chatgpt": "gpt-5",
+    "chatgpt": "gpt-6.1-sol",
 }
 
 # コスト定義 (USD per million tokens)

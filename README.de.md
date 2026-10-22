@@ -15,6 +15,22 @@
 
 <sub>**Keine API-Schlüssel · PDF-First · OSS · CodeQL-geprüft**</sub>
 
+</div>
+
+### 📋 Kopieren & Einfügen — Fertig in 1 Schritt
+
+**🤖 Option A — Direkt in deinen KI-Agenten (Claude Code / Codex / Gemini CLI / Antigravity / Cursor) einfügen (automatische Installation, Audit & PDF-Erstellung):**
+```text
+Installiere https://github.com/Atlas-Associates-Inc/Due-diligence-engine (`python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git`), führe `dde prompt --pdf --lang de` auf diesem Projekt aus und befolge alle Anweisungen des generierten Prompts (SCHRITT 0 Live-Webrecherche, vollständiges Codebase-Audit, JSON-Generierung und PDF-Erstellung), um den finalen Consulting-PDF-Bericht nach ~/Downloads/ auszugeben.
+```
+
+**💻 Option B — Einzeiler für dein Terminal (Installation + Ausführung in einem Befehl):**
+```bash
+python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git && dde prompt --pdf --lang de
+```
+
+<div align="center">
+
 <br/>
 
 ```
@@ -90,7 +106,7 @@ macOS-Homebrew-Nutzer: verwende `python3 -m pip` — der reine `pip`-Befehl wird
 
 **Empfohlenes Setup:**
 
-- **Starte das leistungsfähigste verfügbare Modell** in deiner IDE (Claude Fable 5.1, Claude Opus 5.5, GPT-5, Gemini 4 Argon usw.)
+- **Starte das leistungsfähigste verfügbare Modell** in deiner IDE (Claude Fable 5.1, Gemini 4 Argon, Astra (GPT-6.1-Sol), GPT-5 usw.)
 - **Füge `dde prompt --pdf`** in das Terminal ein
 - **Hol dir einen Kaffee** ☕ — die KI liest Hunderte von Dateien, bewertet über
   9+ Dimensionen, recherchiert weltweit 5–10 Wettbewerber und erstellt ein 24-seitiges Beratungs-PDF
@@ -403,7 +419,7 @@ A: DDE bewertet den Quellcode, nicht das Abzeichen. Ein SOC2-zertifizierter Dien
 ## 🗺️ Roadmap
 
 **Kürzlich ausgeliefert (v0.3.x+)**
-- ✅ **Zero-Defect-Sicherheits- & Zuverlässigkeitshärtung** (2026-10, v0.6.3): Umfassende End-to-End-Auditierung und Härtung aller 35 Module — Schutz vor SSRF & DNS-Rebinding in der Website-Analyse, Isolation gegen Zip Slip / symbolische Links / FIFOs in `SecureLoader` & `SecurePurger` mit strikter Weiterleitung von Löschfehlern, strikte Durchsetzung von Null-Datenspeicherung `store=False` in der Google Interactions API, sicheres Parsen von Anthropic-`ThinkingBlock`s & Parameterkompatibilität für `gpt-5`, vollständiges XML/HTML-Escaping in ReportLab & zerstörungsfreie RTL-Formung für Arabisch in allen 14 PDF-Sprachen, Wheel-Packaging für gebündelte Schriftarten & HTML-Templates sowie 144 automatisierte Unit- & E2E-Regressionstests.
+- ✅ **Zero-Defect-Sicherheits- & Zuverlässigkeitshärtung** (2026-10, v0.6.3): Umfassende End-to-End-Auditierung und Härtung aller 35 Module — Schutz vor SSRF & DNS-Rebinding in der Website-Analyse, Isolation gegen Zip Slip / symbolische Links / FIFOs in `SecureLoader` & `SecurePurger` mit strikter Weiterleitung von Löschfehlern, strikte Durchsetzung von Null-Datenspeicherung `store=False` in der Google Interactions API, sicheres Parsen von Anthropic-`ThinkingBlock`s & Parameterkompatibilität für `gpt-6.1-sol` (Astra) / `gpt-5`, vollständiges XML/HTML-Escaping in ReportLab & zerstörungsfreie RTL-Formung für Arabisch in allen 14 PDF-Sprachen, Wheel-Packaging für gebündelte Schriftarten & HTML-Templates sowie 144 automatisierte Unit- & E2E-Regressionstests.
 - ✅ **Modell-Refresh auf die Claude-5.5-Generation + Python 3.13** (2026-10, v0.6.2): Alle drei BYOK-Tiers auf die aktuelle Modellreihe umgestellt — Scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, $0.10/$0.50 pro MTok, 10× günstiger), Analyse **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, $2/$10 statt $3/$15), Judge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, weiterhin $10/$50). Der Site-Verification-Scorer enthält keinen hartkodierten datierten Haiku-Snapshot mehr, und Standardmodell/Kostentabelle für Claude im BYOK-Modus werden jetzt aus `config.MODELS` abgeleitet, abgesichert durch den neuen Test `tests/test_model_ids.py`. Gemini-BYOK migriert vom bisherigen SDK auf aktuelles `google-genai>=2.30.1` (Interactions API) + `gemini-4-argon`; OpenAI-BYOK-Standard auf `gpt-5` aktualisiert. KI-Terminal-Erkennung in `dde doctor` um Codex CLI, Gemini CLI und Antigravity erweitert. CI-GitHub-Actions aktualisiert (`setup-python@v7`, `codeql-action@v4.37.4`, `osv-scanner-action@v2.5.0`). Heuristische Fehlalarme aus den PDF-`red_flags` eliminiert (`git rebase`-Datumsdifferenzen und Buzzword-Zähler auf reine Info-Metriken herabgestuft; Prompt + Parser-Sicherheitsfilter `_filter_red_flags` lassen nur echte Code-Defekte mit `Datei:Zeile` und Behebungsplan zu; PDF-Dateiname vereinheitlicht). Veraltetes `datetime.utcnow()` ersetzt (keine Warnungen mehr unter Python 3.12+); Python 3.13 zur CI-Matrix und zu den Classifiers hinzugefügt.
 - ✅ **Paket umbenannt `src` → `due_diligence_engine`** (2026-07, v0.6.1): Das importierbare Paket verwendet nicht mehr den generischen Top-Level-Namen `src` und vermeidet so `sys.path`-Kollisionen nach der pip-Installation. Der `dde`-Befehl bleibt unverändert; nur die `import`-Pfade ändern sich (`from due_diligence_engine...`).
 - ✅ **PyPI-fähiges Packaging, `dde doctor`, visuelle Zusammenfassungsseite & Quellenanhang** (2026-07, v0.6.0): Die KI-Anbieter-SDKs wurden in ein optionales `[byok]`-Extra verschoben, sodass die Basisinstallation wirklich ohne API-Schlüssel auskommt (behebt einen Fehler, bei dem `dde prompt` abstürzte, wenn `anthropic` fehlte); neuer Umgebungs-Selbsttest `dde doctor`; das Radar-Diagramm erhält eine eigene **Visuelle-Zusammenfassung**-Seite und ein neuer **Quellenanhang** listet jede konsultierte Live-Web-URL auf (14 Sprachen); echter Sicherheitsfix, damit das Laden von Archiven keine Klartext-Extraktionskopie mehr auf der Festplatte hinterlässt; erste Tests für die Module secure-loader/secure-purge; CI-Matrix auf macOS + Windows 3.12 erweitert, mit Coverage. Die Distribution erfolgt weiter über die dokumentierte `git+https`-Installation; eine PyPI-Veröffentlichung wurde geprüft und zurückgestellt.
@@ -483,6 +499,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.3` — 🌍 READMEs in 6 Sprachen · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · GPT-5 · 🌐 Live-Websuche · 5-Dimensionen-Bewertung
+`v0.6.3` — 🌍 READMEs in 6 Sprachen · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 Live-Websuche · 5-Dimensionen-Bewertung
 
 </div>

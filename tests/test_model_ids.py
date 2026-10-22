@@ -50,7 +50,7 @@ def test_byok_claude_default_follows_registry():
 
 def test_byok_defaults_are_current():
     assert providers._DEFAULT_MODELS["gemini"] == "gemini-4-argon"
-    assert providers._DEFAULT_MODELS["chatgpt"] == "gpt-5"
+    assert providers._DEFAULT_MODELS["chatgpt"] == "gpt-6.1-sol"
     assert providers._BYOK_MODULE_TO_PACKAGE["google.genai"] == "google-genai"
     assert ("google" + ".generativeai") not in providers._BYOK_MODULE_TO_PACKAGE
 
