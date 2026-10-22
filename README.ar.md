@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.6.2-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.3-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -404,7 +404,8 @@ dde analyze owner/repo
 
 ## 🗺️ خريطة الطريق
 
-**أُطلق مؤخرًا (v0.3.x)**
+**أُطلق مؤخرًا (v0.3.x+)**
+- ✅ **تعزيز شامل للأمان والموثوقية بدون عيوب (Zero-Defect)** (2026-10، v0.6.3): تدقيق شامل وتثبيت أمني في جميع الوحدات الـ 35 — تثبيت وحماية ضد SSRF وإعادة ربط DNS في تحليل المواقع، عزل Zip Slip والروابط الرمزية وملفات FIFO في `SecureLoader` و`SecurePurger` مع تمرير دقيق لأخطاء الحذف، فرض صارم لعدم حفظ البيانات `store=False` في واجهة برمجة تطبيقات Google Interactions، تحليل آمن لكتل التفكير `ThinkingBlock` في Anthropic وتوافق مع معاملات `gpt-5`، ترميز وحماية كاملة ضد حقن XML/HTML في ReportLab وتشكيل RTL غير تدميري للعربية عبر تقارير PDF بكافة اللغات الـ 14، تضمين الخطوط وقوالب HTML داخل حزمة wheel، وتجهيز 144 اختبار وحدة وانحدار E2E مؤتمت بالكامل.
 - ✅ **تحديث النماذج إلى جيل Claude 5.5 + دعم Python 3.13** (2026-10، v0.6.2): انتقلت طبقات BYOK الثلاث إلى التشكيلة الحالية — الفحص **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`، $0.10/$0.50 لكل مليون توكن، أرخص بعشر مرات)، التحليل **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`، $2/$10 بدلًا من $3/$15)، الحَكَم **Fable 5 → Fable 5.1** (`claude-fable-5-1`، بنفس السعر $10/$50). لم يعد مُقيِّم التحقق من المواقع يُضمّن لقطة Haiku مؤرَّخة، وأصبح النموذج الافتراضي وجدول التكلفة لـ Claude في BYOK مشتقَّين من `config.MODELS`، مع حماية بالاختبار الجديد `tests/test_model_ids.py`. وجرى ترحيل Gemini BYOK من حزمة SDK السابقة إلى `google-genai>=2.30.1` الحالية (Interactions API) مع `gemini-4-argon`، وتحديث نموذج OpenAI BYOK الافتراضي إلى `gpt-5`. وتوسيع كشف طرفيات الذكاء الاصطناعي في `dde doctor` ليشمل Codex CLI وGemini CLI وAntigravity. وتحديث إجراءات GitHub Actions للتكامل المستمر (`setup-python@v7`، `codeql-action@v4.37.4`، `osv-scanner-action@v2.5.0`). إزالة ضوضاء الإنذارات الكاذبة الاستدلالية من `red_flags` في تقارير PDF (تحويل فروق تواريخ `git rebase` وتكرار المصطلحات إلى مؤشرات إرشادية فقط، مع صمام أمان `_filter_red_flags` لقصر المخرجات على عيوب الكود الحقيقية مع المسار ورقم السطر وخطة الإصلاح، وتوحيد اسم ملف PDF). استُبدل `datetime.utcnow()` المهمَل (إزالة تحذيرات Python 3.12+)؛ وأُضيف Python 3.13 إلى مصفوفة CI والـ classifiers.
 - ✅ **إعادة تسمية الحزمة `src` ← `due_diligence_engine`** (2026-07، v0.6.1): لم تعد الحزمة القابلة للاستيراد تستخدم الاسم العام `src` على المستوى الأعلى، ما يتجنّب التعارضات على `sys.path` عند التثبيت عبر pip. أمر `dde` لم يتغيّر؛ تتغيّر فقط مسارات `import` (`from due_diligence_engine...`).
 - ✅ **تجهيز للنشر على PyPI و`dde doctor` وصفحة ملخص مرئي وملحق المصادر** (2026-07، v0.6.0): نُقِلت حِزم SDK لمزوّدي الذكاء الاصطناعي إلى إضافة اختيارية `[byok]`، لتصبح التثبيتة الأساسية بلا مفاتيح API فعليًا (مع إصلاح خلل كان يُعطِّل `dde prompt` عند غياب `anthropic`)؛ أمر تشخيص ذاتي جديد `dde doctor`؛ أصبح لمخطط الرادار صفحة **ملخص مرئي** خاصة به، وأُضيف **ملحق المصادر** الذي يسرد كل رابط ويب مباشر تمت استشارته (14 لغة)؛ إصلاح أمني حقيقي كي لا يُبقي تحميل الأرشيف نسخة استخراج بنص صريح على القرص؛ أول اختبارات لوحدتَي secure-loader/secure-purge؛ توسيع مصفوفة CI إلى macOS وWindows 3.12 مع قياس التغطية. يستمر التوزيع عبر تثبيت `git+https` الموثّق؛ جرى تقييم النشر على PyPI وتأجيله.
@@ -486,6 +487,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.2` — 🌍 ملفات README بست لغات · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · GPT-5 · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
+`v0.6.3` — 🌍 ملفات README بست لغات · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · GPT-5 · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
 
 </div>

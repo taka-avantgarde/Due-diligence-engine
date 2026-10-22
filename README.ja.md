@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.6.2-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.3-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -399,7 +399,8 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 
 ## 🗺️ ロードマップ
 
-**最近リリース (v0.3.x)**
+**最近リリース (v0.3.x+)**
+- ✅ **ゼロディフェクト・セキュリティ＆信頼性強化**（2026-10、v0.6.3）: 全35モジュールの徹底監査・堅牢化を実施 — サイト分析のSSRF・DNS Rebindingピン留め防御、`SecureLoader` / `SecurePurger` における Zip Slip・Symlink・FIFO遮断と削除失敗の厳密伝播、Google Interactions API の `store=False` ゼロデータ保持強制、Anthropic `ThinkingBlock` 安全走査および `gpt-5` パラメータ互換、全14言語PDFにおける ReportLab XMLインジェクション防止エスケープとアラビア語非破壊RTL整形、フォント・HTMLテンプレートのwheelパッケージ同梱、および計144件の自動ユニット・E2E回帰テストを整備。
 - ✅ **Claude 5.5 世代へモデル更新 + Python 3.13 対応**（2026-10、v0.6.2）: BYOK の 3 ティアをすべて現行ラインナップへ移行 — スキャン **Haiku 4.5 → Haiku 5.5**（`claude-haiku-5-5`、$0.10/$0.50 per MTok、10 分の 1 のコスト）、分析 **Sonnet 4.6 → Sonnet 5.5**（`claude-sonnet-5-5`、$2/$10、従来 $3/$15 から値下げ）、判定 **Fable 5 → Fable 5.1**（`claude-fable-5-1`、$10/$50 は据え置き）。サイト検証スコアラーの日付付き Haiku スナップショットのハードコードを廃止し、BYOK の Claude デフォルト/コスト表も `config.MODELS` から導出するよう統一（新テスト `tests/test_model_ids.py` で保護）。Gemini BYOK を旧 SDK から現行 `google-genai>=2.30.1`（Interactions API）+ `gemini-4-argon` へ移行、OpenAI BYOK デフォルトを `gpt-5` へ更新。`dde doctor` / AI ターミナル自動検出に Codex CLI・Gemini CLI・Antigravity を追加。CI GitHub Actions（`setup-python@v7`、`codeql-action@v4.37.4`、`osv-scanner-action@v2.5.0`）を最新化。PDF `red_flags` の誤検知ノイズ 0% 化を実施（`git rebase` 日時差や専門用語カウント等のヒューリスティック誤検知を参考値へ降格し、プロンプト＋パーサー安全弁 `_filter_red_flags` により `file:line` と修正方針を伴う本物のコード欠陥のみを出力、PDF ファイル名も正規名に一元化）。非推奨の `datetime.utcnow()` を置換（Python 3.12+ の警告解消）。CI マトリクスと classifiers に Python 3.13 を追加。
 - ✅ **パッケージ名を `src` → `due_diligence_engine` に改名**（2026-07、v0.6.1）: import されるパッケージが汎用トップレベル名 `src` を使わなくなり、pip インストール時の `sys.path` 衝突を回避。`dde` コマンドは不変で、変わるのは `import` パスのみ（`from due_diligence_engine...`）。
 - ✅ **PyPI 公開対応・`dde doctor`・ビジュアルサマリーページ・出典付録**（2026-07、v0.6.0）: AI プロバイダー SDK を任意の `[byok]` extra へ分離し、標準インストールを真の「API キー不要」に（`anthropic` 未インストールで `dde prompt` が落ちる実バグも修正）。環境自己診断コマンド `dde doctor` を新設。レーダーチャートを専用の**ビジュアルサマリー**ページに分離し、参照した全ライブ Web URL を列挙する**出典付録**を追加（14 言語）。アーカイブ読み込み時に平文の展開コピーがディスクに残る**セキュリティ不具合を修正**。secure-loader / secure-purge モジュールの初テストを追加。CI マトリクスを macOS + Windows 3.12 へ拡張しカバレッジ計測を導入。配布は README 記載の `git+https` インストールで継続（PyPI 公開は検討の上で見送り）。
@@ -479,6 +480,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.2` — 🌍 6 言語 README · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · GPT-5 · 🌐 ライブ Web 調査 · 5 次元スコアリング
+`v0.6.3` — 🌍 6 言語 README · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · GPT-5 · 🌐 ライブ Web 調査 · 5 次元スコアリング
 
 </div>

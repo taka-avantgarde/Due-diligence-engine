@@ -12,11 +12,12 @@
 
 ## バージョン同期 / Version Sync
 
-リリース時、バージョン番号は以下 **4 箇所すべて**で揃える:
+リリース時、バージョン番号は以下すべてで揃える:
 1. `pyproject.toml` の `version`
-2. `due_diligence_engine/cli.py` の `@click.version_option(version=...)`
-3. 両 README のバッジ `version-vX.Y.Z`
-4. 両 README フッターの `` `vX.Y.Z` `` 行
+2. `due_diligence_engine/__init__.py` の `__version__`
+3. `due_diligence_engine/cli.py` の `@click.version_option(version=...)`
+4. `due_diligence_engine/report/generator.py` のフッター文字列
+5. 全 6 言語 README のバッジ `version-vX.Y.Z` とフッターの `` `vX.Y.Z` `` 行
 
 ## モデル ID / Model IDs
 
@@ -33,11 +34,12 @@
 
 ## テスト / Tests
 
-- 変更後は必ず `python3 -m pip install -e .` 済みの環境で `python3 -m pytest tests/ -q` を実行（125 件 pass が基準）。
+- 変更後は必ず `python3 -m pip install -e .` 済みの環境で `python3 -m pytest tests/ -q` を実行（144 件 pass が基準）。
 - CI（`.github/workflows/tests.yml`）が push/PR ごとに pytest を実行する（ubuntu / Python 3.11・3.12・3.13、Windows / macOS も含む）。
 - モデル ID の整合は `tests/test_model_ids.py` が保護（日付サフィックス禁止・`config.MODELS` 以外でのハードコード禁止）。
 - レッドフラグの誤検知ゼロ原則（ヒューリスティック誤検知のサイレント破棄・実コード欠陥のみ出力・パーサー安全弁 `_filter_red_flags`）は `tests/test_consulting_pdf.py::TestRedFlagZeroFalsePositiveNoise` が保護。
 - レポート対応 14 言語は `tests/test_consulting_pdf.py::TestMultilingualReports` がスモークテストで保護（キー整合 + 全言語 PDF 生成）。言語を追加したら `ALL_REPORT_LANGS` にも追加すること。
+- 全モジュール横断のセキュリティ・信頼性回帰（SSRF・Zip Slip・FIFO遮断・削除エラー伝播・store=False強制・ThinkingBlock走査等）は `tests/test_audit_regressions.py`（19件）が保護。
 
 ## リポジトリ / Repository
 

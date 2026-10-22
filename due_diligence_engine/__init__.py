@@ -1,3 +1,3 @@
 """Due Diligence Engine - AI startup technical due diligence."""
 
-__version__ = "0.6.2"
+__version__ = "0.6.3"

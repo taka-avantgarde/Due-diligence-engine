@@ -28,7 +28,7 @@ console = Console()
 
 
 @click.group()
-@click.version_option(version="0.6.2", prog_name="dde")
+@click.version_option(version="0.6.3", prog_name="dde")
 def cli() -> None:
     """Due Diligence Engine - AI startup technical due diligence."""
     pass

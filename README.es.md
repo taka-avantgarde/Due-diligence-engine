@@ -45,7 +45,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.6.2-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v0.6.3-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -402,7 +402,8 @@ R: DDE evalúa el código fuente, no la insignia. Un servicio de almacenamiento 
 
 ## 🗺️ Hoja de Ruta
 
-**Lanzado recientemente (v0.3.x)**
+**Lanzado recientemente (v0.3.x+)**
+- ✅ **Fortalecimiento de Seguridad y Confiabilidad Zero-Defect** (2026-10, v0.6.3): auditoría integral de extremo a extremo y endurecimiento en los 35 módulos — fijación contra SSRF y DNS rebinding en análisis de sitios, aislamiento de Zip Slip / enlaces simbólicos / FIFO en `SecureLoader` y `SecurePurger`, cumplimiento estricto de retención cero `store=False` en Google Interactions API, parseo seguro de Anthropic compatible con `ThinkingBlock` y parámetros de `gpt-5`, escape completo XML/HTML en ReportLab y modelado RTL no destructivo para árabe en los 14 idiomas PDF, empaquetado wheel para fuentes y plantillas HTML integradas, y 144 pruebas automatizadas unitarias y de regresión E2E.
 - ✅ **Actualización de modelos a la generación Claude 5.5 + Python 3.13** (2026-10, v0.6.2): los tres niveles BYOK pasan a la línea actual — escaneo **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, $0.10/$0.50 por MTok, 10× más barato), análisis **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, $2/$10, antes $3/$15), juez **Fable 5 → Fable 5.1** (`claude-fable-5-1`, mismo $10/$50). El evaluador de verificación de sitios ya no incrusta un snapshot fechado de Haiku y el modelo/tabla de costes por defecto de Claude en BYOK se derivan ahora de `config.MODELS`, protegidos por el nuevo `tests/test_model_ids.py`. Gemini BYOK migrado desde el SDK heredado al actual `google-genai>=2.30.1` (Interactions API) + `gemini-4-argon`; valor predeterminado de OpenAI BYOK actualizado a `gpt-5`. Detección de terminales de IA en `dde doctor` ampliada a Codex CLI, Gemini CLI y Antigravity. GitHub Actions de CI actualizados (`setup-python@v7`, `codeql-action@v4.37.4`, `osv-scanner-action@v2.5.0`). Eliminado el ruido de falsos positivos heurísticos en `red_flags` del PDF (diferencias de fechas por `git rebase` y conteo de términos pasan a métricas informativas; prompt + filtro `_filter_red_flags` exigen defectos reales en código con `archivo:línea` y remediación; nombre de PDF unificado). Se reemplazó el obsoleto `datetime.utcnow()` (elimina avisos en Python 3.12+); Python 3.13 añadido a la matriz de CI y a los classifiers.
 - ✅ **Paquete renombrado `src` → `due_diligence_engine`** (2026-07, v0.6.1): el paquete importable ya no usa el nombre genérico de nivel superior `src`, evitando colisiones en `sys.path` al instalarse con pip. El comando `dde` no cambia; solo cambian las rutas de `import` (`from due_diligence_engine...`).
 - ✅ **Empaquetado listo para PyPI, `dde doctor`, página de resumen visual y apéndice de fuentes** (2026-07, v0.6.0): los SDK de proveedores de IA se movieron a un extra opcional `[byok]`, por lo que la instalación base es realmente sin claves de API (corrige un error por el que `dde prompt` fallaba si faltaba `anthropic`); nuevo autodiagnóstico `dde doctor`; el gráfico de radar tiene ahora su propia página de **Resumen Visual** y un nuevo **Apéndice de Fuentes** enumera cada URL web en vivo consultada (14 idiomas); corrección de seguridad real para que la carga de archivos ya no deje una copia de extracción en texto plano en disco; primeras pruebas de los módulos secure-loader/secure-purge; matriz de CI ampliada a macOS + Windows 3.12 con cobertura. La distribución continúa mediante la instalación `git+https` documentada; la publicación en PyPI se evaluó y se pospuso.
@@ -482,6 +483,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.2` — 🌍 READMEs en 6 idiomas · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · GPT-5 · 🌐 Investigación web en vivo · puntuación de 5 dimensiones
+`v0.6.3` — 🌍 READMEs en 6 idiomas · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · GPT-5 · 🌐 Investigación web en vivo · puntuación de 5 dimensiones
 
 </div>
