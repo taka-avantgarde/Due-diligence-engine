@@ -28,7 +28,7 @@ class SlideGenerator:
         timeline_chart = self._build_git_timeline(result)
 
         overall = score.overall_score if score else 0
-        grade = score.grade if score else "N/A"
+        grade = html.escape(str(score.grade)) if score else "N/A"
         recommendation = score.recommendation if score else "No score computed."
 
         esc_proj = html.escape(result.project_name)
@@ -113,7 +113,7 @@ class SlideGenerator:
   <div class="metric"><div class="value">${result.total_cost_usd:.4f}</div><div class="label">Total API Cost</div></div>
   <table>
     <tr><th>Model Tier</th><th>Input Tokens</th><th>Output Tokens</th></tr>
-    {"".join(f'<tr><td>{tier.title()}</td><td>{u.get("input_tokens", 0):,}</td><td>{u.get("output_tokens", 0):,}</td></tr>' for tier, u in result.model_usage.items() if u.get("input_tokens", 0) > 0)}
+    {"".join(f'<tr><td>{html.escape(str(tier.title()))}</td><td>{u.get("input_tokens", 0):,}</td><td>{u.get("output_tokens", 0):,}</td></tr>' for tier, u in result.model_usage.items() if u.get("input_tokens", 0) > 0)}
   </table>
 </div>
 
@@ -129,7 +129,7 @@ class SlideGenerator:
 
         # Use a simple bar chart (Mermaid xychart-beta)
         dims = result.score.dimensions
-        labels = [f'"{d.name}"' for d in dims]
+        labels = [f'"{html.escape(str(d.name))}"' for d in dims]
         values = [str(int(d.score)) for d in dims]
 
         return f"""<div class="mermaid">
@@ -147,7 +147,7 @@ xychart-beta
             return "<p>No language data available.</p>"
 
         entries = "\n    ".join(
-            f'"{ext}" : {count}' for ext, count in sorted(langs.items(), key=lambda x: -x[1])
+            f'"{html.escape(str(ext))}" : {count}' for ext, count in sorted(langs.items(), key=lambda x: -x[1])
         )
 
         return f"""<div class="mermaid">

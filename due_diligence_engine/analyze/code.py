@@ -50,6 +50,7 @@ class CodeAnalyzer:
         result = CodeAnalysisResult()
         code_files = self._loader.get_code_files()
         result.total_files = len(code_files)
+        result.complexity_metrics["files"] = [{"path": e["path"]} for e in code_files]
 
         api_call_files = 0
         real_impl_files = 0
@@ -85,7 +86,21 @@ class CodeAnalyzer:
                 self._analyze_python_ast(path, content, result)
 
             # Check for test files
-            if "test" in path.lower() or "spec" in path.lower():
+            p_parts = Path(path.lower()).parts
+            p_stem = Path(path.lower()).stem
+            if (
+                any(
+                    part.startswith("test_")
+                    or part.endswith("_test.py")
+                    or part.endswith(".test.ts")
+                    or part.endswith(".spec.ts")
+                    or part.endswith(".test.js")
+                    or part.endswith(".spec.js")
+                    or part in ("test", "tests", "spec", "specs", "__tests__")
+                    for part in p_parts
+                )
+                or "test" in p_stem
+            ):
                 result.has_tests = True
 
         # Compute API wrapper ratio
@@ -116,7 +131,10 @@ class CodeAnalyzer:
             result.findings.append(f"Syntax error in {path}")
             return
 
-        functions = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
+        functions = [
+            n for n in ast.walk(tree)
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ]
         classes = [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
 
         # Check function complexity (rough: count branches)

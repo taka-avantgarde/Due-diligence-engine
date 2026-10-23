@@ -22,13 +22,14 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
+from due_diligence_engine import __version__
 from due_diligence_engine.config import Config, get_config
 
 console = Console()
 
 
 @click.group()
-@click.version_option(version="0.6.3", prog_name="dde")
+@click.version_option(version=__version__, prog_name="dde")
 def cli() -> None:
     """Due Diligence Engine - AI startup technical due diligence."""
     pass
@@ -155,7 +156,8 @@ def analyze(
             # Generate slides
             slide_gen = SlideGenerator()
             safe_name = name.replace("/", "_").replace("\\", "_")
-            slide_path = output_dir / f"dde_slides_{safe_name}_{result.analysis_id}.html"
+            safe_id = re.sub(r"[^A-Za-z0-9_.-]", "_", result.analysis_id)
+            slide_path = output_dir / f"dde_slides_{safe_name}_{safe_id}.html"
             slide_gen.save(result, slide_path)
             saved.append(slide_path)
 
@@ -237,22 +239,24 @@ def prompt(
         lang_source = ctx.get_parameter_source("lang")
         if lang_source != click.core.ParameterSource.COMMANDLINE:
             if os.isatty(sys.stdin.fileno()):
+                _supported_langs = ["en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"]
                 console.print()
                 console.print(
                     Panel(
                         "[bold]Which language for the PDF report?[/bold]\n"
                         "PDFレポートの出力言語を選択してください。\n\n"
-                        "  [cyan]1[/cyan]  English\n"
-                        "  [cyan]2[/cyan]  日本語",
-                        title="DDE — Language / 言語",
+                        "  [cyan]1[/cyan]  English (en)\n"
+                        "  [cyan]2[/cyan]  日本語 (ja)\n"
+                        "  [dim]Or enter code: es, fr, de, pt, nl, it, id, zh, ko, vi, th, ar[/dim]",
+                        title="DDE — Language / 言語 (14 supported)",
                         border_style="cyan",
                     )
                 )
                 choice = click.prompt(
-                    "  Select / 選択 (1-2)",
-                    type=click.Choice(["1", "2"]),
-                )
-                lang = "en" if choice == "1" else "ja"
+                    "  Select / 選択 (1-2 or language code)",
+                    type=click.Choice(["1", "2", *_supported_langs], case_sensitive=False),
+                ).lower()
+                lang = "en" if choice == "1" else ("ja" if choice == "2" else choice)
                 console.print()
             # else: non-interactive — use default "en"
 
@@ -502,7 +506,8 @@ def report(
         from due_diligence_engine.report.pdf_generator import PDFReportGenerator
         pdf_gen = PDFReportGenerator()
         safe_name = result.project_name.replace("/", "_").replace("\\", "_")
-        pdf_path = output_dir / f"dde_report_{safe_name}_{result.analysis_id}.pdf"
+        safe_id = re.sub(r"[^A-Za-z0-9_.-]", "_", result.analysis_id)
+        pdf_path = output_dir / f"dde_report_{safe_name}_{safe_id}.pdf"
         pdf_gen.generate_to_file(result, pdf_path, lang=lang)
         saved.append(pdf_path)
 
@@ -562,10 +567,22 @@ def purge(
     else:
         config = get_config()
         config.ensure_dirs()
-        cert_path = config.output_dir / f"purge_cert_{analysis_id}.json"
+        safe_id = re.sub(r"[^A-Za-z0-9_.-]", "_", analysis_id)
+        cert_path = config.output_dir / f"purge_cert_{safe_id}.json"
 
     purger.export_certificate(cert, cert_path)
     console.print(f"[green]Certificate saved: {cert_path}[/green]")
+
+    if cert.verification_hash in ("purge_incomplete", "directory_not_found"):
+        if cert.verification_hash == "purge_incomplete":
+            console.print(
+                Panel(
+                    "Purge incomplete: some files could not be securely deleted.",
+                    title="Purge Error",
+                    border_style="red",
+                )
+            )
+            sys.exit(1)
 
 
 @cli.command()

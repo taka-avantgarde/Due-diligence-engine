@@ -27,7 +27,7 @@ from due_diligence_engine.models import RedFlag, Score, ScoreDimension, Severity
 logger = logging.getLogger(__name__)
 
 
-# 8軸の定義
+# 7軸の定義
 SITE_DIMENSIONS = {
     "tech_stack_depth": {
         "name": "Tech Stack Depth",
@@ -72,7 +72,7 @@ _ADVANCED_TECH = {
     "kubernetes": 3, "terraform": 2, "docker": 1,
     "e2ee": 3, "end-to-end encryption": 3, "zero-knowledge": 3,
     "signal protocol": 3, "ml-kem": 4, "pqc": 4,
-    "gpt-4": 2, "claude": 2, "gemini": 2, "llm": 2,
+    "gpt-4": 2, "gpt-5": 3, "gpt-6": 3, "astra": 3, "claude": 2, "claude-5": 3, "gemini": 2, "gemini-4": 3, "llm": 2,
     "machine learning": 2, "deep learning": 2, "neural network": 2,
     "pytorch": 2, "tensorflow": 2,
     "graphql": 2, "grpc": 2, "webassembly": 3, "wasm": 3,

@@ -222,7 +222,12 @@ class SecureLoader:
             path = path[:-4]
         path += ".git"
 
-        return f"{parsed.scheme}://{parsed.netloc}{path}"
+        # Strip userinfo (username / password) to prevent embedding or leaking credentials
+        netloc = parsed.hostname or parsed.netloc
+        if parsed.port:
+            netloc = f"{netloc}:{parsed.port}"
+
+        return f"{parsed.scheme}://{netloc}{path}"
 
     @staticmethod
     def _extract_branch(url: str) -> str | None:
@@ -519,8 +524,17 @@ class SecureLoader:
                     yield file_path
 
 
+_SPECIAL_CODE_FILENAMES = {
+    "go.mod", "go.sum", "gemfile", "gemfile.lock", "cargo.toml",
+    "package.json", "pyproject.toml", "requirements.txt",
+    "jenkinsfile", "dockerfile", "makefile", ".gitlab-ci.yml", ".travis.yml",
+}
+
+
 def _classify_file(path: Path) -> str:
     """Classify a file as code, doc, or other."""
+    if path.name.lower() in _SPECIAL_CODE_FILENAMES:
+        return "code"
     if path.name in {"Jenkinsfile", "Dockerfile", "Makefile", ".gitlab-ci.yml", ".travis.yml"}:
         return "code"
     if path.suffix in CODE_EXTENSIONS:

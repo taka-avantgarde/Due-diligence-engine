@@ -78,6 +78,7 @@ class DocAnalyzer:
                         "text": line_stripped,
                         "source": f"{path}:{i + 1}",
                     })
+                    break
 
             # Architecture claims
             for pattern in ARCHITECTURE_CLAIM_PATTERNS:
@@ -88,6 +89,7 @@ class DocAnalyzer:
                         "text": line_stripped,
                         "source": f"{path}:{i + 1}",
                     })
+                    break
 
             # General technical claims (sentences with technical keywords)
             if _is_technical_claim(line_stripped):

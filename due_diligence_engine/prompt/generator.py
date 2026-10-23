@@ -5,7 +5,7 @@ DDE のヒューリスティック分析結果を、IDE 内 AI（Claude Code, Cu
 
 特徴:
 - 非IT業界の利用者向けに全技術用語に注釈を付与（ほんやくコンニャク方式）
-- 6次元スコアリング + ステータスバー表示 (100点満点)
+- 5次元スコアリング + ステータスバー表示 (100点満点)
 - 強み・弱みの詳細分析と「何ができるようになるか」の事例説明
 - 「こうすればもっと良くなる」改善提案
 - サービスサイトURL貼り付けによる主張vs実態の乖離分析を促進
@@ -303,7 +303,7 @@ def _generate_en(result: AnalysisResult, stage: str) -> str:
     sections.append("## Red Flags Detected\n")
     sections.append(_format_red_flags_en(result))
 
-    sections.append("## Scoring Framework (6 dimensions, 10-level scale)\n")
+    sections.append("## Scoring Framework (5 dimensions, 10-level scale)\n")
     sections.append(
         "Evaluate each dimension on a 1-10 scale, then convert to 0-100 points.\n"
         "Final score = weighted average of all dimensions.\n"
@@ -343,7 +343,7 @@ def _generate_ja(result: AnalysisResult, stage: str) -> str:
     sections.append("## 検出されたレッドフラグ（警告サイン）\n")
     sections.append(_format_red_flags_ja(result))
 
-    sections.append("## スコアリング基準（6次元 × 10段階評価）\n")
+    sections.append("## スコアリング基準（5次元 × 10段階評価）\n")
     sections.append(
         "各次元を1〜10で評価し、100点満点に変換してください。\n"
         "最終スコア = 全次元の加重平均です。\n"
@@ -698,7 +698,7 @@ _EVAL_INSTRUCTIONS_EN = """## Your Evaluation Task
 Based on the heuristic data above, perform the following:
 
 1. **Read all code in the repository** to verify and supplement the heuristic findings
-2. **Score each of the 6 dimensions** on a 1-10 scale with evidence and plain-language explanation
+2. **Score each of the 5 dimensions** on a 1-10 scale with evidence and plain-language explanation
 3. **Calculate the final score**: Each level × 10 = points (0-100), then weighted average
 4. **Assign a grade**: A (90+), B (75+), C (60+), D (40+), F (<40)
 5. **Re-evaluate red flags**: The heuristic analysis may have false positives
@@ -724,7 +724,7 @@ Use status bars for visual scoring (copy this format exactly):
 
 ### Dimension Scores (status bar + plain language)
 
-Technical Originality (25%)
+Technical Originality (20%)
 ████████████████████████████░░░░ 92/100 — Lv.9 Original
 → In plain terms: [explanation of what this means for a non-engineer]
 → This enables: [what the user/business can do because of this]
@@ -734,7 +734,7 @@ Technology Advancement (20%)
 → In plain terms: [explanation]
 → This enables: [capability]
 
-[...repeat for all 6 dimensions...]
+[...repeat for all 5 dimensions...]
 
 ### Strengths — What This Technology Makes Possible
 1. [Strength] → "Because of this, [concrete capability/benefit]"
@@ -766,7 +766,7 @@ _EVAL_INSTRUCTIONS_JA = """## あなたへの評価タスク
 上記のヒューリスティックデータに基づいて、以下を実行してください:
 
 1. **リポジトリ内の全コードを読み**、ヒューリスティック結果を検証・補足
-2. **6次元それぞれを1〜10で評価**（根拠＋平易な日本語での説明を添えて）
+2. **5次元それぞれを1〜10で評価**（根拠＋平易な日本語での説明を添えて）
 3. **最終スコアを計算**: 各レベル × 10 = ポイント（0〜100）→ 加重平均
 4. **グレードを付与**: A（90以上）、B（75以上）、C（60以上）、D（40以上）、F（40未満）
 5. **レッドフラグの再評価**: ヒューリスティック分析には誤検知がありえます
@@ -792,7 +792,7 @@ _EVAL_INSTRUCTIONS_JA = """## あなたへの評価タスク
 
 ### 次元別スコア（ステータスバー＋平易な解説）
 
-技術独自性（25%）
+技術独自性（20%）
 ████████████████████████████░░░░ 92/100 — Lv.9 オリジナル
 → わかりやすく言うと: [エンジニア以外にもわかる説明]
 → この技術のおかげで: [何ができるようになっているか]
@@ -802,7 +802,7 @@ _EVAL_INSTRUCTIONS_JA = """## あなたへの評価タスク
 → わかりやすく言うと: [説明]
 → この技術のおかげで: [できること]
 
-[...6次元すべて繰り返し...]
+[...5次元すべて繰り返し...]
 
 ### 強み — この技術で何ができるようになっているか
 1. [強み] → 「これがあるおかげで、[具体的にできること・事例]」
@@ -1171,7 +1171,7 @@ For each item, assign:
 - **rationale**: Evidence-based explanation
 - **evidence**: List of specific URLs, file paths, or code snippets
 
-Calculate **overall_credibility** as the weighted average of all 9 scores.
+Calculate **overall_credibility** as the weighted average of all 10 scores.
 Provide a **summary** paragraph explaining the overall site credibility.
 
 Include the results in the `site_verification` section of the JSON output.
@@ -1259,7 +1259,7 @@ Each chart page renders a 2×3 grid: [Global | US] [EMEA | LATAM] [Japan | SEA].
 3. **mckinsey_moat** — McKinsey 9-Box / Tech Moat Matrix
    - X: "Competitive Position" — Switching cost × Data network effects × Integration lock-in × Brand premium (0-100)
    - Y: "Technical Moat Depth" — Algorithm uniqueness × Proprietary data × Latency edge × Model architecture originality (0-100)
-   - Quadrants: Fortress (high-high) / Innovator (low X, high Y) / Entrenched (high X, low Y) / Commodity (low-low)
+   - Quadrants: Fortress (high-high) / Innovator (low X, high Y) / Commodity (high X, low Y) / Fast Follower (low-low)
 
 4. **security_posture** — Security & Privacy Maturity Matrix
    - X: "Security Implementation Depth" — Encryption at-rest & in-transit strength × Zero-trust architecture adoption × Penetration test cadence × Incident response maturity (0-100)
@@ -1334,7 +1334,7 @@ _COMPETITIVE_ANALYSIS_INSTRUCTIONS_JA = """## 競合分析タスク
 3. **mckinsey_moat** — McKinsey 9ボックス / 技術モートマトリックス
    - X: 「競争ポジション」— スイッチングコスト × データネットワーク効果 × 統合ロックイン × ブランドプレミアム (0-100)
    - Y: 「技術モート深度」— アルゴリズム独自性 × 独自データ × レイテンシ優位性 × モデルアーキテクチャ独自性 (0-100)
-   - 象限: フォートレス(右上) / イノベーター(左上) / 既得権(右下) / コモディティ(左下)
+   - 象限: フォートレス(右上) / イノベーター(左上) / コモディティ(右下) / ファストフォロワー(左下)
 
 4. **security_posture** — セキュリティ＆プライバシー成熟度マトリックス
    - X: 「セキュリティ実装深度」— 暗号化強度(保存時・通信時) × ゼロトラストアーキテクチャ採用度 × ペネトレーションテスト頻度 × インシデントレスポンス成熟度 (0-100)
@@ -1481,8 +1481,8 @@ Set `web_search_performed: false` and write a clear `data_cutoff_warning` such a
 
 ### Per-competitor citations (mandatory)
 
-For every entry in `competitive_analysis.markets[].competitors[]` and
-`implementation_matrix.competitors[]`, include a `sources` array with at least
+For every entry in `competitive_analysis.markets[].charts[].data_points[]` and
+`implementation_matrix.items[].statuses[]`, include a `sources` array with at least
 **1 verifying URL** (their website, recent news, GitHub repo, funding press release, SEC filing, etc.).
 For each `implementation_matrix` cell marked `verified` or `claimed`, the source URL must be the
 specific page where the evidence was found.
@@ -1543,7 +1543,7 @@ _WEB_RESEARCH_MANDATE_JA = """## 🌐 STEP 0 — ライブ Web 調査（必須�
 
 ### 競合ごとの出典（必須）
 
-`competitive_analysis.markets[].competitors[]` と `implementation_matrix.competitors[]` の
+`competitive_analysis.markets[].charts[].data_points[]` と `implementation_matrix.items[].statuses[]` の
 全エントリに `sources` 配列を含めること。最低 **1つの検証 URL**（公式サイト・最近のニュース・
 GitHub リポ・資金調達プレスリリース・有報など）。実装能力マトリックスの `verified` / `claimed`
 セルでは、**証拠が見つかった具体的なページ URL** を記載すること。
@@ -1676,7 +1676,7 @@ cybersecurity engineering**. Third-party certifications are **never scored**:
 }
 ```
 
-This is **additional** — the existing `dimension_scores` (6-dimension) must still be populated.
+This is **additional** — the existing `dimension_scores` (5-dimension) must still be populated.
 """
 
 
@@ -2051,7 +2051,7 @@ _CONSULTING_EVAL_JA = """## 評価タスク（黙って実行 — ユーザー�
 
 ## 最重要: 言語ルール
 **JSONの全フィールドの値（executive_summary, rationale, SWOT points, explanations 等）は必ず日本語で記述すること。**
-**英語で書かないでください。キー名はそのまま英語、値は全て日本語。**
+**英語で書かないでください。キー名はそのまま英語、値は全て日本語（ただし enum/コード値である `grade`, `confidence`, `investment_thesis.recommendation`, `red_flags[].severity`, `chart_type`, `axis_key`, `sub_items[].key`, `statuses[].status`, `industry_context` はスキーマ定義通りの英語 enum 文字列を維持すること）。**
 **SWOT分析のpoint, explanation, business_analogy も全て日本語で書く。**
 
 ## 最重要: ソースコードの鮮度
@@ -2184,7 +2184,7 @@ Do not add markdown formatting around it — output raw JSON only.
   "glossary_additions": [
     { "term": "technical term", "definition": "plain-language explanation" }
   ],
-  "ai_model_used": "your model name (e.g. Claude Fable 5.1, Gemini 4 Argon, Astra / GPT-6.1-Sol, GPT-5, etc.)",
+  "ai_model_used": "your model name (e.g. Claude Fable 5.1, Claude Sonnet 5.5, Gemini 4 Argon, Astra / GPT-6.1-Sol, GPT-6-Astra, GPT-5, etc.)",
   "site_verification": {
     "urls_analyzed": ["https://example.com", "..."],
     "items": [

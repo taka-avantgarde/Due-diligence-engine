@@ -76,7 +76,7 @@ class ConsistencyAnalyzer:
     ) -> None:
         """Verify claims about testing."""
         test_pattern = re.compile(
-            r"\b(?:unit\s+test\w*|integration\s+test\w*|test\s+suite|test\s+coverage|pytest|jest|end-to-end\s+test\w*)\b",
+            r"\b(?:unit\s+test\w*|integration\s+test\w*|tests?\s+suite|tests?\s+coverage|pytest|jest|end-to-end\s+test\w*)\b",
             re.IGNORECASE,
         )
         test_claims = [

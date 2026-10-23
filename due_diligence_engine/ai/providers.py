@@ -14,7 +14,12 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-from due_diligence_engine.config import MODELS
+from due_diligence_engine.config import (
+    BYOK_DEFAULT_MODELS,
+    MODELS,
+    PROVIDER_COSTS,
+    PROVIDER_MODEL_COSTS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +148,7 @@ class AIProvider(ABC):
 class AnthropicProvider(AIProvider):
     """Anthropic Claude プロバイダー。
 
-    既存のHaiku→Sonnet→Opus 3段階パイプラインを単一の高品質モデル呼び出しに
+    既存のHaiku→Sonnet→Fable 3段階パイプラインを単一の高品質モデル呼び出しに
     ラップし、統一インターフェースで結果を返す。
     """
 
@@ -218,9 +223,8 @@ class GoogleProvider(AIProvider):
                     store=False,
                 )
             else:
-                interaction = client.interactions.create(
-                    model=self._model_id,
-                    input=prompt,
+                raise RuntimeError(
+                    "Zero-retention policy violation: Google GenAI SDK interactions.create does not support store=False"
                 )
 
             # トークン使用量の追跡
@@ -295,22 +299,8 @@ class OpenAIProvider(AIProvider):
 
 # --- プロバイダーファクトリ ---
 
-# デフォルトモデルID定義
-_DEFAULT_MODELS = {
-    "claude": MODELS["sonnet"].model_id,  # config.MODELS で一元管理 (現行: Sonnet 5.5)
-    "gemini": "gemini-4-argon",
-    "chatgpt": "gpt-6.1-sol",
-}
-
-# コスト定義 (USD per million tokens)
-PROVIDER_COSTS: dict[str, dict[str, float]] = {
-    "claude": {
-        "input": MODELS["sonnet"].input_cost_per_mtok,
-        "output": MODELS["sonnet"].output_cost_per_mtok,
-    },
-    "gemini": {"input": 2.00, "output": 10.00},
-    "chatgpt": {"input": 1.25, "output": 10.00},
-}
+# デフォルトモデルID定義（config.BYOK_DEFAULT_MODELS で一元管理）
+_DEFAULT_MODELS = BYOK_DEFAULT_MODELS
 
 
 def create_provider(provider_name: str, api_key: str, model_id: str | None = None) -> AIProvider:
@@ -339,20 +329,33 @@ def create_provider(provider_name: str, api_key: str, model_id: str | None = Non
         raise ValueError(f"Unknown provider: {provider_name}. Use 'claude', 'gemini', or 'chatgpt'.")
 
 
-def estimate_provider_cost(provider_name: str, input_tokens: int, output_tokens: int) -> float:
+def estimate_provider_cost(
+    provider_name: str,
+    input_tokens: int,
+    output_tokens: int,
+    model_id: str | None = None,
+) -> float:
     """プロバイダーのAPI使用コストを推定。
 
     Args:
         provider_name: "claude", "gemini", "chatgpt" のいずれか。
         input_tokens: 入力トークン数。
         output_tokens: 出力トークン数。
+        model_id: オプションのモデルID。
 
     Returns:
         推定コスト（USD）。
     """
-    costs = PROVIDER_COSTS.get(provider_name, {"input": 0, "output": 0})
-    input_cost = (input_tokens / 1_000_000) * costs["input"]
-    output_cost = (output_tokens / 1_000_000) * costs["output"]
+    input_tokens = max(0, int(input_tokens))
+    output_tokens = max(0, int(output_tokens))
+
+    if model_id and model_id in PROVIDER_MODEL_COSTS:
+        costs = PROVIDER_MODEL_COSTS[model_id]
+    else:
+        costs = PROVIDER_COSTS.get(provider_name, {"input": 0.0, "output": 0.0})
+
+    input_cost = (input_tokens / 1_000_000) * costs.get("input", 0.0)
+    output_cost = (output_tokens / 1_000_000) * costs.get("output", 0.0)
     return round(input_cost + output_cost, 6)
 
 

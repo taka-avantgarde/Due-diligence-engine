@@ -397,7 +397,7 @@ def test_score_compute_deduplication_and_idempotence():
 def test_ai_providers_handling():
     """Test Anthropic ThinkingBlock parsing, OpenAI gpt-5 no-temperature/max_completion_tokens, and Google store=False."""
     # (a) AnthropicProvider handling ThinkingBlock before TextBlock
-    anthropic_p = AnthropicProvider(api_key="mock-ant-key", model_id="claude-3-7-sonnet-20250219")
+    anthropic_p = AnthropicProvider(api_key="mock-ant-key", model_id="claude-sonnet-5-5")
 
     class MockThinkingBlock:
         type = "thinking"
@@ -446,7 +446,7 @@ def test_ai_providers_handling():
         assert call_kwargs.get("max_completion_tokens") == 8192
 
     # (c) GoogleProvider: store=False in interactions.create
-    google_p = GoogleProvider(api_key="mock-google-key", model_id="gemini-2.5-pro")
+    google_p = GoogleProvider(api_key="mock-google-key", model_id="gemini-4-argon")
 
     mock_google_client = MagicMock()
     mock_google_resp = MagicMock()
@@ -645,16 +645,16 @@ def test_markdown_ai_results_and_red_flags():
         project_name="TestProject",
         score=Score(overall_score=85.0, grade="B", recommendation="Viable", red_flags=flags, dimensions=[]),
         ai_results={
-            "openai": AIProviderResult(provider="openai", model_id="gpt-5"),
-            "google": AIProviderResult(provider="google", model_id="gemini-2.5-pro", error="Rate limited"),
+            "chatgpt": AIProviderResult(provider="chatgpt", model_id="gpt-5"),
+            "gemini": AIProviderResult(provider="gemini", model_id="gemini-4-argon", error="Rate limited"),
         },
         red_flags=flags,
     )
     generator = ReportGenerator()
     md = generator.generate_markdown(res)
 
-    assert "### Openai (gpt-5) — Success" in md
-    assert "### Google (gemini-2.5-pro) — Failed" in md
+    assert "### Chatgpt (gpt-5) — Success" in md
+    assert "### Gemini (gemini-4-argon) — Failed" in md
     assert "**Error:** Rate limited" in md
     assert "- **[CRITICAL]** **SQL Injection** (security)" in md
     assert "- **[HIGH]** **Slow Query** (performance)" in md
@@ -784,7 +784,7 @@ def test_purge_directory_symlink_and_overwrite_error(tmp_path):
 # ===========================================================================
 def test_google_provider_inspect_signature():
     """Verify GoogleProvider passes store=False when supported and only omits store when signature lacks it."""
-    google_p = GoogleProvider(api_key="mock-key", model_id="gemini-2.5-pro")
+    google_p = GoogleProvider(api_key="mock-key", model_id="gemini-4-argon")
 
     mock_client_kwargs = MagicMock()
     mock_resp = MagicMock()
@@ -810,8 +810,10 @@ def test_google_provider_inspect_signature():
         mock_client_strict.interactions.create = strict_create
         mock_sdk_mod.Client.return_value = mock_client_strict
 
-        # Must not raise TypeError, but gracefully call strict_create without store
-        google_p.analyze("summary", "context")
+        # Fails closed on zero-retention violation
+        res_fail = google_p.analyze("summary", "context")
+        assert "error" in res_fail
+        assert "Zero-retention policy violation" in res_fail["error"]
 
 
 # ===========================================================================

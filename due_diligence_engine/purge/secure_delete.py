@@ -173,7 +173,7 @@ class SecurePurger:
         except OSError:
             return 0
 
-        if stat.S_ISLNK(st.st_mode):
+        if not stat.S_ISREG(st.st_mode):
             try:
                 file_path.unlink()
             except OSError:
@@ -184,27 +184,37 @@ class SecurePurger:
         total_overwritten = 0
         chunk_limit = 1024 * 1024  # 1 MB
 
-        for pass_num in range(OVERWRITE_PASSES):
-            with open(file_path, "wb") as f:
-                remaining = size
-                if pass_num < OVERWRITE_PASSES - 1:
-                    # Random data passes
-                    while remaining > 0:
-                        chunk_size = min(chunk_limit, remaining)
-                        f.write(os.urandom(chunk_size))
-                        remaining -= chunk_size
-                else:
-                    # Final pass: zeros
-                    while remaining > 0:
-                        chunk_size = min(chunk_limit, remaining)
-                        f.write(b"\x00" * chunk_size)
-                        remaining -= chunk_size
-                f.flush()
-                os.fsync(f.fileno())
-            total_overwritten += size
+        if size > 0:
+            for pass_num in range(OVERWRITE_PASSES):
+                try:
+                    f = open(file_path, "r+b")
+                except OSError:
+                    f = open(file_path, "wb")
+
+                with f:
+                    f.seek(0)
+                    remaining = size
+                    if pass_num < OVERWRITE_PASSES - 1:
+                        # Random data passes
+                        while remaining > 0:
+                            chunk_size = min(chunk_limit, remaining)
+                            f.write(os.urandom(chunk_size))
+                            remaining -= chunk_size
+                    else:
+                        # Final pass: zeros
+                        while remaining > 0:
+                            chunk_size = min(chunk_limit, remaining)
+                            f.write(b"\x00" * chunk_size)
+                            remaining -= chunk_size
+                    f.flush()
+                    os.fsync(f.fileno())
+                total_overwritten += size
 
         # Delete the file
-        file_path.unlink()
+        try:
+            file_path.unlink()
+        except OSError:
+            pass
 
         return total_overwritten
 

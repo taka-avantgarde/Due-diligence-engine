@@ -169,13 +169,13 @@ class ConsistencyResult(BaseModel):
 class AIProviderResult(BaseModel):
     """単一AIプロバイダーの分析結果。
 
-    各プロバイダー（Claude/Gemini/ChatGPT）が6軸スコア・レッドフラグ・
+    各プロバイダー（Claude/Gemini/ChatGPT）が5軸スコア・レッドフラグ・
     判定結果を独立して返す。複数プロバイダーの結果をクロス検証に使用。
     """
 
     provider: str  # "claude", "gemini", "chatgpt"
     model_id: str
-    dimension_scores: dict[str, float] = Field(default_factory=dict)  # 6軸スコア (0-100)
+    dimension_scores: dict[str, float] = Field(default_factory=dict)  # 5軸スコア (0-100)
     red_flags: list[RedFlag] = Field(default_factory=list)
     verdict: str = ""  # "strong_invest", "invest_with_conditions", etc.
     confidence: float = 0.0
@@ -479,8 +479,8 @@ class ConsultingReport(BaseModel):
 
 # ─────────────────────────────────────────────────────────────
 # Task C: Atlas 最適化評価（4軸並列評価）
-# 既存6次元スコアは完全保持、その上に「Arc エンジニアリング哲学」による
-# 並列評価軸を追加。合計スコアは従来6次元のみで算出（後方互換性100%）。
+# 既存5次元スコアは完全保持、その上に「Arc エンジニアリング哲学」による
+# 並列評価軸を追加。合計スコアは従来5次元のみで算出（後方互換性100%）。
 # ─────────────────────────────────────────────────────────────
 
 
@@ -506,7 +506,7 @@ class AtlasAxisScore(BaseModel):
     score: float = Field(default=0.0, ge=0, le=100)
     level: int = Field(default=1, ge=1, le=10)
     rationale: str = ""
-    # security 軸のみサブ項目を持つ（暗号化30% / プライバシー8% / 態勢2% / 通信7% / レイヤー3%）
+    # security 軸のみサブ項目を持つ（暗号化35% / プライバシー8% / 態勢2% / 通信7% / レイヤー3%）
     sub_items: list[AtlasAxisSubItem] = Field(default_factory=list)
 
 

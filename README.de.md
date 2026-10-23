@@ -35,7 +35,7 @@ python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  $ dde prompt --pdf                                         │
+│  $ dde prompt --pdf --lang de                               │
 │                                                             │
 │  🌐 Live web research (2026 competitors, funding, CVEs)...  │
 │  Reading codebase...                                        │
@@ -80,7 +80,7 @@ python3 -m pip install --no-cache-dir git+https://github.com/Atlas-Associates-In
 **Aus deinem Projektverzeichnis ausführen:**
 
 ```bash
-dde prompt --pdf
+dde prompt --pdf --lang de
 ```
 
 Verwende ein beliebiges KI-gestütztes IDE-Terminal (Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot). Deine KI liest den Code, bewertet ihn wie ein Technologieberater von Weltklasse und schreibt ein 24-seitiges PDF nach `~/Downloads/`. **Keine API-Schlüssel. Keine Cloud. Keine Zusatzkosten.**
@@ -107,7 +107,7 @@ macOS-Homebrew-Nutzer: verwende `python3 -m pip` — der reine `pip`-Befehl wird
 **Empfohlenes Setup:**
 
 - **Starte das leistungsfähigste verfügbare Modell** in deiner IDE (Claude Fable 5.1, Gemini 4 Argon, Astra (GPT-6.1-Sol), GPT-5 usw.)
-- **Füge `dde prompt --pdf`** in das Terminal ein
+- **Füge `dde prompt --pdf --lang de`** in das Terminal ein
 - **Hol dir einen Kaffee** ☕ — die KI liest Hunderte von Dateien, bewertet über
   9+ Dimensionen, recherchiert weltweit 5–10 Wettbewerber und erstellt ein 24-seitiges Beratungs-PDF
 - **Erwartete Dauer**: **10–20 Minuten** (länger bei großen Codebasen oder tiefer arbeitenden Modellen)
@@ -338,17 +338,17 @@ bestimmte Wettbewerber als Vergleichsziel gewählt wurde (Hauptsitz, Marktpositi
 # Current directory, English PDF
 dde prompt --pdf
 
-# Japanese PDF
-dde prompt --pdf --lang ja
+# German PDF
+dde prompt --pdf --lang de
 
 # GitHub repo with stage context
-dde prompt owner/repo --pdf --lang ja --stage seed
+dde prompt owner/repo --pdf --lang de --stage seed
 
 # Check your environment is ready (git, fonts, reportlab, ~/Downloads, AI SDKs)
 dde doctor
 
 # Non-interactive (for AI terminals without prompt support)
-dde prompt --pdf --lang ja \
+dde prompt --pdf --lang de \
   --url https://example.com \
   --url https://docs.example.com
 
@@ -418,7 +418,7 @@ A: DDE bewertet den Quellcode, nicht das Abzeichen. Ein SOC2-zertifizierter Dien
 
 ## 🗺️ Roadmap
 
-**Kürzlich ausgeliefert (v0.3.x+)**
+**Kürzlich ausgeliefert (v0.6.x)**
 - ✅ **Zero-Defect-Sicherheits- & Zuverlässigkeitshärtung** (2026-10, v0.6.3): Umfassende End-to-End-Auditierung und Härtung aller 35 Module — Schutz vor SSRF & DNS-Rebinding in der Website-Analyse, Isolation gegen Zip Slip / symbolische Links / FIFOs in `SecureLoader` & `SecurePurger` mit strikter Weiterleitung von Löschfehlern, strikte Durchsetzung von Null-Datenspeicherung `store=False` in der Google Interactions API, sicheres Parsen von Anthropic-`ThinkingBlock`s & Parameterkompatibilität für `gpt-6.1-sol` (Astra) / `gpt-5`, vollständiges XML/HTML-Escaping in ReportLab & zerstörungsfreie RTL-Formung für Arabisch in allen 14 PDF-Sprachen, Wheel-Packaging für gebündelte Schriftarten & HTML-Templates sowie 144 automatisierte Unit- & E2E-Regressionstests.
 - ✅ **Modell-Refresh auf die Claude-5.5-Generation + Python 3.13** (2026-10, v0.6.2): Alle drei BYOK-Tiers auf die aktuelle Modellreihe umgestellt — Scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, $0.10/$0.50 pro MTok, 10× günstiger), Analyse **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, $2/$10 statt $3/$15), Judge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, weiterhin $10/$50). Der Site-Verification-Scorer enthält keinen hartkodierten datierten Haiku-Snapshot mehr, und Standardmodell/Kostentabelle für Claude im BYOK-Modus werden jetzt aus `config.MODELS` abgeleitet, abgesichert durch den neuen Test `tests/test_model_ids.py`. Gemini-BYOK migriert vom bisherigen SDK auf aktuelles `google-genai>=2.30.1` (Interactions API) + `gemini-4-argon`; OpenAI-BYOK-Standard auf `gpt-5` aktualisiert. KI-Terminal-Erkennung in `dde doctor` um Codex CLI, Gemini CLI und Antigravity erweitert. CI-GitHub-Actions aktualisiert (`setup-python@v7`, `codeql-action@v4.37.4`, `osv-scanner-action@v2.5.0`). Heuristische Fehlalarme aus den PDF-`red_flags` eliminiert (`git rebase`-Datumsdifferenzen und Buzzword-Zähler auf reine Info-Metriken herabgestuft; Prompt + Parser-Sicherheitsfilter `_filter_red_flags` lassen nur echte Code-Defekte mit `Datei:Zeile` und Behebungsplan zu; PDF-Dateiname vereinheitlicht). Veraltetes `datetime.utcnow()` ersetzt (keine Warnungen mehr unter Python 3.12+); Python 3.13 zur CI-Matrix und zu den Classifiers hinzugefügt.
 - ✅ **Paket umbenannt `src` → `due_diligence_engine`** (2026-07, v0.6.1): Das importierbare Paket verwendet nicht mehr den generischen Top-Level-Namen `src` und vermeidet so `sys.path`-Kollisionen nach der pip-Installation. Der `dde`-Befehl bleibt unverändert; nur die `import`-Pfade ändern sich (`from due_diligence_engine...`).
@@ -459,7 +459,7 @@ A: DDE bewertet den Quellcode, nicht das Abzeichen. Ein SOC2-zertifizierter Dien
 - ✅ Überarbeitung des Typografie-Systems (Zeilenabstand, Hierarchie)
 - ✅ Härtung der Sicherheits-CI (CodeQL, Dependabot, gitleaks)
 
-**Geplant (v0.4.0+)**
+**Geplant (v0.7.0+)**
 - 🚧 Batch-Modus — ein Portfolio von Repos mit einem Befehl analysieren
 - 🚧 Verlaufsverfolgung — erneut analysieren und Score-Differenzen über die Zeit anzeigen
 - 🚧 Slack/Discord-Benachrichtigungsadapter

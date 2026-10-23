@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 def _is_ip_safe(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
-    return not (
+    return ip.is_global and not (
         ip.is_private
         or ip.is_loopback
         or ip.is_link_local
@@ -467,7 +467,7 @@ class SiteAnalyzer:
             r"\b(PostgreSQL|MySQL|MongoDB|Redis|Elasticsearch|DynamoDB)\b",
             r"\b(Firebase|Supabase|Vercel|Cloudflare|Heroku)\b",
             # AI/ML
-            r"\b(GPT-4|Claude|Gemini|LLM|machine learning|deep learning|neural network)\b",
+            r"\b(GPT-4|GPT-5|GPT-6|Astra|Claude|Gemini|LLM|machine learning|deep learning|neural network)\b",
             r"\b(TensorFlow|PyTorch|Hugging Face|OpenAI|Anthropic)\b",
             # セキュリティ
             r"\b(E2EE|end-to-end encryption|zero-knowledge|Signal Protocol|TLS|OAuth)\b",

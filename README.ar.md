@@ -39,7 +39,7 @@ python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  $ dde prompt --pdf                                         │
+│  $ dde prompt --pdf --lang ar                               │
 │                                                             │
 │  🌐 Live web research (2026 competitors, funding, CVEs)...  │
 │  Reading codebase...                                        │
@@ -86,7 +86,7 @@ python3 -m pip install --no-cache-dir git+https://github.com/Atlas-Associates-In
 **التشغيل من مجلد مشروعك:**
 
 ```bash
-dde prompt --pdf
+dde prompt --pdf --lang ar
 ```
 
 استخدم أي طرفية لبيئة تطوير مدعومة بالذكاء الاصطناعي (Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot). يقرأ الذكاء الاصطناعي قاعدة الكود، ويقيّمها كمستشار تقني من الطراز العالمي، ويكتب ملف PDF من 24 صفحة إلى `~/Downloads/`. **بلا مفاتيح API. بلا سحابة. بلا تكلفة إضافية.**
@@ -113,7 +113,7 @@ pip3 install --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-dili
 **الإعداد الموصى به:**
 
 - **شغّل أقوى نموذج متاح** في بيئة التطوير لديك (Claude Fable 5.1 أو Gemini 4 Argon أو Astra (GPT-6.1-Sol) أو GPT-5، وما إلى ذلك)
-- **الصق `dde prompt --pdf`** في الطرفية
+- **الصق `dde prompt --pdf --lang ar`** في الطرفية
 - **اذهب لاحتساء قهوة** ☕ — سيقرأ الذكاء الاصطناعي مئات الملفات، ويقيّم عبر
   أكثر من 9 أبعاد، ويبحث عن 5 إلى 10 منافسين عالميًا، ويبني ملف PDF استشاري من 24 صفحة
 - **الوقت المتوقع**: **10 إلى 20 دقيقة** (أطول لقواعد الكود الكبيرة أو النماذج الأعمق)
@@ -344,17 +344,17 @@ Privacy & Compliance
 # Current directory, English PDF
 dde prompt --pdf
 
-# Japanese PDF
-dde prompt --pdf --lang ja
+# Arabic PDF
+dde prompt --pdf --lang ar
 
 # GitHub repo with stage context
-dde prompt owner/repo --pdf --lang ja --stage seed
+dde prompt owner/repo --pdf --lang ar --stage seed
 
 # Check your environment is ready (git, fonts, reportlab, ~/Downloads, AI SDKs)
 dde doctor
 
 # Non-interactive (for AI terminals without prompt support)
-dde prompt --pdf --lang ja \
+dde prompt --pdf --lang ar \
   --url https://example.com \
   --url https://docs.example.com
 
@@ -424,7 +424,7 @@ dde analyze owner/repo
 
 ## 🗺️ خريطة الطريق
 
-**أُطلق مؤخرًا (v0.3.x+)**
+**أُطلق مؤخرًا (v0.6.x)**
 - ✅ **تعزيز شامل للأمان والموثوقية بدون عيوب (Zero-Defect)** (2026-10، v0.6.3): تدقيق شامل وتثبيت أمني في جميع الوحدات الـ 35 — تثبيت وحماية ضد SSRF وإعادة ربط DNS في تحليل المواقع، عزل Zip Slip والروابط الرمزية وملفات FIFO في `SecureLoader` و`SecurePurger` مع تمرير دقيق لأخطاء الحذف، فرض صارم لعدم حفظ البيانات `store=False` في واجهة برمجة تطبيقات Google Interactions، تحليل آمن لكتل التفكير `ThinkingBlock` في Anthropic وتوافق مع معاملات `gpt-6.1-sol` (Astra) / `gpt-5`، ترميز وحماية كاملة ضد حقن XML/HTML في ReportLab وتشكيل RTL غير تدميري للعربية عبر تقارير PDF بكافة اللغات الـ 14، تضمين الخطوط وقوالب HTML داخل حزمة wheel، وتجهيز 144 اختبار وحدة وانحدار E2E مؤتمت بالكامل.
 - ✅ **تحديث النماذج إلى جيل Claude 5.5 + دعم Python 3.13** (2026-10، v0.6.2): انتقلت طبقات BYOK الثلاث إلى التشكيلة الحالية — الفحص **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`، $0.10/$0.50 لكل مليون توكن، أرخص بعشر مرات)، التحليل **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`، $2/$10 بدلًا من $3/$15)، الحَكَم **Fable 5 → Fable 5.1** (`claude-fable-5-1`، بنفس السعر $10/$50). لم يعد مُقيِّم التحقق من المواقع يُضمّن لقطة Haiku مؤرَّخة، وأصبح النموذج الافتراضي وجدول التكلفة لـ Claude في BYOK مشتقَّين من `config.MODELS`، مع حماية بالاختبار الجديد `tests/test_model_ids.py`. وجرى ترحيل Gemini BYOK من حزمة SDK السابقة إلى `google-genai>=2.30.1` الحالية (Interactions API) مع `gemini-4-argon`، وتحديث نموذج OpenAI BYOK الافتراضي إلى `gpt-5`. وتوسيع كشف طرفيات الذكاء الاصطناعي في `dde doctor` ليشمل Codex CLI وGemini CLI وAntigravity. وتحديث إجراءات GitHub Actions للتكامل المستمر (`setup-python@v7`، `codeql-action@v4.37.4`، `osv-scanner-action@v2.5.0`). إزالة ضوضاء الإنذارات الكاذبة الاستدلالية من `red_flags` في تقارير PDF (تحويل فروق تواريخ `git rebase` وتكرار المصطلحات إلى مؤشرات إرشادية فقط، مع صمام أمان `_filter_red_flags` لقصر المخرجات على عيوب الكود الحقيقية مع المسار ورقم السطر وخطة الإصلاح، وتوحيد اسم ملف PDF). استُبدل `datetime.utcnow()` المهمَل (إزالة تحذيرات Python 3.12+)؛ وأُضيف Python 3.13 إلى مصفوفة CI والـ classifiers.
 - ✅ **إعادة تسمية الحزمة `src` ← `due_diligence_engine`** (2026-07، v0.6.1): لم تعد الحزمة القابلة للاستيراد تستخدم الاسم العام `src` على المستوى الأعلى، ما يتجنّب التعارضات على `sys.path` عند التثبيت عبر pip. أمر `dde` لم يتغيّر؛ تتغيّر فقط مسارات `import` (`from due_diligence_engine...`).
@@ -465,7 +465,7 @@ dde analyze owner/repo
 - ✅ إصلاح شامل لنظام الخطوط الطباعية (المسافة بين الأسطر، التسلسل الهرمي)
 - ✅ تعزيز أمن التكامل المستمر (CodeQL، Dependabot، gitleaks)
 
-**مخطَّط له (v0.4.0+)**
+**مخطَّط له (v0.7.0+)**
 - 🚧 وضع الدُّفعات — تحليل محفظة من المستودعات بأمر واحد
 - 🚧 التتبّع التاريخي — إعادة التحليل وإظهار فروق النقاط عبر الزمن
 - 🚧 محوّل إشعارات Slack/Discord

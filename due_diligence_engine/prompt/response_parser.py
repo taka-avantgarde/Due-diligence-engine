@@ -44,17 +44,27 @@ logger = logging.getLogger(__name__)
 
 
 def parse_consulting_json(file_path: str | Path) -> ConsultingReport:
-    """Load a consulting report JSON file and return a validated model.
+    """Load a consulting report JSON file (or raw JSON string) and return a validated model.
 
     Args:
-        file_path: Path to the JSON file produced by the IDE AI.
+        file_path: Path to the JSON file produced by the IDE AI, or raw JSON text.
 
     Returns:
         A validated ``ConsultingReport`` instance with missing fields
         filled with safe defaults and scores clamped to valid ranges.
     """
-    path = Path(file_path)
-    raw_text = path.read_text(encoding="utf-8")
+    if isinstance(file_path, Path):
+        raw_text = file_path.read_text(encoding="utf-8")
+    else:
+        s = str(file_path).strip()
+        p = Path(s)
+        try:
+            if p.is_file():
+                raw_text = p.read_text(encoding="utf-8")
+            else:
+                raw_text = s
+        except OSError:
+            raw_text = s
     data = _extract_json(raw_text)
     return _build_report(data)
 
@@ -71,7 +81,7 @@ def parse_consulting_response(raw: str | dict[str, Any] | Path) -> ConsultingRep
     if isinstance(raw, Path):
         return parse_consulting_json(raw)
     stripped = raw.strip()
-    if stripped.startswith("{") or stripped.startswith("```"):
+    if stripped.startswith("{") or stripped.startswith("[") or stripped.startswith("```"):
         return parse_consulting_dict(_extract_json(stripped))
     return parse_consulting_json(raw)
 
@@ -83,10 +93,20 @@ def parse_consulting_response(raw: str | dict[str, Any] | Path) -> ConsultingRep
 
 def _extract_json(text: str) -> dict[str, Any]:
     """Extract JSON from raw text, handling markdown code blocks."""
+    def _unwrap_obj(obj: Any) -> dict[str, Any] | None:
+        if isinstance(obj, dict):
+            return obj
+        if isinstance(obj, list) and len(obj) > 0 and isinstance(obj[0], dict):
+            return obj[0]
+        return None
+
     # Try direct parse first
     text = text.strip()
     try:
-        return json.loads(text)
+        loaded = json.loads(text)
+        res = _unwrap_obj(loaded)
+        if res is not None:
+            return res
     except json.JSONDecodeError:
         pass
 
@@ -94,7 +114,10 @@ def _extract_json(text: str) -> dict[str, Any]:
     match = re.search(r"```(?:json)?\s*\n(.*?)```", text, re.DOTALL)
     if match:
         try:
-            return json.loads(match.group(1).strip())
+            loaded = json.loads(match.group(1).strip())
+            res = _unwrap_obj(loaded)
+            if res is not None:
+                return res
         except json.JSONDecodeError:
             pass
 
@@ -103,13 +126,27 @@ def _extract_json(text: str) -> dict[str, Any]:
     brace_end = text.rfind("}")
     if brace_start != -1 and brace_end > brace_start:
         try:
-            return json.loads(text[brace_start : brace_end + 1])
+            loaded = json.loads(text[brace_start : brace_end + 1])
+            res = _unwrap_obj(loaded)
+            if res is not None:
+                return res
+        except json.JSONDecodeError:
+            pass
+
+    # Try finding the outermost [ ... ] (in case JSON root is a list of objects)
+    bracket_start = text.find("[")
+    bracket_end = text.rfind("]")
+    if bracket_start != -1 and bracket_end > bracket_start:
+        try:
+            loaded = json.loads(text[bracket_start : bracket_end + 1])
+            res = _unwrap_obj(loaded)
+            if res is not None:
+                return res
         except json.JSONDecodeError:
             pass
 
     raise ValueError(
-        "Could not parse consulting report JSON. "
-        "Ensure the AI output is valid JSON."
+        "Could not parse consulting report JSON: root must be a JSON object."
     )
 
 
@@ -127,15 +164,50 @@ def _clamp(value: Any, lo: float, hi: float, default: float = 0.0) -> float:
 
 
 _FALSE_POSITIVE_PATTERNS = (
-    "誤検知",
-    "無効化済",
-    "false positive",
-    "false-positive",
     "[dismissed]",
+    "[false positive]",
+    "[false-positive]",
+    "(false positive)",
+    "(false-positive)",
     "dismissed as false",
+    "heuristic false positive",
+    "heuristic false-positive",
+    "no actual risk",
+    "誤検知・無効化",
+    "誤検知/無効化",
+    "無効化済",
     "実質的なリスクなし",
     "実質的リスクなし",
-    "no actual risk",
+    "this is a false positive",
+    "is a false positive",
+    "this is a false-positive",
+    "is a false-positive",
+)
+
+_DISMISSED_FALSE_POSITIVE_RE = re.compile(
+    r"(?:"
+    r"\[dismissed\]"
+    r"|\[false[ -]positive\]"
+    r"|\(false[ -]positive\)"
+    r"|\bheuristic false[ -]positive\b"
+    r"|\bdismissed as false\b"
+    r"|\bno actual risk\b"
+    r"|\b(?:this|it)\s+is\s+a\s+false[ -]positive\b"
+    r"|\bis\s+a\s+false[ -]positive\b"
+    r"|\bconsidered\s+(?:a\s+)?false[ -]positive\b"
+    r"|\btreated\s+as\s+(?:a\s+)?false[ -]positive\b"
+    r"|\bmarked\s+as\s+(?:a\s+)?false[ -]positive\b"
+    r"|false[ -]positive\s+(?:discrepancy|alarm|noise|warning)"
+    r"|false[ -]positive\s+(?:caused\s+by|due\s+to)"
+    r"|^\[?false[ -]positive\]?\s*[:\-]"
+    r"|誤検知[・/、\s]*(?:無効化|除外|無視|対象外)"
+    r"|無効化済"
+    r"|実質的(?:な)?リスクなし"
+    r"|リスク(?:は)?ありません"
+    r"|誤検知(?:と判定|として除外|として無視)"
+    r"|^\[?誤検知\]?\s*[:\-・]"
+    r")",
+    re.IGNORECASE,
 )
 
 _NEGATION_PATTERNS = (
@@ -170,7 +242,7 @@ def _filter_red_flags(raw_flags: Any) -> list[dict[str, Any]]:
         if any(neg in combined for neg in _NEGATION_PATTERNS):
             filtered.append(norm_item)
             continue
-        if any(pat in combined for pat in _FALSE_POSITIVE_PATTERNS):
+        if any(pat in combined for pat in _FALSE_POSITIVE_PATTERNS) or _DISMISSED_FALSE_POSITIVE_RE.search(combined):
             continue
         filtered.append(norm_item)
     return filtered
@@ -378,11 +450,16 @@ def _parse_data_freshness(raw: Any) -> DataFreshness | None:
     if not isinstance(raw, dict):
         return None
     warning = raw.get("data_cutoff_warning")
+    wsp = raw.get("web_search_performed", False)
+    if isinstance(wsp, str):
+        wsp_bool = wsp.strip().lower() in ("true", "1", "yes")
+    else:
+        wsp_bool = bool(wsp)
     return DataFreshness(
-        web_search_performed=bool(raw.get("web_search_performed", False)),
+        web_search_performed=wsp_bool,
         search_date=str(raw.get("search_date", "") or ""),
-        queries_executed=[str(q) for q in raw.get("queries_executed", []) if q],
-        sources_consulted=[str(s) for s in raw.get("sources_consulted", []) if s],
+        queries_executed=_ensure_str_list(raw.get("queries_executed")),
+        sources_consulted=_ensure_str_list(raw.get("sources_consulted")),
         data_cutoff_warning=str(warning) if warning else None,
     )
 
@@ -511,6 +588,11 @@ def _parse_projection(raw: Any) -> YearProjection | None:
 
 
 def _ensure_str_list(val: Any) -> list[str]:
-    if not isinstance(val, list):
+    if val is None:
         return []
-    return [str(item) for item in val]
+    if isinstance(val, str):
+        s = val.strip()
+        return [s] if s else []
+    if isinstance(val, (list, tuple, set)):
+        return [str(item) for item in val if item is not None and str(item).strip()]
+    return []

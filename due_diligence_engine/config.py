@@ -45,6 +45,40 @@ MODELS = {
     ),
 }
 
+BYOK_DEFAULT_MODELS: dict[str, str] = {
+    "claude": MODELS["sonnet"].model_id,
+    "gemini": "gemini-4-argon",
+    "chatgpt": "gpt-6.1-sol",
+}
+
+PROVIDER_MODEL_COSTS: dict[str, dict[str, float]] = {
+    "claude-haiku-5-5": {
+        "input": MODELS["haiku"].input_cost_per_mtok,
+        "output": MODELS["haiku"].output_cost_per_mtok,
+    },
+    "claude-sonnet-5-5": {
+        "input": MODELS["sonnet"].input_cost_per_mtok,
+        "output": MODELS["sonnet"].output_cost_per_mtok,
+    },
+    "claude-fable-5-1": {
+        "input": MODELS["fable"].input_cost_per_mtok,
+        "output": MODELS["fable"].output_cost_per_mtok,
+    },
+    "gemini-4-argon": {"input": 2.00, "output": 10.00},
+    "gpt-6.1-sol": {"input": 2.00, "output": 10.00},
+    "gpt-6-astra": {"input": 5.00, "output": 25.00},
+    "gpt-5": {"input": 1.25, "output": 10.00},
+}
+
+PROVIDER_COSTS: dict[str, dict[str, float]] = {
+    "claude": {
+        "input": MODELS["sonnet"].input_cost_per_mtok,
+        "output": MODELS["sonnet"].output_cost_per_mtok,
+    },
+    "gemini": {"input": 2.00, "output": 10.00},
+    "chatgpt": {"input": 2.00, "output": 10.00},
+}
+
 
 @dataclass
 class PricingTier:
@@ -254,6 +288,15 @@ def estimate_cost(
     if not model:
         raise ValueError(f"Unknown model tier: {model_tier}")
 
-    input_cost = (input_tokens / 1_000_000) * model.input_cost_per_mtok
-    output_cost = (output_tokens / 1_000_000) * model.output_cost_per_mtok
+    input_tokens = max(0, int(input_tokens))
+    output_tokens = max(0, int(output_tokens))
+
+    input_rate = model.input_cost_per_mtok
+    output_rate = model.output_cost_per_mtok
+    if model_tier == "haiku" and input_tokens > 100_000:
+        input_rate = 0.50
+        output_rate = 2.50
+
+    input_cost = (input_tokens / 1_000_000) * input_rate
+    output_cost = (output_tokens / 1_000_000) * output_rate
     return (input_cost + output_cost) * saas_multiplier

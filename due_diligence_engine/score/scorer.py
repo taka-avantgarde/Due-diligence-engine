@@ -480,9 +480,9 @@ class Scorer:
         contradictions = len(consistency.contradictions)
 
         if contradictions > 5:
-            return max(1, min(3, int(score / 20)))
+            return max(1, min(2, int(score / 20)))
         if contradictions > 2:
-            return max(3, min(5, int(score / 15)))
+            return max(1, min(4, int(score / 15)))
 
         # Map consistency_score (0-100) to level (1-10)
         level = max(1, min(10, int(score / 10)))

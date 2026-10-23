@@ -3,7 +3,7 @@
 戦略:
 1. ローカル分析（API不要）: コード構造、ドキュメント、Git履歴、整合性チェック
 2. AI分析（オプション）: 環境変数 or BYOKキーで設定されたプロバイダーを並列実行
-   - 従来方式: Haiku→Sonnet→Opus 3段階パイプライン（環境変数のANTHROPIC_API_KEY使用時）
+   - 従来方式: Haiku→Sonnet→Fable 3段階パイプライン（環境変数のANTHROPIC_API_KEY使用時）
    - 新方式: マルチプロバイダー並列分析（BYOKキー使用時、最大3社同時）
 3. スコアリング: ヒューリスティック + AI結果の加重平均
 """
@@ -134,7 +134,7 @@ class AnalysisEngine:
             self._run_multi_provider_analysis(result, effective_keys)
         elif not skip_ai and self._config.anthropic_api_key:
             # 後方互換: 環境変数のAnthropicキーのみの場合は従来の3段階パイプライン
-            logger.info("Phase 2: Running legacy AI-enhanced analysis (Haiku→Sonnet→Opus)...")
+            logger.info("Phase 2: Running legacy AI-enhanced analysis (Haiku→Sonnet→Fable)...")
             ai_findings = self._run_ai_analysis(result)
             self._merge_ai_findings(result, ai_findings)
         else:
@@ -223,6 +223,7 @@ class AnalysisEngine:
             provider.provider_name,
             usage.get("input_tokens", 0),
             usage.get("output_tokens", 0),
+            model_id=provider.model_id,
         )
 
         if raw.get("error") or raw.get("parse_error"):
@@ -273,7 +274,7 @@ class AnalysisEngine:
     # --- 従来の3段階パイプライン（後方互換） ---
 
     def _run_ai_analysis(self, result: AnalysisResult) -> dict[str, Any]:
-        """従来の Haiku→Sonnet→Opus 3段階AI分析パイプラインを実行。"""
+        """従来の Haiku→Sonnet→Fable 3段階AI分析パイプラインを実行。"""
         findings: dict[str, Any] = {
             "haiku_scan": {},
             "sonnet_analysis": {},

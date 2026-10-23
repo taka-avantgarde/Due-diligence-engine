@@ -275,7 +275,7 @@ def _make_consulting_report() -> ConsultingReport:
             {"term": "SOC2", "definition": "A security certification that proves a company handles data responsibly."},
             {"term": "Multi-tenant", "definition": "One system serving multiple customers with isolated data."},
         ],
-        ai_model_used="Claude Opus 4 (test)",
+        ai_model_used="Claude Fable 5.1 (test)",
         analysis_id="test_20260402",
         project_name="NeuralPay",
         site_verification=SiteVerificationReport(

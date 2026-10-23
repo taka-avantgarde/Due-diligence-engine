@@ -1356,12 +1356,12 @@ class PDFReportGenerator:
         return _reshape_ar(text) if self._lang == "ar" else text
 
     def _esc_text(self, text: Any) -> str:
-        """Escape text for ReportLab Paragraph, and wrap Latin runs if in Arabic mode."""
+        """Escape text for ReportLab Paragraph, and wrap Latin runs if in Arabic or Thai mode."""
         raw = str(text if text is not None else "")
-        if self._lang != "ar":
+        if self._lang not in ("ar", "th"):
             return _esc(raw)
 
-        # Arabic mode: split raw string by Latin/ASCII runs BEFORE XML escaping
+        # Arabic & Thai mode: split raw string by Latin/ASCII runs BEFORE XML escaping
         # so entities like &amp; are never sliced across <font> tags.
         pattern = re.compile(r"[A-Za-z0-9][A-Za-z0-9_./:+%&=@#?~,\-]*")
         result_parts = []
@@ -1436,14 +1436,14 @@ class PDFReportGenerator:
         # Title prefix
         elements.append(
             Paragraph(
-                f'<font color="#5271FF" size="12">{t["title_prefix"]}</font>',
+                f'<font color="#5271FF" size="12">{self._esc_text(t["title_prefix"])}</font>',
                 cover_center,
             )
         )
         elements.append(Spacer(1, 6 * mm))
 
         # Title
-        elements.append(Paragraph(t["report_title"], cover_title))
+        elements.append(Paragraph(self._esc_text(t["report_title"]), cover_title))
         elements.append(Spacer(1, 2 * mm))
 
         # Project name — with horizontal rule accent
@@ -1464,7 +1464,7 @@ class PDFReportGenerator:
         # Score display (consulting report)
         if cr is None:
             cr = result.consulting_report
-        if cr and cr.overall_score > 0:
+        if cr is not None and cr.overall_score is not None:
             grade = cr.grade or "?"
             grade_color = GRADE_COLORS.get(grade, colors.HexColor("#9ca3af"))
 
@@ -1531,13 +1531,13 @@ class PDFReportGenerator:
         # Metadata
         elements.append(
             Paragraph(
-                f"{t['analysis_id']}: {self._esc_text(result.analysis_id)}",
+                f"{self._esc_text(t['analysis_id'])}: {self._esc_text(result.analysis_id)}",
                 cover_small,
             )
         )
         elements.append(
             Paragraph(
-                f"{t['date']}: {result.timestamp.strftime('%Y-%m-%d %H:%M UTC')}",
+                f"{self._esc_text(t['date'])}: {self._esc_text(result.timestamp.strftime('%Y-%m-%d %H:%M UTC'))}",
                 cover_small,
             )
         )
@@ -1678,7 +1678,7 @@ class PDFReportGenerator:
         t = self._t
         elements: list = []
 
-        ai_title = "AI Provider Analysis" if self._lang == "en" else "AIプロバイダー分析"
+        ai_title = "AIプロバイダー分析" if self._lang == "ja" else "AI Provider Analysis"
         elements.append(Paragraph(ai_title, s["heading1"]))
         elements.append(
             HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=4 * mm)
@@ -1720,7 +1720,7 @@ class PDFReportGenerator:
 
         if valid_providers:
             elements.append(Spacer(1, 4 * mm))
-            comparison_title = "Provider Score Comparison" if self._lang == "en" else "プロバイダースコア比較"
+            comparison_title = "プロバイダースコア比較" if self._lang == "ja" else "Provider Score Comparison"
             elements.append(Paragraph(comparison_title, s["heading2"]))
 
             # v0.3: 5 dimensions (security_posture merged into architecture_quality)
@@ -1749,7 +1749,7 @@ class PDFReportGenerator:
             header = [t.get("dimension", "Dimension")]
             for name, _ in valid_providers:
                 header.append(name.capitalize())
-            avg_label = "Avg" if self._lang == "en" else "平均"
+            avg_label = "平均" if self._lang == "ja" else "Avg"
             header.append(avg_label)
 
             table_data = [header]
@@ -1765,7 +1765,7 @@ class PDFReportGenerator:
                 table_data.append(row)
 
             # コスト行
-            cost_label = "Cost (USD)" if self._lang == "en" else "コスト (USD)"
+            cost_label = "コスト (USD)" if self._lang == "ja" else "Cost (USD)"
             cost_row = [cost_label]
             total_cost = 0.0
             for _, r in valid_providers:
@@ -1842,7 +1842,7 @@ class PDFReportGenerator:
                 elements.append(Paragraph(self._esc_text(flag.description), s["flag_desc"]))
 
                 if flag.evidence:
-                    evidence_label = "Evidence" if self._lang == "en" else "\u8a3c\u62e0"
+                    evidence_label = "\u8a3c\u62e0" if self._lang == "ja" else "Evidence"
                     evidence_text = f"{evidence_label}: " + "; ".join(flag.evidence[:3])
                     elements.append(Paragraph(self._esc_text(evidence_text), s["flag_desc"]))
 
@@ -2241,10 +2241,10 @@ class PDFReportGenerator:
         # Grade label first (above score to prevent overlap)
         grade_label = f'{t["grade_prefix"]}: {grade}'
         rec = _PDF_GRADE_REC.get(self._lang, _PDF_GRADE_REC["en"])
-        recommendation = rec.get(grade, "")
+        recommendation = self._maybe_reshape(rec.get(grade, ""))
         grade_line = (
-            f'<font color="{grade_color.hexval()}" size="14"><b>{grade_label}</b></font>'
-            f'  <font color="{COLOR_TEXT_DIM.hexval()}" size="10">{recommendation}</font>'
+            f'<font color="{grade_color.hexval()}" size="14"><b>{self._esc_text(grade_label)}</b></font>'
+            f'  <font color="{COLOR_TEXT_DIM.hexval()}" size="10">{self._esc_text(recommendation)}</font>'
         )
         elements.append(Paragraph(grade_line, s["center"]))
         elements.append(Spacer(1, 2 * mm))
@@ -3167,8 +3167,8 @@ class PDFReportGenerator:
                 return val[:max_len] + "..."
             return val
 
-        risk_items = "".join(f"• {self._esc_text(_cap(r))}<br/>" for r in thesis.key_risks) if thesis.key_risks else "—"
-        upside_items = "".join(f"• {self._esc_text(_cap(u))}<br/>" for u in thesis.key_upside) if thesis.key_upside else "—"
+        risk_items = "".join(f"• {self._esc_text(_cap(r, 300))}<br/>" for r in thesis.key_risks[:12]) if thesis.key_risks else "—"
+        upside_items = "".join(f"• {self._esc_text(_cap(u, 300))}<br/>" for u in thesis.key_upside[:12]) if thesis.key_upside else "—"
 
         risk_upside = Table(
             [
@@ -3405,11 +3405,12 @@ class PDFReportGenerator:
         row_h = 44
         label_w = 160
         chart_w = label_w + bar_max_w + 80
-        chart_h = len(sv.items) * row_h + 10
+        sv_items = sv.items[:14]
+        chart_h = len(sv_items) * row_h + 10
 
         d = Drawing(chart_w, chart_h)
 
-        for i, item in enumerate(sv.items):
+        for i, item in enumerate(sv_items):
             y = chart_h - (i + 1) * row_h + 14
 
             # Item name (bold)
@@ -4168,7 +4169,8 @@ class PDFReportGenerator:
             "unknown": ("?", COLOR_TEXT_DIM),                          # 不明
         }
 
-        for cat in category_order:
+        all_cats = category_order + [c for c in items_by_cat if c not in category_order]
+        for cat in all_cats:
             cat_items = items_by_cat.get(cat, [])
             if not cat_items:
                 continue

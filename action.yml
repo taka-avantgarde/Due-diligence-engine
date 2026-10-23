@@ -47,8 +47,15 @@ runs:
 
     - name: Install DDE
       shell: bash
+      env:
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
+        INPUT_SKIP_AI: ${{ inputs.skip_ai }}
       run: |
-        pip install -e ${{ github.action_path }}
+        if [ -n "$ANTHROPIC_API_KEY" ] && [ "$INPUT_SKIP_AI" != "true" ]; then
+          pip install -e "${{ github.action_path }}[byok]"
+        else
+          pip install -e "${{ github.action_path }}"
+        fi
 
     - name: Run Analysis
       id: run_dde
@@ -58,7 +65,11 @@ runs:
         INPUT_SKIP_AI: ${{ inputs.skip_ai }}
         INPUT_OUTPUT_FORMAT: ${{ inputs.output_format }}
       run: |
-        ARGS="--format $INPUT_OUTPUT_FORMAT"
+        if [ "$INPUT_OUTPUT_FORMAT" = "html" ]; then
+          ARGS="--format md --format html"
+        else
+          ARGS="--format $INPUT_OUTPUT_FORMAT"
+        fi
         if [ "$INPUT_SKIP_AI" = "true" ] || [ -z "$ANTHROPIC_API_KEY" ]; then
           ARGS="$ARGS --skip-ai"
         fi
@@ -74,15 +85,15 @@ runs:
           GRADE="?"
           FLAGS="0"
         else
-          SCORE=$(grep -oE '\*\*Overall Score:\*\*\s*[0-9]+' "$REPORT" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+          SCORE=$( (grep -oE '\*\*Overall Score:\*\*\s*[0-9]+' "$REPORT" 2>/dev/null || true) | (grep -oE '[0-9]+' || true) | head -1)
           if [ -z "$SCORE" ]; then
-            SCORE=$(grep -oE 'Overall Score:\s*[0-9]+' "$REPORT" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+            SCORE=$( (grep -oE 'Overall Score:\s*[0-9]+' "$REPORT" 2>/dev/null || true) | (grep -oE '[0-9]+' || true) | head -1)
           fi
-          GRADE=$(grep -oE '\(Grade:\s*[A-F]\)' "$REPORT" 2>/dev/null | grep -oE '[A-F]' | head -1)
+          GRADE=$( (grep -oE '\(Grade:\s*[A-F]\)' "$REPORT" 2>/dev/null || true) | (grep -oE '[A-F]' || true) | head -1)
           if [ -z "$GRADE" ]; then
-            GRADE=$(grep -oE 'Grade:\s*[A-F]' "$REPORT" 2>/dev/null | grep -oE '[A-F]' | head -1)
+            GRADE=$( (grep -oE 'Grade:\s*[A-F]' "$REPORT" 2>/dev/null || true) | (grep -oE '[A-F]' || true) | head -1)
           fi
-          FLAGS=$(grep -cE '^\s*-\s*\*\*\[(CRITICAL|HIGH|MEDIUM|LOW|INFO)\]\*\*' "$REPORT" 2>/dev/null) || FLAGS="0"
+          FLAGS=$(grep -cE '^\s*-\s*\*\*\[(CRITICAL|HIGH|MEDIUM|LOW|INFO)\]\*\*' "$REPORT" 2>/dev/null || true)
 
           # Defaults if grep returned empty
           SCORE="${SCORE:-0}"

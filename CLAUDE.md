@@ -6,23 +6,25 @@
   - `README.md` (English) / `README.ja.md` (日本語) / `README.es.md` (Español) /
     `README.ar.md` (العربية) / `README.fr.md` (Français) / `README.de.md` (Deutsch)
 - 一部の言語だけの更新は禁止。バージョン番号・機能説明・比較表・FAQ・ロードマップ・フッターなど、**あらゆる変更を全 6 言語に反映**する。
-- 各ファイル最上部の言語スイッチャーは全ファイルで同一（自言語のみ青ハイライト `5271FF`、他は淡灰 `EEF2F7`）。
+- 各ファイル最上部の言語スイッチャーは全ファイルで同一（自言語のみ青ハイライト `5271FF`、他はダークグレー `30363D`）。
 - README is multilingual (6 languages): **always update ALL of `README.md`, `README.ja.md`, `README.es.md`, `README.ar.md`, `README.fr.md`, `README.de.md` together.** Never update only some.
 - 翻訳元は英語版 `README.md`。新機能はまず英語版を確定 → 各言語へ反映。
 
 ## バージョン同期 / Version Sync
 
-リリース時、バージョン番号は以下すべてで揃える:
+- `due_diligence_engine/__init__.py` の `__version__` を Single Source of Truth (SSOT) とし、`tests/test_zero_drift_invariants.py` が以下すべてとの完全一致を機械的に検証・保護する:
 1. `pyproject.toml` の `version`
 2. `due_diligence_engine/__init__.py` の `__version__`
-3. `due_diligence_engine/cli.py` の `@click.version_option(version=...)`
+3. `due_diligence_engine/cli.py` の `@click.version_option(version=__version__)`
 4. `due_diligence_engine/report/generator.py` のフッター文字列
 5. 全 6 言語 README のバッジ `version-vX.Y.Z` とフッターの `` `vX.Y.Z` `` 行
+6. `scorecard.html` テンプレート
 
-## モデル ID / Model IDs
+## モデル ID と価格の SSOT / Model IDs & Pricing SSOT
 
-- Claude モデル ID は `due_diligence_engine/config.py` の `MODELS` 辞書で一元管理。
-- 更新時は必ず[公式モデル一覧](https://platform.claude.com/docs/en/about-claude/models/overview)で実在とエイリアスを確認してから変更する（存在しない ID は API を壊す）。
+- モデル定義・BYOKデフォルト・価格情報は `due_diligence_engine/config.py` の `MODELS`, `BYOK_DEFAULT_MODELS`, `PROVIDER_MODEL_COSTS` を Single Source of Truth (SSOT) とする。
+- `ai.providers._DEFAULT_MODELS` や各プロバイダのコスト計算は SSOT から導出し、`tests/test_zero_drift_invariants.py` および `tests/test_model_ids.py` がドリフトを機械的に検出・遮断する。
+- 更新時は必ず公式モデル一覧で実在とエイリアスを確認してから変更する（存在しない ID は API を壊す）。
 
 ## PDF レポートの検証 / PDF Verification
 

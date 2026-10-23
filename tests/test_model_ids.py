@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from due_diligence_engine import config
 from due_diligence_engine.ai import providers
 from due_diligence_engine.config import MODELS
 
@@ -53,6 +54,10 @@ def test_byok_defaults_are_current():
     assert providers._DEFAULT_MODELS["chatgpt"] == "gpt-6.1-sol"
     assert providers._BYOK_MODULE_TO_PACKAGE["google.genai"] == "google-genai"
     assert ("google" + ".generativeai") not in providers._BYOK_MODULE_TO_PACKAGE
+    assert providers.PROVIDER_COSTS["chatgpt"]["input"] == 2.00
+    assert "gpt-6.1-sol" in config.PROVIDER_MODEL_COSTS
+    assert "gpt-6-astra" in config.PROVIDER_MODEL_COSTS
+    assert providers.estimate_provider_cost("claude", 1_000_000, 1_000_000, model_id="claude-fable-5-1") == 60.0
 
 
 def test_no_hardcoded_claude_model_ids_outside_config():

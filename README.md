@@ -418,7 +418,7 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 
 ## 🗺️ Roadmap
 
-**Recently shipped (v0.3.x+)**
+**Recently shipped (v0.6.x)**
 - ✅ **Zero-Defect Security & Reliability Hardening** (2026-10, v0.6.3): comprehensive end-to-end audit and hardening across all 35 modules — SSRF & DNS-rebinding pinning in site analysis, Zip Slip / symlink / FIFO isolation in `SecureLoader` & `SecurePurger`, strict `store=False` zero-retention enforcement on Google Interactions API, `ThinkingBlock`-safe Anthropic parsing & `gpt-6.1-sol` (Astra) / `gpt-5` parameter compatibility, full ReportLab XML/HTML escaping + non-destructive Arabic RTL shaping across all 14 PDF languages, wheel packaging for bundled fonts & HTML templates, and 144 automated unit & E2E regression tests.
 - ✅ **Claude 5.5-generation model refresh + Python 3.13** (2026-10, v0.6.2): all three BYOK tiers moved to the current lineup — scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, $0.10/$0.50 per MTok, 10× cheaper), analyze **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, $2/$10, down from $3/$15), judge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, same $10/$50). The site-verification scorer no longer hardcodes a dated Haiku snapshot and the BYOK Claude default/cost table now derive from `config.MODELS`, guarded by a new `tests/test_model_ids.py`. Gemini BYOK migrated from legacy SDK to `google-genai>=2.30.1` (Interactions API) + `gemini-4-argon`; OpenAI BYOK default updated to `gpt-5`. AI terminal detection in `dde doctor` expanded to Codex CLI, Gemini CLI, and Antigravity. CI GitHub Actions refreshed (`setup-python@v7`, `codeql-action@v4.37.4`, `osv-scanner-action@v2.5.0`). Eliminated heuristic false-positive noise from PDF `red_flags` (git rebase date diffs and doc buzzword counts demoted to informational metrics; prompt + parser safety valve `_filter_red_flags` strictly output only genuine code-verified defects with `file:line` and remediation; canonical PDF filename unified to prevent duplicate outputs). Deprecated `datetime.utcnow()` replaced (silences Python 3.12+ warnings); Python 3.13 added to the CI matrix and classifiers.
 - ✅ **Package renamed `src` → `due_diligence_engine`** (2026-07, v0.6.1): the importable package no longer uses the generic top-level name `src`, avoiding `sys.path` collisions once pip-installed. The `dde` command is unchanged; only `import` paths change (`from due_diligence_engine...`).
@@ -459,7 +459,7 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 - ✅ Typography system overhaul (leading, hierarchy)
 - ✅ Security CI hardening (CodeQL, Dependabot, gitleaks)
 
-**Planned (v0.4.0+)**
+**Planned (v0.7.0+)**
 - 🚧 Batch mode — analyze a portfolio of repos in one command
 - 🚧 Historical tracking — re-analyze and show score deltas over time
 - 🚧 Slack/Discord notification adapter
