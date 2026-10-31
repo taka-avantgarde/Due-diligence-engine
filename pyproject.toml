@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -8,7 +8,8 @@ version = "0.6.3"
 description = "AI-powered technical due diligence CLI — PDF-first, zero API keys required"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [
     { name = "Takayuki Miyano", email = "taka@atlasassociates.io" },
 ]
@@ -31,13 +32,13 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Documentation",
     "Topic :: Utilities",
@@ -47,16 +48,15 @@ classifiers = [
 # needs NO API keys. AI-provider SDKs are intentionally NOT here; see the
 # optional [byok] extra below.
 dependencies = [
-    "click>=8.1.0",
-    "jinja2>=3.1.0",
-    "rich>=13.0.0",
-    "cryptography>=43.0.0",
-    "pydantic>=2.0.0",
-    "gitpython>=3.1.0",
-    "reportlab>=4.1.0",
-    "httpx>=0.27.0",
+    "click>=8.3.1",
+    "jinja2>=3.1.6",
+    "rich>=14.3.3",
+    "cryptography>=46.0.7",
+    "pydantic>=2.12.5",
+    "reportlab>=5.1.0",
+    "httpx>=0.28.1",
     "arabic-reshaper>=3.0.0",  # Arabic report rendering (contextual shaping)
-    "python-bidi>=0.4.2",      # Arabic report rendering (RTL bidi reordering)
+    "python-bidi>=0.6.11",     # Arabic report rendering (RTL bidi reordering)
 ]
 
 [project.optional-dependencies]
@@ -64,15 +64,15 @@ dependencies = [
 # cross-verification path (`dde analyze` with managed API keys). The local-only
 # `dde prompt --pdf` flow needs NONE of these.
 byok = [
-    "anthropic>=0.45.0",
+    "anthropic>=0.84.0",
     "google-genai>=2.30.1",
-    "openai>=1.50.0",
+    "openai>=1.55.3",
 ]
 dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.24.0",
-    "pytest-cov>=5.0.0",
-    "httpx>=0.27.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.0",
 ]
 
 [project.urls]
@@ -94,6 +94,7 @@ artifacts = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.run]
 source = ["due_diligence_engine"]

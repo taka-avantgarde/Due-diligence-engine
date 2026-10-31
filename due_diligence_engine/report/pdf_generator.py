@@ -90,9 +90,14 @@ if _register_ttf("NotoNaskhArabic", "NotoNaskhArabic-Regular.ttf"):
 # Arabic falls back to unshaped text rather than breaking.
 try:
     import arabic_reshaper as _arabic_reshaper
-    from bidi.algorithm import get_display as _bidi_get_display
+    try:
+        from bidi import get_display as _bidi_get_display
+    except ImportError:
+        from bidi.algorithm import get_display as _bidi_get_display
     _HAS_ARABIC = True
-except Exception:  # noqa: BLE001
+except Exception:  # pragma: no cover - optional at import time
+    _arabic_reshaper = None  # type: ignore[assignment]
+    _bidi_get_display = None  # type: ignore[assignment]
     _HAS_ARABIC = False
 
 

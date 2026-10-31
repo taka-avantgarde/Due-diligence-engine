@@ -52,9 +52,9 @@ runs:
         INPUT_SKIP_AI: ${{ inputs.skip_ai }}
       run: |
         if [ -n "$ANTHROPIC_API_KEY" ] && [ "$INPUT_SKIP_AI" != "true" ]; then
-          pip install -e "${{ github.action_path }}[byok]"
+          python -m pip install -e "${{ github.action_path }}[byok]"
         else
-          pip install -e "${{ github.action_path }}"
+          python -m pip install -e "${{ github.action_path }}"
         fi
 
     - name: Run Analysis

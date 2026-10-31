@@ -330,3 +330,58 @@ def test_edge_case_scorer_determine_claim_level_monotonic():
     # Low score (10.0) with contradictions must not be elevated
     assert _call_claim_level(10.0, 3) == 1
     assert _call_claim_level(10.0, 6) == 1
+
+
+def test_dependency_and_sdk_contract_invariant():
+    """Verify pyproject.toml dependency hygiene, Rust bidi fast-path, and live SDK contracts."""
+    import importlib.util
+    import inspect
+    import tomllib
+
+    pyproject_data = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    project = pyproject_data["project"]
+
+    # PEP 639 license string + no deprecated license classifier
+    assert project["license"] == "Apache-2.0"
+    assert "License :: OSI Approved :: Apache Software License" not in project.get("classifiers", [])
+    assert "Programming Language :: Python :: 3.14" in project.get("classifiers", [])
+
+    # Ensure unused gitpython is never reintroduced and no duplicate packages exist between core & dev
+    core_deps = [d.split(">=")[0].split("<")[0].strip().lower() for d in project["dependencies"]]
+    dev_deps = [d.split(">=")[0].split("<")[0].strip().lower() for d in project["optional-dependencies"]["dev"]]
+    assert "gitpython" not in core_deps
+    assert not (set(core_deps) & set(dev_deps)), "Duplicate package between core dependencies and dev"
+
+    # pytest-asyncio loop scope explicitly configured
+    pytest_opts = pyproject_data["tool"]["pytest"]["ini_options"]
+    assert pytest_opts.get("asyncio_default_fixture_loop_scope") == "function"
+
+    # Rust-backed python-bidi top-level import preferred in pdf_generator.py
+    pdf_gen_src = (_PKG / "report" / "pdf_generator.py").read_text(encoding="utf-8")
+    assert "from bidi import get_display as _bidi_get_display" in pdf_gen_src
+
+    # Verify live BYOK SDK method signatures if installed in the active environment
+    if importlib.util.find_spec("anthropic"):
+        from anthropic.resources.messages import Messages
+        sig = inspect.signature(Messages.create)
+        for param in ("model", "max_tokens", "messages"):
+            assert param in sig.parameters or any(
+                p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+            )
+    if importlib.util.find_spec("openai"):
+        import openai
+        from openai.resources.chat.completions import Completions
+        sig = inspect.signature(Completions.create)
+        for param in ("model", "messages", "max_completion_tokens"):
+            assert param in sig.parameters or any(
+                p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+            )
+    if importlib.util.find_spec("google") and importlib.util.find_spec("google.genai"):
+        from google import genai
+        client = genai.Client(api_key="test-key-not-called")
+        sig = inspect.signature(client.interactions.create)
+        for param in ("model", "input", "store"):
+            assert param in sig.parameters or any(
+                p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+            )
+
