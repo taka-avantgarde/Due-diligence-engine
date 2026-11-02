@@ -391,31 +391,27 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
     overall_score = _clamp(data.get("overall_score", 0), 0, 100)
     grade = str(data.get("grade", "") or "").strip().upper()
 
+    def _canonical_grade(score: float) -> str:
+        if score >= 90:
+            return "A"
+        elif score >= 75:
+            return "B"
+        elif score >= 60:
+            return "C"
+        elif score >= 40:
+            return "D"
+        else:
+            return "F"
+
     if dimension_scores:
         dim_mean = sum(d.score for d in dimension_scores.values()) / len(dimension_scores)
-        if abs(dim_mean - overall_score) > 40:
+        if data.get("overall_score") is None or abs(dim_mean - overall_score) > 5.0:
             overall_score = round(dim_mean, 1)
-            if overall_score >= 90:
-                grade = "A"
-            elif overall_score >= 75:
-                grade = "B"
-            elif overall_score >= 60:
-                grade = "C"
-            elif overall_score >= 40:
-                grade = "D"
-            else:
-                grade = "F"
+            grade = _canonical_grade(overall_score)
+        elif len(dimension_scores) >= 5:
+            grade = _canonical_grade(overall_score)
     if not grade:
-        if overall_score >= 90:
-            grade = "A"
-        elif overall_score >= 75:
-            grade = "B"
-        elif overall_score >= 60:
-            grade = "C"
-        elif overall_score >= 40:
-            grade = "D"
-        else:
-            grade = "F"
+        grade = _canonical_grade(overall_score)
 
     tech_level_summary = data.get("tech_level_summary") if isinstance(data.get("tech_level_summary"), dict) else {}
     glossary_additions = data.get("glossary_additions") if isinstance(data.get("glossary_additions"), list) else []
@@ -443,6 +439,81 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
         competitor_rationales=competitor_rationales,
         data_freshness=_parse_data_freshness(data.get("data_freshness")),
     )
+
+
+def validate_consulting_submission(
+    data: dict[str, Any],
+) -> tuple[bool, list[str], list[str]]:
+    """Validate a consulting report submission dict against schema requirements.
+
+    Returns:
+        (is_valid, errors, warnings)
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    if not isinstance(data, dict):
+        return False, ["Submission data must be a dictionary"], []
+
+    project_name = data.get("project_name")
+    if not isinstance(project_name, str) or not project_name.strip():
+        errors.append("Missing or empty 'project_name'")
+
+    executive_summary = data.get("executive_summary")
+    if not isinstance(executive_summary, str) or not executive_summary.strip():
+        errors.append("Missing or empty 'executive_summary'")
+
+    raw_dims = data.get("dimension_scores")
+    if not isinstance(raw_dims, dict):
+        errors.append("Missing or invalid 'dimension_scores' (must be a dictionary)")
+    else:
+        required_groups = [
+            ("technical_originality", ["technical_originality"]),
+            ("technology_advancement", ["technology_advancement"]),
+            ("implementation_depth", ["implementation_depth", "implementation_capability"]),
+            ("architecture_quality", ["architecture_quality"]),
+            ("claim_consistency", ["claim_consistency", "market_readiness"]),
+        ]
+
+        scores: list[float] = []
+        for canonical, aliases in required_groups:
+            matched_key = next((k for k in aliases if k in raw_dims), None)
+            if not matched_key:
+                errors.append(
+                    f"Missing required dimension '{canonical}' (checked: {', '.join(aliases)})"
+                )
+                continue
+
+            val = raw_dims[matched_key]
+            score_val = None
+            if isinstance(val, dict):
+                score_val = val.get("score")
+            elif isinstance(val, (int, float)) and not isinstance(val, bool):
+                score_val = val
+
+            if score_val is None or not isinstance(score_val, (int, float)) or isinstance(score_val, bool):
+                errors.append(f"Dimension '{matched_key}' score must be a number, got {val!r}")
+            elif not (0 <= score_val <= 100):
+                errors.append(f"Dimension '{matched_key}' score {score_val} is outside valid range [0, 100]")
+            else:
+                scores.append(float(score_val))
+
+        if len(scores) == 5:
+            dim_mean = sum(scores) / 5.0
+            overall = data.get("overall_score")
+            if overall is not None:
+                try:
+                    overall_val = float(overall)
+                    if abs(dim_mean - overall_val) > 5.0:
+                        warnings.append(
+                            f"overall_score ({overall_val:.1f}) differs from 5-dimension mean ({dim_mean:.1f}) "
+                            f"by > 5.0; will be reconciled to 5-dimension mean"
+                        )
+                except (ValueError, TypeError):
+                    warnings.append(f"overall_score {overall!r} is not numeric; will be derived from dimension mean")
+
+    is_valid = len(errors) == 0
+    return is_valid, errors, warnings
 
 
 def _parse_data_freshness(raw: Any) -> DataFreshness | None:

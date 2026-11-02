@@ -35,6 +35,43 @@ REAL_IMPL_PATTERNS = [
 ]
 
 
+class _SinglePassMetricsVisitor(ast.NodeVisitor):
+    """Single-pass AST visitor computing function count, class count, and branch complexity."""
+
+    def __init__(self) -> None:
+        self.functions: list[tuple[ast.FunctionDef | ast.AsyncFunctionDef, int]] = []
+        self.classes: list[ast.ClassDef] = []
+        self._func_stack: list[int] = []
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        self.classes.append(node)
+        self.generic_visit(node)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._enter_func(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        self._enter_func(node)
+
+    def _enter_func(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        self._func_stack.append(0)
+        self.generic_visit(node)
+        branches = self._func_stack.pop()
+        self.functions.append((node, branches))
+
+    def _branch_node(self, node: ast.AST) -> None:
+        for idx in range(len(self._func_stack)):
+            self._func_stack[idx] += 1
+        self.generic_visit(node)
+
+    visit_If = _branch_node
+    visit_For = _branch_node
+    visit_AsyncFor = _branch_node
+    visit_While = _branch_node
+    visit_Try = _branch_node
+    visit_ExceptHandler = _branch_node
+
+
 class CodeAnalyzer:
     """Analyzes source code for quality, originality, and red flags."""
 
@@ -103,12 +140,15 @@ class CodeAnalyzer:
             ):
                 result.has_tests = True
 
+        # Pre-index manifest files for fast lookups
+        manifest_paths = [e["path"].replace("\\", "/").lower() for e in self._loader.manifest]
+
         # Compute API wrapper ratio
         if result.total_files > 0:
             result.api_wrapper_ratio = api_call_files / result.total_files
 
         # Check for CI/CD
-        result.has_ci_cd = self._check_ci_cd()
+        result.has_ci_cd = self._check_ci_cd(manifest_paths=manifest_paths)
 
         # Check for documentation
         result.has_documentation = self._check_documentation()
@@ -124,43 +164,22 @@ class CodeAnalyzer:
     def _analyze_python_ast(
         self, path: str, content: str, result: CodeAnalysisResult
     ) -> None:
-        """Perform AST analysis on Python files."""
+        """Perform AST analysis on Python files using a single-pass visitor."""
         try:
             tree = ast.parse(content)
         except SyntaxError:
             result.findings.append(f"Syntax error in {path}")
             return
 
-        functions = [
-            n for n in ast.walk(tree)
-            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-        ]
-        classes = [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
+        visitor = _SinglePassMetricsVisitor()
+        visitor.visit(tree)
 
-        # Check function complexity (rough: count branches)
-        for func in functions:
-            branch_count = sum(
-                1
-                for node in ast.walk(func)
-                if isinstance(node, (ast.If, ast.For, ast.While, ast.Try, ast.ExceptHandler))
-            )
+        # Check function complexity (count branches) & thin wrappers
+        for func, branch_count in visitor.functions:
             if branch_count > 15:
                 result.findings.append(
                     f"High complexity ({branch_count} branches) in {path}:{func.name}"
                 )
-
-        # Check for empty classes (possible stubs)
-        for cls in classes:
-            body_stmts = [
-                s for s in cls.body
-                if not isinstance(s, (ast.Pass, ast.Expr))
-                or (isinstance(s, ast.Expr) and not isinstance(s.value, ast.Constant))
-            ]
-            if len(body_stmts) == 0:
-                result.findings.append(f"Empty class {cls.name} in {path} (possible stub)")
-
-        # Detect functions that just call an API and return
-        for func in functions:
             if len(func.body) <= 3:
                 source_segment = ast.get_source_segment(content, func)
                 if source_segment and any(
@@ -170,7 +189,17 @@ class CodeAnalyzer:
                         f"Thin API wrapper: {func.name} in {path}"
                     )
 
-    def _check_ci_cd(self) -> bool:
+        # Check for empty classes (possible stubs)
+        for cls in visitor.classes:
+            body_stmts = [
+                s for s in cls.body
+                if not isinstance(s, (ast.Pass, ast.Expr))
+                or (isinstance(s, ast.Expr) and not isinstance(s.value, ast.Constant))
+            ]
+            if len(body_stmts) == 0:
+                result.findings.append(f"Empty class {cls.name} in {path} (possible stub)")
+
+    def _check_ci_cd(self, manifest_paths: list[str] | None = None) -> bool:
         """Check if CI/CD configuration exists."""
         ci_indicators = [
             ".github/workflows",
@@ -180,8 +209,10 @@ class CodeAnalyzer:
             "azure-pipelines.yml",
             ".travis.yml",
         ]
-        for entry in self._loader.manifest:
-            path_norm = entry["path"].replace("\\", "/").lower()
+        paths = manifest_paths if manifest_paths is not None else [
+            e["path"].replace("\\", "/").lower() for e in self._loader.manifest
+        ]
+        for path_norm in paths:
             for indicator in ci_indicators:
                 if indicator in path_norm:
                     return True

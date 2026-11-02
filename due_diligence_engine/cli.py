@@ -6,6 +6,8 @@ Commands:
   report      - Generate report from a previous analysis
   purge       - Securely delete analysis data
   leaderboard - Show scoring leaderboard across analyses
+  doctor      - Diagnose the local environment for running DDE
+  mcp         - Start the native Model Context Protocol (MCP) server
 """
 
 from __future__ import annotations
@@ -831,6 +833,14 @@ def doctor() -> None:
         console.print(Panel(
             "[bold green]All checks passed.[/bold green] Environment is fully configured.",
             title="Doctor: OK", border_style="green"))
+
+
+@cli.command("mcp")
+@click.option("--transport", default="stdio", type=click.Choice(["stdio"]), help="MCP transport protocol (default: stdio)")
+def mcp_cmd(transport: str) -> None:
+    """Start the Due Diligence Engine MCP server over stdio."""
+    from due_diligence_engine.mcp_server import run_stdio_mcp_server
+    run_stdio_mcp_server()
 
 
 def _display_score_summary(result, score) -> None:

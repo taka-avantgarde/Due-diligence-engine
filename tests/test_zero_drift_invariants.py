@@ -76,11 +76,13 @@ def test_version_ssot_invariant():
         )
         assert f"v{version}" in content, f"{r_name} missing v{version} mention"
 
-    # Scorecard HTML template parity and zero legacy version
-    tpl_root = (_ROOT / "templates" / "scorecard.html").read_text(encoding="utf-8")
+    # Scorecard HTML template single SSOT and zero legacy version
+    assert not (_ROOT / "templates" / "scorecard.html").exists(), (
+        "Duplicate root templates/scorecard.html must not exist; package template is sole SSOT"
+    )
     tpl_pkg = (_PKG / "report" / "templates" / "scorecard.html").read_text(encoding="utf-8")
-    assert tpl_root == tpl_pkg, "Root and package scorecard.html templates must be byte-for-byte identical"
-    assert "v0.1.0" not in tpl_root, "scorecard.html template contains stale hardcoded v0.1.0"
+    assert "v0.1.0" not in tpl_pkg, "scorecard.html template contains stale hardcoded v0.1.0"
+    assert "{{ version" in tpl_pkg, "scorecard.html must render dynamic version"
 
 
 # ==============================================================================
@@ -384,4 +386,212 @@ def test_dependency_and_sdk_contract_invariant():
             assert param in sig.parameters or any(
                 p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
             )
+
+
+def test_pricing_tier_unification_invariant():
+    """Verify estimate_cost and estimate_provider_cost return identical results across tiers."""
+    c1 = config.estimate_cost("haiku", 200_000, 10_000)
+    c2 = providers.estimate_provider_cost("claude", 200_000, 10_000, model_id="claude-haiku-5-5")
+    assert c1 == pytest.approx(0.125)
+    assert c2 == pytest.approx(0.125)
+
+    s1 = config.estimate_cost("sonnet", 50_000, 10_000)
+    s2 = providers.estimate_provider_cost("claude", 50_000, 10_000, model_id="claude-sonnet-5-5")
+    assert s1 == pytest.approx(s2)
+
+
+def test_consulting_score_reconciliation_and_strict_validation():
+    """Verify 5-dimension score reconciliation and strict consulting submission validation."""
+    from due_diligence_engine.prompt.response_parser import (
+        parse_consulting_dict,
+        validate_consulting_submission,
+    )
+
+    # Empty dict must be rejected by strict validation
+    valid_empty, errs_empty, _ = validate_consulting_submission({})
+    assert not valid_empty
+    assert len(errs_empty) > 0
+
+    # Contradictory overall_score=95 / grade=A when all 5 dimensions are 80.0 must reconcile to 80.0 / B
+    contradictory = {
+        "project_name": "ScoreCheckApp",
+        "executive_summary": "Detailed summary for validation.",
+        "dimension_scores": {
+            "technical_originality": {"score": 80.0, "rationale": "ok"},
+            "technology_advancement": {"score": 80.0, "rationale": "ok"},
+            "implementation_depth": {"score": 80.0, "rationale": "ok"},
+            "architecture_quality": {"score": 80.0, "rationale": "ok"},
+            "claim_consistency": {"score": 80.0, "rationale": "ok"},
+        },
+        "overall_score": 95.0,
+        "grade": "A",
+    }
+    valid_ok, errs_ok, warns_ok = validate_consulting_submission(contradictory)
+    assert valid_ok, f"Unexpected validation errors: {errs_ok}"
+    assert len(warns_ok) > 0
+
+    parsed = parse_consulting_dict(contradictory)
+    assert parsed.overall_score == pytest.approx(80.0)
+    assert parsed.grade == "B"
+
+
+def test_application_api_and_mcp_server_e2e(tmp_path):
+    """Verify Shared Application API (api.py) and Native MCP Server (mcp_server.py) end-to-end."""
+    from due_diligence_engine.mcp_server import handle_mcp_message
+
+    sample_repo = tmp_path / "sample_repo"
+    sample_repo.mkdir()
+    (sample_repo / "README.md").write_text("# SampleProject\nFast, secure service.\n", encoding="utf-8")
+    (sample_repo / "app.py").write_text("def add(a: int, b: int) -> int:\n    return a + b\n", encoding="utf-8")
+
+    # 1. MCP initialize
+    init_resp = handle_mcp_message({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
+    assert init_resp is not None
+    assert init_resp["result"]["serverInfo"]["name"] == "due-diligence-engine"
+
+    # 2. MCP tools/list
+    tools_resp = handle_mcp_message({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
+    tool_names = {t["name"] for t in tools_resp["result"]["tools"]}
+    assert {
+        "dde_prepare_audit",
+        "dde_list_evidence",
+        "dde_read_evidence",
+        "dde_verify_sites",
+        "dde_validate_report",
+        "dde_render_report",
+        "dde_close_audit",
+    }.issubset(tool_names)
+
+    # 3. MCP resources/list & resources/read
+    res_list = handle_mcp_message({"jsonrpc": "2.0", "id": 3, "method": "resources/list", "params": {}})
+    res_uris = {r["uri"] for r in res_list["result"]["resources"]}
+    assert "dde://schemas/consulting/v1" in res_uris
+
+    res_read = handle_mcp_message({
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "resources/read",
+        "params": {"uri": "dde://schemas/consulting/v1"},
+    })
+    assert "dimension_scores" in res_read["result"]["contents"][0]["text"]
+
+    # 4. Call dde_prepare_audit -> dde_list_evidence -> dde_read_evidence -> dde_validate_report -> dde_render_report -> dde_close_audit
+    prep = handle_mcp_message({
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "tools/call",
+        "params": {
+            "name": "dde_prepare_audit",
+            "arguments": {"target": str(sample_repo), "lang": "en", "skip_git": True},
+        },
+    })
+    assert not prep["result"]["isError"]
+    prep_data = prep["result"]["structuredContent"]
+    audit_id = prep_data["audit_id"]
+    snapshot_sha256 = prep_data["snapshot_sha256"]
+
+    ev_list = handle_mcp_message({
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "tools/call",
+        "params": {"name": "dde_list_evidence", "arguments": {"audit_id": audit_id}},
+    })
+    files = ev_list["result"]["structuredContent"]["files"]
+    assert len(files) >= 2
+    first_fid = files[0]["file_id"]
+
+    ev_read = handle_mcp_message({
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+            "name": "dde_read_evidence",
+            "arguments": {"audit_id": audit_id, "file_id": first_fid, "start_line": 1, "max_lines": 50},
+        },
+    })
+    assert not ev_read["result"]["isError"]
+    assert ev_read["result"]["structuredContent"]["content"]
+
+    report_payload = {
+        "project_name": "SampleProject",
+        "executive_summary": "Clean architecture and tested functions.",
+        "dimension_scores": {
+            "technical_originality": {"score": 82.0, "rationale": "Solid design"},
+            "technology_advancement": {"score": 80.0, "rationale": "Modern stack"},
+            "implementation_depth": {"score": 84.0, "rationale": "Complete"},
+            "architecture_quality": {"score": 86.0, "rationale": "Modular"},
+            "claim_consistency": {"score": 88.0, "rationale": "Verified"},
+        },
+        "overall_score": 84.0,
+        "grade": "B",
+    }
+    val_resp = handle_mcp_message({
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+            "name": "dde_validate_report",
+            "arguments": {
+                "audit_id": audit_id,
+                "snapshot_sha256": snapshot_sha256,
+                "report": report_payload,
+            },
+        },
+    })
+    assert not val_resp["result"]["isError"]
+    val_data = val_resp["result"]["structuredContent"]
+    assert val_data["valid"] is True
+    validation_id = val_data["validation_id"]
+
+    out_dir = tmp_path / "pdf_out"
+    render_resp = handle_mcp_message({
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+            "name": "dde_render_report",
+            "arguments": {
+                "audit_id": audit_id,
+                "validation_id": validation_id,
+                "output_dir": str(out_dir),
+                "lang": "en",
+            },
+        },
+    })
+    assert not render_resp["result"]["isError"]
+    pdf_info = render_resp["result"]["structuredContent"]
+    assert Path(pdf_info["pdf_path"]).exists()
+    assert pdf_info["bytes"] > 5000
+
+    close_resp = handle_mcp_message({
+        "jsonrpc": "2.0",
+        "id": 10,
+        "method": "tools/call",
+        "params": {"name": "dde_close_audit", "arguments": {"audit_id": audit_id}},
+    })
+    assert not close_resp["result"]["isError"]
+    assert close_resp["result"]["structuredContent"]["closed"] is True
+
+
+def test_governance_ssot_and_maintenance_gate():
+    """Verify ATLAS.md, AGENTS.md, .gemini/settings.json, .agents/skills, .agents/rules, and maintenance check."""
+    from due_diligence_engine.maintenance import run_quick_check
+
+    assert not (_ROOT / "GEMINI.md").exists(), "ATLAS G0: GEMINI.md must not exist in repo (unified in ATLAS.md)"
+    for doc in ("ATLAS.md", "AGENTS.md", ".gemini/settings.json", "CLAUDE.md", "scripts/agent_handoff.sh", ".agents/hooks.json"):
+        assert (_ROOT / doc).exists(), f"Missing required governance file: {doc}"
+
+    for skill in ("dde-audit", "dde-consulting-report", "dde-dev-change", "dde-dev-pdf-qa", "dde-dev-release"):
+        skill_file = _ROOT / ".agents" / "skills" / skill / "SKILL.md"
+        assert skill_file.exists(), f"Missing skill: {skill_file}"
+        text = skill_file.read_text(encoding="utf-8")
+        assert text.startswith("---"), f"Skill {skill} must have YAML frontmatter"
+
+    for rule in ("00_ssot_invariants.md", "10_security_boundaries.md", "20_pdf_typography.md"):
+        rule_file = _ROOT / ".agents" / "rules" / rule
+        assert rule_file.exists(), f"Missing rule: {rule_file}"
+
+    ok, errors = run_quick_check(_ROOT)
+    assert ok, f"Maintenance quick check failed: {errors}"
+
 

@@ -42,3 +42,6 @@ jobs:
 
       - name: Run test suite (with coverage)
         run: pytest tests/ -q --cov=due_diligence_engine --cov-report=term-missing
+
+      - name: Run maintenance SSOT check
+        run: python -m due_diligence_engine.maintenance check --profile quick

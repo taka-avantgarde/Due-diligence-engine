@@ -1,5 +1,24 @@
 # Due Diligence Engine — プロジェクト規約 / Project Conventions
 
+> **Canonical SSOT**: 本リポジトリの正本規約およびアーキテクチャ定義は [`ATLAS.md`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/ATLAS.md) です。  
+> すべてのエージェントおよび開発者は `ATLAS.md` を最優先の規範として従ってください。
+
+---
+
+## 🛠 MCP サーバーとエージェントスキル / Native MCP & Skills
+
+- **Native MCP Server (`dde mcp`)**:
+  - `python3 -m due_diligence_engine.cli mcp` または `dde mcp` で起動する標準 Model Context Protocol サーバー。
+  - 監査ライフサイクルツール (`dde_prepare_audit`, `dde_list_evidence`, `dde_read_evidence`, `dde_verify_sites`, `dde_validate_report`, `dde_render_report`, `dde_close_audit`) およびスキーマリソース (`dde://schemas/consulting/v1`) を提供。
+- **エージェントスキル (`.agents/skills/`)**:
+  - `dde-audit`: MCP ツール経由でのコードベース監査フロー。
+  - `dde-consulting-report`: 24ページ企業買収・M&Aデューデリジェンス PDF レポート生成（14言語対応）。
+  - `dde-dev-change`: バージョン・モデル・価格・README等の変更と検証フロー。
+  - `dde-dev-pdf-qa`: ReportLab PDF レンダリング・RTL・多言語フォント QA フロー。
+  - `dde-dev-release`: リリース前ゲート検査・パッケージング検証・セキュリティ監査フロー。
+
+---
+
 ## ⚠️ ドキュメント同期（必須） / Doc Sync (MANDATORY)
 
 - README は **6 言語すべてを同期更新**すること:
@@ -36,7 +55,14 @@
 
 ## テスト / Tests
 
-- 変更後は必ず `python3 -m pip install -e .` 済みの環境で `python3 -m pytest tests/ -q` を実行（144 件 pass が基準）。
+- 変更後は必ず `python3 -m pip install -e .` 済みの環境で以下を実行:
+  ```bash
+  # 1. 整合性・メンテナスチェック
+  python3 -m due_diligence_engine.maintenance check --profile quick
+
+  # 2. テストスイート（160+ 件 pass が基準）
+  python3 -m pytest tests/ -q
+  ```
 - CI（`.github/workflows/tests.yml`）が push/PR ごとに pytest を実行する（ubuntu / Python 3.11・3.12・3.13、Windows / macOS も含む）。
 - モデル ID の整合は `tests/test_model_ids.py` が保護（日付サフィックス禁止・`config.MODELS` 以外でのハードコード禁止）。
 - レッドフラグの誤検知ゼロ原則（ヒューリスティック誤検知のサイレント破棄・実コード欠陥のみ出力・パーサー安全弁 `_filter_red_flags`）は `tests/test_consulting_pdf.py::TestRedFlagZeroFalsePositiveNoise` が保護。

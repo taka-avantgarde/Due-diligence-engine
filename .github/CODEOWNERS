@@ -4,20 +4,11 @@
 # Default: all files
 * @taka-avantgarde
 
-# Critical: scoring logic (evaluation criteria)
-src/score/ @taka-avantgarde
-templates/evaluation.md @taka-avantgarde
-
-# Critical: billing and pricing
-src/saas/billing.py @taka-avantgarde
-src/config.py @taka-avantgarde
-
-# Critical: security and data handling
-src/purge/ @taka-avantgarde
-src/saas/github_oauth.py @taka-avantgarde
-src/saas/auth.py @taka-avantgarde
-
-# Critical: deployment
-Dockerfile @taka-avantgarde
-firebase.json @taka-avantgarde
-.firebaserc @taka-avantgarde
+# Critical: core package modules
+/due_diligence_engine/score/ @taka-avantgarde
+/due_diligence_engine/config.py @taka-avantgarde
+/due_diligence_engine/ai/ @taka-avantgarde
+/due_diligence_engine/purge/ @taka-avantgarde
+/due_diligence_engine/ingest/ @taka-avantgarde
+/due_diligence_engine/mcp_server.py @taka-avantgarde
+/.github/workflows/ @taka-avantgarde

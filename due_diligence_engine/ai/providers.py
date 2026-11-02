@@ -19,6 +19,7 @@ from due_diligence_engine.config import (
     MODELS,
     PROVIDER_COSTS,
     PROVIDER_MODEL_COSTS,
+    calculate_token_cost,
 )
 
 logger = logging.getLogger(__name__)
@@ -346,17 +347,8 @@ def estimate_provider_cost(
     Returns:
         推定コスト（USD）。
     """
-    input_tokens = max(0, int(input_tokens))
-    output_tokens = max(0, int(output_tokens))
-
-    if model_id and model_id in PROVIDER_MODEL_COSTS:
-        costs = PROVIDER_MODEL_COSTS[model_id]
-    else:
-        costs = PROVIDER_COSTS.get(provider_name, {"input": 0.0, "output": 0.0})
-
-    input_cost = (input_tokens / 1_000_000) * costs.get("input", 0.0)
-    output_cost = (output_tokens / 1_000_000) * costs.get("output", 0.0)
-    return round(input_cost + output_cost, 6)
+    target = model_id if (model_id and model_id in PROVIDER_MODEL_COSTS) else provider_name
+    return round(calculate_token_cost(target, input_tokens, output_tokens), 6)
 
 
 def _parse_json_response(text: str) -> dict[str, Any]:

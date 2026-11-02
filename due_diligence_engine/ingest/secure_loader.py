@@ -49,6 +49,9 @@ IGNORED_DIRS = {
     ".next", ".nuxt", "target", "vendor",
 }
 
+# Explicitly allowed dot directories for CI/CD and AI agent configurations
+ALLOWED_DOT_DIRS = {".github", ".circleci", ".agents", ".claude", ".codex", ".gemini"}
+
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB per file
 
 
@@ -503,10 +506,18 @@ class SecureLoader:
             dirs[:] = [
                 d for d in dirs
                 if d not in IGNORED_DIRS
-                and not (d.startswith(".") and d not in {".github", ".circleci"})
+                and not (d.startswith(".") and d not in ALLOWED_DOT_DIRS)
                 and not (Path(root) / d).is_symlink()
             ]
             for fname in files:
+                fname_lower = fname.lower()
+                if (
+                    fname_lower == "settings.local.json"
+                    or fname_lower.endswith(".key")
+                    or fname_lower.endswith(".pem")
+                    or fname_lower.startswith(".env")
+                ):
+                    continue
                 file_path = Path(root) / fname
                 if file_path.is_symlink():
                     continue

@@ -1,0 +1,2 @@
+project_doc_fallback_filenames = ["ATLAS.md", "Atlas.md", "CLAUDE.md"]
+project_doc_max_bytes = 131072

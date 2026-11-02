@@ -419,6 +419,10 @@ _PDF_I18N = {
         "src_col_num": "#",
         "src_col_url": "Source URL",
         "src_none": "No external sources were recorded for this analysis.",
+        "ai_provider_analysis": "AI Provider Analysis",
+        "provider_score_comparison": "Provider Score Comparison",
+        "avg_short": "Avg",
+        "evidence": "Evidence",
     },
     "ja": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -638,6 +642,10 @@ _PDF_I18N = {
         "src_col_num": "#",
         "src_col_url": "ソース URL",
         "src_none": "本分析では外部ソースの記録はありません。",
+        "ai_provider_analysis": "AIプロバイダー分析",
+        "provider_score_comparison": "プロバイダースコア比較",
+        "avg_short": "平均",
+        "evidence": "証拠",
     },
     "es": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -844,6 +852,10 @@ _PDF_I18N = {
         "src_col_num": "#",
         "src_col_url": "URL de la fuente",
         "src_none": "No se registraron fuentes externas para este análisis.",
+        "ai_provider_analysis": "Análisis de Proveedores de IA",
+        "provider_score_comparison": "Comparación de Puntuaciones de Proveedores",
+        "avg_short": "Prom.",
+        "evidence": "Evidencia",
     },
 }
 
@@ -918,6 +930,38 @@ _DIM_NAME_MAP = {
     "architecture_quality": "Architecture Quality (incl. Security)",
     "claim_consistency": "Claim Consistency",
 }
+
+
+def inspect_flowables_scale(elements: list[Any], min_scale: float = 0.75) -> list[str]:
+    """Inspect KeepInFrame instances in elements and return warnings if scale < min_scale."""
+    from reportlab.platypus import KeepInFrame
+
+    warnings: list[str] = []
+
+    def _walk(item: Any, path: str = "root") -> None:
+        if isinstance(item, KeepInFrame):
+            scale = getattr(item, "_scale", 1.0)
+            if scale < min_scale:
+                name = getattr(item, "name", None) or getattr(item, "_content", [None])[0] or "unnamed"
+                warnings.append(
+                    f"KeepInFrame ({path}: {name}) scale factor {scale:.2f} is below minimum {min_scale:.2f}"
+                )
+        if hasattr(item, "_content") and isinstance(item._content, (list, tuple)):
+            for i, child in enumerate(item._content):
+                _walk(child, f"{path}._content[{i}]")
+        if hasattr(item, "_flowables") and isinstance(item._flowables, (list, tuple)):
+            for i, child in enumerate(item._flowables):
+                _walk(child, f"{path}._flowables[{i}]")
+        if hasattr(item, "_cellvalues") and isinstance(item._cellvalues, (list, tuple)):
+            for r_idx, row in enumerate(item._cellvalues):
+                if isinstance(row, (list, tuple)):
+                    for c_idx, cell in enumerate(row):
+                        _walk(cell, f"{path}[{r_idx}][{c_idx}]")
+
+    for idx, el in enumerate(elements):
+        _walk(el, f"elements[{idx}]")
+
+    return warnings
 
 
 def _wrap_lines(text: str, max_chars_per_line: int, max_lines: int = 2) -> list[str]:
@@ -1383,7 +1427,11 @@ class PDFReportGenerator:
 
     def _dim_name(self, name: str) -> str:
         """Get dimension name in the current language."""
-        return self._maybe_reshape(_DIM_NAME_MAPS.get(self._lang, {}).get(name, name))
+        lookup = _DIM_NAME_MAP.get(name, name)
+        translated = _DIM_NAME_MAPS.get(self._lang, {}).get(lookup)
+        if not translated:
+            translated = _DIM_NAME_MAPS.get(self._lang, {}).get(name, lookup)
+        return self._maybe_reshape(translated)
 
     def _font_normal(self) -> str:
         """Normal-weight font for the current language (CJK-aware)."""
@@ -1683,8 +1731,7 @@ class PDFReportGenerator:
         t = self._t
         elements: list = []
 
-        ai_title = "AIプロバイダー分析" if self._lang == "ja" else "AI Provider Analysis"
-        elements.append(Paragraph(ai_title, s["heading1"]))
+        elements.append(Paragraph(t["ai_provider_analysis"], s["heading1"]))
         elements.append(
             HRFlowable(width="100%", thickness=1, color=COLOR_BORDER, spaceAfter=4 * mm)
         )
@@ -1725,8 +1772,7 @@ class PDFReportGenerator:
 
         if valid_providers:
             elements.append(Spacer(1, 4 * mm))
-            comparison_title = "プロバイダースコア比較" if self._lang == "ja" else "Provider Score Comparison"
-            elements.append(Paragraph(comparison_title, s["heading2"]))
+            elements.append(Paragraph(t["provider_score_comparison"], s["heading2"]))
 
             # v0.3: 5 dimensions (security_posture merged into architecture_quality)
             dim_keys = [
@@ -1734,32 +1780,16 @@ class PDFReportGenerator:
                 "implementation_depth", "architecture_quality",
                 "claim_consistency",
             ]
-            dim_labels_en = {
-                "technical_originality": "Originality",
-                "technology_advancement": "Advancement",
-                "implementation_depth": "Implementation",
-                "architecture_quality": "Arch. + Security",
-                "claim_consistency": "Consistency",
-            }
-            dim_labels_ja = {
-                "technical_originality": "独自性",
-                "technology_advancement": "先進性",
-                "implementation_depth": "実装深度",
-                "architecture_quality": "設計+セキュリティ",
-                "claim_consistency": "整合性",
-            }
-            dim_labels = dim_labels_ja if self._lang == "ja" else dim_labels_en
 
             # ヘッダー行
             header = [t.get("dimension", "Dimension")]
             for name, _ in valid_providers:
                 header.append(name.capitalize())
-            avg_label = "平均" if self._lang == "ja" else "Avg"
-            header.append(avg_label)
+            header.append(t["avg_short"])
 
             table_data = [header]
             for key in dim_keys:
-                row = [dim_labels.get(key, key)]
+                row = [self._dim_name(key)]
                 scores = []
                 for _, r in valid_providers:
                     score_val = r.dimension_scores.get(key, 0)
@@ -1770,8 +1800,7 @@ class PDFReportGenerator:
                 table_data.append(row)
 
             # コスト行
-            cost_label = "コスト (USD)" if self._lang == "ja" else "Cost (USD)"
-            cost_row = [cost_label]
+            cost_row = [f"{t['api_cost']} (USD)"]
             total_cost = 0.0
             for _, r in valid_providers:
                 cost_row.append(f"${r.cost_usd:.4f}")
@@ -1847,7 +1876,7 @@ class PDFReportGenerator:
                 elements.append(Paragraph(self._esc_text(flag.description), s["flag_desc"]))
 
                 if flag.evidence:
-                    evidence_label = "\u8a3c\u62e0" if self._lang == "ja" else "Evidence"
+                    evidence_label = t.get("evidence", "Evidence")
                     evidence_text = f"{evidence_label}: " + "; ".join(flag.evidence[:3])
                     elements.append(Paragraph(self._esc_text(evidence_text), s["flag_desc"]))
 

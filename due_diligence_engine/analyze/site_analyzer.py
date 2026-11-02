@@ -86,7 +86,8 @@ def _is_safe_url(url: str) -> bool:
     return is_safe
 
 
-_DNS_LOCK = threading.RLock()
+_DNS_PIN_LOCK = threading.RLock()
+_DNS_LOCK = _DNS_PIN_LOCK
 _DNS_ACTIVE_COUNT: int = 0
 _DNS_ORIG_GETADDRINFO = None
 _DNS_PIN_STACK: list[tuple[str, list]] = []
@@ -138,7 +139,7 @@ def _pinned_dns_context(pinned_host: str | None, pinned_addr_info: list):
     global _DNS_ACTIVE_COUNT, _DNS_ORIG_GETADDRINFO
     token = ((pinned_host or "").lower(), list(pinned_addr_info or []))
 
-    with _DNS_LOCK:
+    with _DNS_PIN_LOCK:
         if _DNS_ACTIVE_COUNT == 0:
             _DNS_ORIG_GETADDRINFO = socket.getaddrinfo
             socket.getaddrinfo = _dispatch_safe_getaddrinfo
@@ -148,7 +149,7 @@ def _pinned_dns_context(pinned_host: str | None, pinned_addr_info: list):
     try:
         yield
     finally:
-        with _DNS_LOCK:
+        with _DNS_PIN_LOCK:
             if token in _DNS_PIN_STACK:
                 _DNS_PIN_STACK.remove(token)
             _DNS_ACTIVE_COUNT -= 1

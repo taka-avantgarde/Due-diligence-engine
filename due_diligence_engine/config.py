@@ -267,6 +267,51 @@ def get_config() -> Config:
     return Config.from_env()
 
 
+def calculate_token_cost(
+    model_or_provider: str,
+    input_tokens: int,
+    output_tokens: int,
+    saas_multiplier: float = 1.0,
+) -> float:
+    """Calculate token cost for any known model ID or provider tier.
+
+    Args:
+        model_or_provider: Model ID, tier name ('haiku', 'sonnet', 'fable'),
+                           or provider name ('claude', 'gemini', 'chatgpt').
+        input_tokens: Number of input tokens.
+        output_tokens: Number of output tokens.
+        saas_multiplier: SaaS markup multiplier (default 1.0).
+
+    Returns:
+        Cost in USD.
+    """
+    input_tokens = max(0, int(input_tokens))
+    output_tokens = max(0, int(output_tokens))
+
+    if model_or_provider in MODELS:
+        model_id = MODELS[model_or_provider].model_id
+    elif model_or_provider in BYOK_DEFAULT_MODELS:
+        model_id = BYOK_DEFAULT_MODELS[model_or_provider]
+    else:
+        model_id = model_or_provider
+
+    costs = PROVIDER_MODEL_COSTS.get(model_id) or PROVIDER_COSTS.get(model_or_provider)
+    if not costs:
+        return 0.0
+
+    input_rate = costs.get("input", 0.0)
+    output_rate = costs.get("output", 0.0)
+
+    # Tier rate for Claude Haiku 5.5 when input exceeds 100k tokens
+    if model_id == "claude-haiku-5-5" and input_tokens > 100_000:
+        input_rate = 0.50
+        output_rate = 2.50
+
+    input_cost = (input_tokens / 1_000_000) * input_rate
+    output_cost = (output_tokens / 1_000_000) * output_rate
+    return (input_cost + output_cost) * saas_multiplier
+
+
 def estimate_cost(
     model_tier: str,
     input_tokens: int,
@@ -284,19 +329,7 @@ def estimate_cost(
     Returns:
         Estimated cost in USD.
     """
-    model = MODELS.get(model_tier)
-    if not model:
+    if model_tier not in MODELS:
         raise ValueError(f"Unknown model tier: {model_tier}")
 
-    input_tokens = max(0, int(input_tokens))
-    output_tokens = max(0, int(output_tokens))
-
-    input_rate = model.input_cost_per_mtok
-    output_rate = model.output_cost_per_mtok
-    if model_tier == "haiku" and input_tokens > 100_000:
-        input_rate = 0.50
-        output_rate = 2.50
-
-    input_cost = (input_tokens / 1_000_000) * input_rate
-    output_cost = (output_tokens / 1_000_000) * output_rate
-    return (input_cost + output_cost) * saas_multiplier
+    return calculate_token_cost(model_tier, input_tokens, output_tokens, saas_multiplier)

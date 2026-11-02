@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "hooks": [
+    {
+      "name": "ssot-quick-check",
+      "event": "post-edit",
+      "command": "python3 -m due_diligence_engine.maintenance check --profile quick",
+      "description": "Run quick SSOT consistency check after file modifications"
+    },
+    {
+      "name": "verify-gate",
+      "event": "verify",
+      "command": "python3 -m due_diligence_engine.maintenance check --profile quick && pytest tests/ -q",
+      "description": "Verification gate command executed before closing tasks"
+    }
+  ]
+}
