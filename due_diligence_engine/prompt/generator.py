@@ -611,7 +611,7 @@ def _get_stage_context_en(stage: str) -> str:
             "- Red flags: Compliance gaps, scalability bottlenecks\n"
         ),
     }
-    return contexts.get(stage, (
+    return contexts.get(stage.replace("-", "_"), (
         "## Stage Context\n\n"
         "The startup's development stage was not specified. "
         "When evaluating, consider whether the findings are appropriate "
@@ -656,7 +656,7 @@ def _get_stage_context_ja(stage: str) -> str:
             "- この段階でのレッドフラグ: コンプライアンス不備、スケーラビリティの壁\n"
         ),
     }
-    return contexts.get(stage, (
+    return contexts.get(stage.replace("-", "_"), (
         "## ステージ別の判断基準\n\n"
         "スタートアップの開発ステージが指定されていません。\n"
         "評価時は、発見事項がそのステージ（シード → シリーズA → シリーズB → グロース）\n"
@@ -2352,7 +2352,7 @@ class PromptGenerator:
 
     def __init__(self, lang: str = "en", stage: str = "unknown"):
         self.lang = lang
-        self.stage = stage
+        self.stage = stage.replace("-", "_")
 
     def generate(
         self,

@@ -6,6 +6,7 @@ the structured JSON output produced by IDE AI (Claude Code, Cursor, etc.).
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import math
@@ -41,6 +42,33 @@ from due_diligence_engine.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+CANONICAL_DIMENSIONS = (
+    "technical_originality", "technology_advancement", "implementation_depth",
+    "architecture_quality", "claim_consistency",
+)
+DIMENSION_ALIASES = {
+    "implementation_capability": "implementation_depth",
+    "market_readiness": "claim_consistency",
+}
+
+
+def _normalize_dimensions(raw: dict[str, Any], *, strict: bool = False) -> dict[str, Any]:
+    normalized: dict[str, Any] = {}
+    for key, value in raw.items():
+        canonical = DIMENSION_ALIASES.get(key, key)
+        if canonical not in CANONICAL_DIMENSIONS:
+            if strict:
+                raise ValueError(f"Unknown dimension '{key}'")
+            continue
+        item = dict(value) if isinstance(value, dict) else {"score": value}
+        if "reasoning" in item:
+            item.setdefault("rationale", item.pop("reasoning"))
+        if canonical in normalized and normalized[canonical] != item:
+            raise ValueError(f"Conflicting values for dimension '{canonical}' and its alias")
+        normalized[canonical] = item
+    return normalized
 
 
 def parse_consulting_json(file_path: str | Path) -> ConsultingReport:
@@ -159,30 +187,9 @@ def _clamp(value: Any, lo: float, hi: float, default: float = 0.0) -> float:
         if not math.isfinite(f):
             return fallback
         return max(lo, min(hi, f))
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, OverflowError):
         return fallback
 
-
-_FALSE_POSITIVE_PATTERNS = (
-    "[dismissed]",
-    "[false positive]",
-    "[false-positive]",
-    "(false positive)",
-    "(false-positive)",
-    "dismissed as false",
-    "heuristic false positive",
-    "heuristic false-positive",
-    "no actual risk",
-    "誤検知・無効化",
-    "誤検知/無効化",
-    "無効化済",
-    "実質的なリスクなし",
-    "実質的リスクなし",
-    "this is a false positive",
-    "is a false positive",
-    "this is a false-positive",
-    "is a false-positive",
-)
 
 _DISMISSED_FALSE_POSITIVE_RE = re.compile(
     r"(?:"
@@ -239,10 +246,14 @@ def _filter_red_flags(raw_flags: Any) -> list[dict[str, Any]]:
         title = str(norm_item.get("title", "")).lower()
         desc = str(norm_item.get("description", "")).lower()
         combined = f"{title} {desc}"
-        if any(neg in combined for neg in _NEGATION_PATTERNS):
+        if any(str(item.get(k, "")).lower() in {"dismissed", "false_positive", "none"}
+               for k in ("status", "disposition")):
+            continue
+        if (any(neg in combined for neg in _NEGATION_PATTERNS)
+                or re.search(r"\b(?:confirmed|exploitable|exploited)\b|vulnerability present|injection present|脆弱性.*確認", combined)):
             filtered.append(norm_item)
             continue
-        if any(pat in combined for pat in _FALSE_POSITIVE_PATTERNS) or _DISMISSED_FALSE_POSITIVE_RE.search(combined):
+        if any(_DISMISSED_FALSE_POSITIVE_RE.match(text.strip()) for text in (title, desc)):
             continue
         filtered.append(norm_item)
     return filtered
@@ -254,7 +265,7 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
     # --- dimension scores ---
     raw_dims = data.get("dimension_scores") if isinstance(data.get("dimension_scores"), dict) else {}
     dimension_scores: dict[str, EnhancedDimensionScore] = {}
-    for key, val in raw_dims.items():
+    for key, val in _normalize_dimensions(raw_dims).items():
         if isinstance(val, dict):
             dimension_scores[key] = EnhancedDimensionScore(
                 score=_clamp(val.get("score", 0), 0, 100),
@@ -389,29 +400,11 @@ def _build_report(data: dict[str, Any]) -> ConsultingReport:
     competitor_rationales = _parse_competitor_rationales(data.get("competitor_rationales"))
 
     overall_score = _clamp(data.get("overall_score", 0), 0, 100)
-    grade = str(data.get("grade", "") or "").strip().upper()
-
-    def _canonical_grade(score: float) -> str:
-        if score >= 90:
-            return "A"
-        elif score >= 75:
-            return "B"
-        elif score >= 60:
-            return "C"
-        elif score >= 40:
-            return "D"
-        else:
-            return "F"
-
-    if dimension_scores:
-        dim_mean = sum(d.score for d in dimension_scores.values()) / len(dimension_scores)
-        if data.get("overall_score") is None or abs(dim_mean - overall_score) > 5.0:
-            overall_score = round(dim_mean, 1)
-            grade = _canonical_grade(overall_score)
-        elif len(dimension_scores) >= 5:
-            grade = _canonical_grade(overall_score)
-    if not grade:
-        grade = _canonical_grade(overall_score)
+    computed_avg = sum(d.score for d in dimension_scores.values()) / 5.0
+    if data.get("overall_score") is None or abs(overall_score - computed_avg) > 0.5:
+        overall_score = round(computed_avg, 1)
+    grade = ("A" if overall_score >= 90 else "B" if overall_score >= 75 else
+             "C" if overall_score >= 60 else "D" if overall_score >= 40 else "F")
 
     tech_level_summary = data.get("tech_level_summary") if isinstance(data.get("tech_level_summary"), dict) else {}
     glossary_additions = data.get("glossary_additions") if isinstance(data.get("glossary_additions"), list) else []
@@ -463,57 +456,47 @@ def validate_consulting_submission(
     if not isinstance(executive_summary, str) or not executive_summary.strip():
         errors.append("Missing or empty 'executive_summary'")
 
+    normalized = copy.deepcopy(data)
     raw_dims = data.get("dimension_scores")
     if not isinstance(raw_dims, dict):
         errors.append("Missing or invalid 'dimension_scores' (must be a dictionary)")
     else:
-        required_groups = [
-            ("technical_originality", ["technical_originality"]),
-            ("technology_advancement", ["technology_advancement"]),
-            ("implementation_depth", ["implementation_depth", "implementation_capability"]),
-            ("architecture_quality", ["architecture_quality"]),
-            ("claim_consistency", ["claim_consistency", "market_readiness"]),
-        ]
+        try:
+            dims = _normalize_dimensions(raw_dims, strict=True)
+            normalized["dimension_scores"] = dims
+            for key in CANONICAL_DIMENSIONS:
+                if key not in dims:
+                    errors.append(f"Missing required dimension '{key}'")
+                    continue
+                score = dims[key].get("score")
+                if (not isinstance(score, (int, float)) or isinstance(score, bool)
+                        or not 0 <= score <= 100 or not math.isfinite(score)):
+                    errors.append(f"Dimension '{key}' score must be a finite number in [0, 100]")
+            if not errors:
+                mean = sum(dims[k]["score"] for k in CANONICAL_DIMENSIONS) / 5.0
+                overall = data.get("overall_score", mean)
+                if (not isinstance(overall, (int, float)) or isinstance(overall, bool)
+                        or not 0 <= overall <= 100 or not math.isfinite(overall)):
+                    errors.append("overall_score must be a finite number in [0, 100]")
+                elif abs(overall - mean) > 0.5:
+                    warnings.append(f"overall_score ({overall:.1f}) differs from 5-dimension mean ({mean:.1f}) by > 0.5; will be reconciled")
+        except (ValueError, TypeError) as exc:
+            errors.append(str(exc))
 
-        scores: list[float] = []
-        for canonical, aliases in required_groups:
-            matched_key = next((k for k in aliases if k in raw_dims), None)
-            if not matched_key:
-                errors.append(
-                    f"Missing required dimension '{canonical}' (checked: {', '.join(aliases)})"
-                )
-                continue
-
-            val = raw_dims[matched_key]
-            score_val = None
-            if isinstance(val, dict):
-                score_val = val.get("score")
-            elif isinstance(val, (int, float)) and not isinstance(val, bool):
-                score_val = val
-
-            if score_val is None or not isinstance(score_val, (int, float)) or isinstance(score_val, bool):
-                errors.append(f"Dimension '{matched_key}' score must be a number, got {val!r}")
-            elif not (0 <= score_val <= 100):
-                errors.append(f"Dimension '{matched_key}' score {score_val} is outside valid range [0, 100]")
-            else:
-                scores.append(float(score_val))
-
-        if len(scores) == 5:
-            dim_mean = sum(scores) / 5.0
-            overall = data.get("overall_score")
-            if overall is not None:
-                try:
-                    overall_val = float(overall)
-                    if abs(dim_mean - overall_val) > 5.0:
-                        warnings.append(
-                            f"overall_score ({overall_val:.1f}) differs from 5-dimension mean ({dim_mean:.1f}) "
-                            f"by > 5.0; will be reconciled to 5-dimension mean"
-                        )
-                except (ValueError, TypeError):
-                    warnings.append(f"overall_score {overall!r} is not numeric; will be derived from dimension mean")
-
-    is_valid = len(errors) == 0
-    return is_valid, errors, warnings
+    # Validate the raw nested structures before the tolerant legacy parser can
+    # coerce or silently discard malformed fields. JSON mode preserves enums.
+    try:
+        from pydantic import ValidationError
+        encoded = json.dumps(normalized, allow_nan=False)
+        ConsultingReport.model_validate_json(encoded, strict=True)
+    except (ValidationError, ValueError, TypeError) as exc:
+        errors.append(f"Invalid report schema: {exc}")
+    if not errors:
+        try:
+            _build_report(normalized)
+        except (ValueError, TypeError, AttributeError, KeyError) as exc:
+            errors.append(f"Invalid report structure: {exc}")
+    return not errors, errors, warnings
 
 
 def _parse_data_freshness(raw: Any) -> DataFreshness | None:

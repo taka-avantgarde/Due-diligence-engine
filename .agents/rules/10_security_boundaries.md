@@ -24,7 +24,7 @@
 
 ---
 
-## 3. Cryptographic Storage & DoD 5220.22-M Purge (`purge/purger.py`)
+## 3. Cryptographic Storage & DoD 5220.22-M Purge (`purge/secure_delete.py`)
 - **Encryption at Rest**:
   - Ephemeral analysis artifacts and decrypted caches must be stored with restricted POSIX permissions (`0o700` directory, `0o600` files).
   - Sensitive tokens and evidence are encrypted via Fernet keys generated in memory.
@@ -42,3 +42,7 @@
 ## 4. Zero-Retention AI Provider Guardrail (`ai/providers.py`)
 - In all API requests to upstream LLMs (Anthropic, Google Gemini, OpenAI), `store=False` (or provider equivalent zero-retention parameter) MUST be enforced.
 - Target proprietary code fragments must never be sent to training queues, public prompt logs, or unencrypted persistent endpoints.
+
+PDF language SSOT: `en`, `ja`, `es`, `fr`, `de`, `pt`, `nl`, `it`, `id`, `zh`, `ko`, `vi`, `th`, `ar`.
+
+Use non-truncating `r+b` overwrites in 1 MB chunks; fsync every pass. Failed cleanup remains retryable. Certificates sign versioned canonical JSON and expose `signature` and `public_key` separately from `verification_hash`. Site requests disable ambient proxies and cap decoded bodies at 2,000,000 bytes.

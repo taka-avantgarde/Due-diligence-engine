@@ -38,7 +38,7 @@ gen = PDFReportGenerator()
 
 # Generate representative language samples
 for lang in ['en', 'ja', 'ar', 'th', 'vi']:
-    out = Path(f'/tmp/dde_qa_{lang}.pdf')
+    out = Path(f'dde_output/dde_qa_{lang}.pdf')
     gen.generate_to_file(ar, out, lang=lang)
     print(f'Rendered: {out} ({out.stat().st_size} bytes)')
 "
@@ -60,3 +60,11 @@ When inspecting generated PDF files:
 4. **Layout Safety**:
    - In Drawing components, confirm text strings do not overflow past the canvas boundary.
    - Confirm `KeepInFrame` cells properly scale down content rather than spilling into unintended page breaks.
+
+## Native MCP contract
+
+Run `dde mcp`; use the seven-tool lifecycle in [dde-audit](../dde-audit/SKILL.md).
+Use `target`, opaque `file_id`, `snapshot_sha256`, `report`, `validation_id` and `output_dir`
+as defined there. The report uses `technical_originality`, `technology_advancement`,
+`implementation_depth`, `architecture_quality`, `claim_consistency`: 0–100, 20% each.
+PDF language keys: `en`, `ja`, `es`, `fr`, `de`, `pt`, `nl`, `it`, `id`, `zh`, `ko`, `vi`, `th`, `ar`.

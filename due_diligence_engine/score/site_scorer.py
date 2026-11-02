@@ -9,7 +9,7 @@
 6. Innovation Score     (0.20) — 独自技術の主張 vs バズワード密度
 7. Credibility Signals  (0.10) — 内部整合性・誇張度・具体性
 
-AI搭載モード: ANTHROPIC_API_KEY が設定されている場合、Claude APIによるセマンティック分析を使用。
+AI搭載モード: use_ai=True と ANTHROPIC_API_KEY を明示した場合、Claude APIによる分析を使用。
 フォールバック: APIキーがない場合はregexベースのヒューリスティック分析を使用。
 """
 
@@ -164,11 +164,14 @@ Return ONLY a JSON object (no markdown, no explanation) in this exact format:
 class SiteScorer:
     """サイト単体の100点満点スコアリングエンジン。
 
-    ANTHROPIC_API_KEY が設定されている場合:
+    use_ai=True かつ ANTHROPIC_API_KEY が設定されている場合:
         Claude APIによるセマンティック分析（業種・言語を問わず正確に評価）
     APIキーがない場合:
         regexベースのヒューリスティック分析（フォールバック）
     """
+
+    def __init__(self, use_ai: bool = False) -> None:
+        self._use_ai = use_ai
 
     def score(self, site_result: SiteAnalysisResult) -> Score:
         """サイト分析結果から7軸スコアを算出。
@@ -180,7 +183,7 @@ class SiteScorer:
             7軸スコア・総合点・グレード付きのScoreオブジェクト
         """
         anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
-        if anthropic_key:
+        if self._use_ai and anthropic_key:
             try:
                 return self._score_with_ai(site_result, anthropic_key)
             except Exception as e:

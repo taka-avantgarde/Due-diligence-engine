@@ -16,6 +16,7 @@ import ipaddress
 import json
 import re
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -24,8 +25,6 @@ from due_diligence_engine import config
 from due_diligence_engine.ai import providers
 from due_diligence_engine.analyze.site_analyzer import _is_ip_safe
 from due_diligence_engine.prompt.response_parser import parse_consulting_json
-from types import SimpleNamespace
-
 from due_diligence_engine.report.pdf_generator import (
     _DIM_NAME_MAPS,
     _PDF_GRADE_REC,
@@ -435,9 +434,11 @@ def test_consulting_score_reconciliation_and_strict_validation():
     assert parsed.grade == "B"
 
 
-def test_application_api_and_mcp_server_e2e(tmp_path):
+def test_application_api_and_mcp_server_e2e(tmp_path, monkeypatch):
     """Verify Shared Application API (api.py) and Native MCP Server (mcp_server.py) end-to-end."""
     from due_diligence_engine.mcp_server import handle_mcp_message
+
+    monkeypatch.setattr(config.Config, "from_env", lambda: config.Config(temp_dir=tmp_path / "ingest"))
 
     sample_repo = tmp_path / "sample_repo"
     sample_repo.mkdir()
@@ -595,3 +596,590 @@ def test_governance_ssot_and_maintenance_gate():
     assert ok, f"Maintenance quick check failed: {errors}"
 
 
+
+# S1–S8: public behavior and security boundaries.
+@pytest.fixture
+def audit_factory(tmp_path, monkeypatch):
+    from due_diligence_engine import api
+    monkeypatch.setattr(api, "_ACTIVE_SESSIONS", {})
+    monkeypatch.setattr(config.Config, "from_env", lambda: config.Config(temp_dir=tmp_path / "ingest"))
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "app.py").write_text("def add(a, b):\n    return a + b\n", encoding="utf-8")
+    (source / "README.md").write_text("# Sample 日本語\n", encoding="utf-8")
+
+    def prepare(**kwargs):
+        return api.prepare_audit(source, skip_git=True, **kwargs)
+
+    yield api, source, prepare
+    api.close_all_sessions()
+
+
+def _submission(score=80):
+    from due_diligence_engine.prompt.response_parser import CANONICAL_DIMENSIONS
+    return {"project_name": "Sample", "executive_summary": "Evidence based assessment.",
+            "dimension_scores": {key: score for key in CANONICAL_DIMENSIONS}}
+
+
+def test_manifest_snapshot_content_binding_and_defensive_copy(audit_factory):
+    import hashlib
+    api, source, prepare = audit_factory
+    first = prepare(stage="series-a")
+    assert first["stage"] == "series_a"
+    session = api._ACTIVE_SESSIONS[first["audit_id"]]
+    entries = session.loader.manifest
+    entries[0]["path"] = "tampered"
+    assert session.loader.manifest[0]["path"] != "tampered"
+    expected = []
+    for item in api.list_evidence(first["audit_id"])["files"]:
+        content = (source / item["path"]).read_bytes()
+        assert item["sha256"] == hashlib.sha256(content).hexdigest()
+        assert type(item["size_bytes"]) is int and item["size_bytes"] == len(content)
+        read = api.read_evidence(first["audit_id"], item["file_id"])
+        assert all(read[key] == item[key] for key in ("sha256", "size_bytes", "category"))
+        expected.append({"path": item["path"], "sha256": item["sha256"], "size_bytes": len(content)})
+    assert first["snapshot_sha256"] == hashlib.sha256(json.dumps(
+        expected, sort_keys=True, separators=(",", ":")
+    ).encode()).hexdigest()
+    assert prepare()["snapshot_sha256"] == first["snapshot_sha256"]
+    (source / "app.py").write_text("def sub(a, b):\n    return a - b\n")
+    assert prepare()["snapshot_sha256"] != first["snapshot_sha256"]
+
+
+@pytest.mark.parametrize("failure", ["ingest", "analysis", "registration"])
+def test_prepare_failure_always_destroys_loader(audit_factory, monkeypatch, failure):
+    api, source, prepare = audit_factory
+    loaders = []
+    loader_class = api.SecureLoader
+    def make_loader(*args, **kwargs):
+        loader = loader_class(*args, **kwargs)
+        loaders.append(loader)
+        return loader
+    monkeypatch.setattr(api, "SecureLoader", make_loader)
+    def fail(*args, **kwargs):
+        raise RuntimeError("injected failure")
+    if failure == "ingest":
+        original = loader_class.load_directory
+        def failed_ingest(self, source):
+            original(self, source)
+            fail()
+        monkeypatch.setattr(loader_class, "load_directory", failed_ingest)
+    elif failure == "analysis":
+        monkeypatch.setattr(api.AnalysisEngine, "run", fail)
+    else:
+        class FailingRegistry(dict):
+            __setitem__ = fail
+        monkeypatch.setattr(api, "_ACTIVE_SESSIONS", FailingRegistry())
+    with pytest.raises(RuntimeError, match="injected failure"):
+        prepare()
+    assert not api._ACTIVE_SESSIONS
+    assert loaders[0]._work_dir is None
+    assert loaders[0]._fernet is None
+
+
+def test_github_shorthand_uses_url_ingestion(audit_factory, monkeypatch):
+    api, source, _ = audit_factory
+    seen = []
+    def clone(self, target):
+        seen.append(target)
+        return self.load_directory(source)
+    monkeypatch.setattr(api.SecureLoader, "load_from_url", clone)
+    api.prepare_audit("owner/repo", skip_git=True)
+    assert seen == ["owner/repo"]
+
+
+def test_retryable_partial_purge_and_certificate(audit_factory, monkeypatch):
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    from due_diligence_engine.models import PurgeCertificate
+    api, source, prepare = audit_factory
+    audit = prepare()
+    session = api._ACTIVE_SESSIONS[audit["audit_id"]]
+    encrypted = list(session.loader.work_dir.rglob("*.enc"))
+    expected_bytes = sum(p.stat().st_size for p in encrypted) * 3
+    original = api.SecurePurger._secure_overwrite
+    calls = 0
+    def fail_second(self, path):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("disk unavailable")
+        return original(self, path)
+    monkeypatch.setattr(api.SecurePurger, "_secure_overwrite", fail_second)
+    with pytest.raises(OSError):
+        api.close_audit(audit["audit_id"])
+    assert session.state == "CLEANUP_FAILED"
+    assert session.loader.work_dir.exists()
+    with pytest.raises(KeyError):
+        api.read_evidence(audit["audit_id"], "f_0001")
+    response = api.close_audit(audit["audit_id"])
+    cert = PurgeCertificate.model_validate(response["purge_certificate"])
+    assert cert.files_purged == len(encrypted)
+    assert cert.bytes_overwritten == expected_bytes
+    key = serialization.load_pem_public_key(cert.public_key.encode())
+    key.verify(bytes.fromhex(cert.signature), cert._sign_payload(), ec.ECDSA(hashes.SHA256()))
+    assert audit["audit_id"] not in api._ACTIVE_SESSIONS
+    assert (source / "app.py").exists()
+
+
+def test_session_ttl_and_lru(audit_factory, monkeypatch):
+    api, _, prepare = audit_factory
+    monkeypatch.setattr(api, "MAX_ACTIVE_SESSIONS", 2)
+    first, second = prepare(), prepare()
+    api.list_evidence(first["audit_id"])
+    third = prepare()
+    assert second["audit_id"] not in api._ACTIVE_SESSIONS
+    assert first["audit_id"] in api._ACTIVE_SESSIONS
+    api._ACTIVE_SESSIONS[first["audit_id"]].last_accessed -= api.SESSION_TTL_SECONDS + 1
+    api.list_evidence(third["audit_id"])
+    assert first["audit_id"] not in api._ACTIVE_SESSIONS
+
+
+def test_read_holds_session_lock_against_close(audit_factory, monkeypatch):
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    api, _, prepare = audit_factory
+    audit = prepare()
+    session = api._ACTIVE_SESSIONS[audit["audit_id"]]
+    entered, release, closing, purging = (threading.Event() for _ in range(4))
+    read = session.loader.read_file
+    purge = api.SecurePurger.purge_directory
+    def blocking_read(path):
+        entered.set()
+        assert release.wait(3)
+        return read(path)
+    def observed_purge(self, *args, **kwargs):
+        purging.set()
+        return purge(self, *args, **kwargs)
+    def close():
+        closing.set()
+        return api.close_audit(audit["audit_id"])
+    monkeypatch.setattr(session.loader, "read_file", blocking_read)
+    monkeypatch.setattr(api.SecurePurger, "purge_directory", observed_purge)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        reader = pool.submit(api.read_evidence, audit["audit_id"], "f_0001")
+        assert entered.wait(3)
+        closer = pool.submit(close)
+        try:
+            assert closing.wait(3)
+            assert not purging.wait(0.05)
+        finally:
+            release.set()
+        assert reader.result(timeout=3)["content"]
+        assert closer.result(timeout=3)["closed"]
+
+
+def test_three_pass_overwrite_in_place_chunked_and_synced(tmp_path, monkeypatch):
+    import os
+
+    from due_diligence_engine.purge import secure_delete
+    path = tmp_path / "secret"
+    size = 1024 * 1024 + 17
+    path.write_bytes(b"a" * size)
+    inode = path.stat().st_ino
+    passes = []
+    real_sync = os.fsync
+    def sync(fd):
+        assert os.fstat(fd).st_ino == inode and os.fstat(fd).st_size == size
+        passes.append(os.pread(fd, size, 0))
+        real_sync(fd)
+    chunks = []
+    def random(n):
+        chunks.append(n)
+        return b"r" * n
+    monkeypatch.setattr(secure_delete.os, "fsync", sync)
+    monkeypatch.setattr(secure_delete.os, "urandom", random)
+    assert secure_delete.secure_overwrite_file(path) == size * 3
+    assert passes == [b"\x00" * size, b"\xff" * size, b"r" * size]
+    assert chunks == [1024 * 1024, 17]
+    assert not path.exists()
+
+
+def test_canonical_certificate_has_no_pipe_collision():
+    from cryptography.exceptions import InvalidSignature
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    from due_diligence_engine.models import PurgeCertificate
+    from due_diligence_engine.purge.secure_delete import SecurePurger
+    first = PurgeCertificate(analysis_id="a|b", project_name="c")
+    second = first.model_copy(update={"analysis_id": "a", "project_name": "b|c"})
+    assert first._sign_payload() != second._sign_payload()
+    SecurePurger()._sign_certificate(first)
+    key = serialization.load_pem_public_key(first.public_key.encode())
+    with pytest.raises(InvalidSignature):
+        key.verify(bytes.fromhex(first.signature), second._sign_payload(), ec.ECDSA(hashes.SHA256()))
+
+
+def test_canonical_dimensions_aliases_reasoning_and_score_reconciliation():
+    from due_diligence_engine.prompt.response_parser import (
+        parse_consulting_dict,
+        validate_consulting_submission,
+    )
+    report = _submission()
+    report["dimension_scores"]["implementation_capability"] = report["dimension_scores"].pop("implementation_depth")
+    report["dimension_scores"]["market_readiness"] = {"score": 80, "reasoning": "Verified"}
+    report["dimension_scores"].pop("claim_consistency")
+    report.update(overall_score=81, grade="A")
+    assert validate_consulting_submission(report)[0]
+    parsed = parse_consulting_dict(report)
+    assert parsed.overall_score == 80 and parsed.grade == "B"
+    assert parsed.dimension_scores["claim_consistency"].rationale == "Verified"
+    assert set(parsed.dimension_scores) == set(_submission()["dimension_scores"])
+    report["dimension_scores"]["extra"] = 100
+    assert not validate_consulting_submission(report)[0]
+    assert parse_consulting_dict(report).overall_score == 80
+    report["dimension_scores"]["implementation_depth"] = 10
+    with pytest.raises(ValueError, match="Conflicting"):
+        parse_consulting_dict(report)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf"), 10**400, True, "80"])
+def test_invalid_scores_return_validation_errors(value):
+    from due_diligence_engine.prompt.response_parser import (
+        validate_consulting_submission,
+    )
+    report = _submission(value)
+    assert not validate_consulting_submission(report)[0]
+    report = _submission()
+    report["overall_score"] = value
+    assert not validate_consulting_submission(report)[0]
+
+
+@pytest.mark.parametrize("field,value", [
+    ("swot", {"strengths": [{}]}), ("future_outlook", {"year_1": []}),
+    ("strategic_advice", {"immediate_actions": "invalid"}),
+    ("investment_thesis", {"key_risks": [42]}),
+    ("site_verification", {"items": ["invalid"]}),
+    ("competitive_analysis", {"markets": ["invalid"]}),
+    ("implementation_matrix", {"items": [{"statuses": [False]}]}),
+    ("atlas_four_axis", {"axes": [{"score": float("nan")}] }),
+])
+def test_nested_schema_rejected_before_parsing(field, value):
+    from due_diligence_engine.prompt.response_parser import (
+        validate_consulting_submission,
+    )
+    report = _submission()
+    report[field] = value
+    valid, errors, _ = validate_consulting_submission(report)
+    assert not valid and errors
+
+
+def test_false_positive_substrings_do_not_hide_confirmed_flags():
+    from due_diligence_engine.prompt.response_parser import _filter_red_flags
+    flags = [
+        {"title": "SQL injection", "description": "vendor claims false positive, but SQLi confirmed"},
+        {"title": "Exposure", "description": "Vendor says no actual risk despite reachable admin access"},
+        {"title": "[Dismissed] warning", "description": "SQL injection confirmed"},
+        {"title": "[Dismissed] warning", "description": "Test fixture"},
+        {"title": "Warning", "status": "false_positive"},
+    ]
+    assert _filter_red_flags(flags) == flags[:3]
+
+
+def test_validation_binding_and_render_immutability(audit_factory, tmp_path, monkeypatch):
+    import hashlib
+    api, _, prepare = audit_factory
+    audit = prepare()
+    report = _submission()
+    args = (audit["audit_id"], audit["snapshot_sha256"])
+    result = api.validate_report(*args, report=report)
+    assert re.fullmatch(r"val_[0-9a-f]{16}", result["validation_id"])
+    assert api.validate_report(*args, report=dict(reversed(list(report.items()))))["validation_id"] == result["validation_id"]
+    report["executive_summary"] = "Changed"
+    assert api.validate_report(*args, report=report)["validation_id"] != result["validation_id"]
+    another = prepare()
+    assert api.validate_report(another["audit_id"], another["snapshot_sha256"], report=_submission())["validation_id"] != result["validation_id"]
+    session = api._ACTIVE_SESSIONS[audit["audit_id"]]
+    before = session.analysis_result.model_dump()
+    pdf = b"%PDF-1.4 test bytes"
+    def generate(self, res, path, **kwargs):
+        res.code_analysis.findings.append("mutated by generator")
+        path.write_bytes(pdf)
+    monkeypatch.setattr(api.PDFReportGenerator, "generate_to_file", generate)
+    real_replace = api.os.replace
+    def replace_then_external_writer(src, dest):
+        real_replace(src, dest)
+        dest.write_bytes(b"changed after replacement")
+    monkeypatch.setattr(api.os, "replace", replace_then_external_writer)
+    rendered = api.render_report(audit["audit_id"], result["validation_id"], output_dir=tmp_path)
+    assert rendered["sha256"] == hashlib.sha256(pdf).hexdigest()
+    assert rendered["bytes"] == len(pdf)
+    assert session.analysis_result.model_dump() == before
+    with pytest.raises(ValueError, match="Unsupported PDF language"):
+        api.render_report(audit["audit_id"], result["validation_id"], lang="../../outside", output_dir=tmp_path)
+
+
+def test_sites_empty_default_and_cross_validation(audit_factory, monkeypatch):
+    from due_diligence_engine.analyze.site_analyzer import SiteAnalysisResult, SiteClaim
+    api, _, prepare = audit_factory
+    audit = prepare()
+    assert api.verify_sites(audit["audit_id"])["results"] == []
+    sr = SiteAnalysisResult(site_url="https://example.com", claims=[SiteClaim(category="security", claim="E2EE", source_url="https://example.com")])
+    monkeypatch.setattr(api.SiteAnalyzer, "analyze", lambda self, url: sr)
+    choices = []
+    class Scorer:
+        def __init__(self, use_ai):
+            choices.append(use_ai)
+        def score(self, result):
+            return SimpleNamespace(overall_score=50, grade="D")
+    monkeypatch.setattr(api, "SiteScorer", Scorer)
+    result = api.verify_sites(audit["audit_id"], [sr.site_url])
+    assert choices[-1] is False
+    assert result["cross_validation"]["contradictions"]
+    assert api._ACTIVE_SESSIONS[audit["audit_id"]].analysis_result.site_analysis.claims[0].category == "security"
+
+
+@pytest.mark.parametrize("finding", ["TODO encrypt", "E2EE missing", "unencrypted storage", "weak crypto", "E2EE not implemented", "E2EE is not supported"])
+def test_negative_crypto_findings_do_not_verify_e2ee(finding):
+    from due_diligence_engine.analyze.site_analyzer import (
+        SiteAnalysisResult,
+        SiteClaim,
+        cross_validate_site_vs_code,
+    )
+    site = SiteAnalysisResult(site_url="https://example.com", claims=[SiteClaim(category="security", claim="E2EE", source_url="https://example.com")])
+    cross = cross_validate_site_vs_code(site, {"languages": {}, "findings": [finding]})
+    assert not cross.verified_claims and cross.contradictions
+
+
+def test_site_response_limit_and_proxy_isolation(monkeypatch):
+    import httpx
+
+    from due_diligence_engine.analyze import site_analyzer as mod
+    client_class = httpx.Client
+    requests = []
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, headers={"content-type": "text/html"}, content=b"x" * (mod._MAX_RESPONSE_BYTES + 1))
+    def client(**kwargs):
+        assert kwargs["trust_env"] is False
+        return client_class(transport=httpx.MockTransport(handler), **kwargs)
+    monkeypatch.setattr(mod.httpx, "Client", client)
+    monkeypatch.setattr(mod, "_resolve_and_validate_url", lambda url: (True, "example.com", []))
+    result = mod.SiteAnalyzer().analyze("https://example.com")
+    assert result.pages_analyzed == 0
+    assert requests[0].headers["accept-encoding"] == "identity"
+
+
+@pytest.mark.parametrize("message,code", [
+    ({"id": 1, "method": "ping"}, -32600),
+    ({"jsonrpc": "1.0", "id": 1, "method": "ping"}, -32600),
+    ({"jsonrpc": "2.0", "id": True, "method": "ping"}, -32600),
+    ({"jsonrpc": "2.0", "id": 1, "method": 7}, -32600),
+    ({"jsonrpc": "2.0", "id": 1, "method": "ping", "params": []}, -32602),
+    ({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {}}, -32602),
+    ({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "dde_prepare_audit", "arguments": []}}, -32602),
+    ({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "dde_prepare_audit", "arguments": {"target": 3}}}, -32602),
+    ({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "dde_close_audit"}}, -32602),
+])
+def test_mcp_strict_envelope_and_arguments(message, code):
+    from due_diligence_engine.mcp_server import handle_mcp_message
+    assert handle_mcp_message(message)["error"]["code"] == code
+
+
+def test_mcp_notifications_null_batch_protocol_and_stage():
+    from due_diligence_engine.mcp_server import SUPPORTED_PROTOCOL_VERSIONS, MCPServer
+    recorded = []
+    api = SimpleNamespace(prepare_audit=lambda **kw: recorded.append(kw) or {})
+    server = MCPServer(api)
+    assert server.handle_mcp_message({"jsonrpc": "2.0", "method": "ping"}) is None
+    replies = server.handle_mcp_message([
+        {"jsonrpc": "2.0", "id": None, "method": "ping"},
+        {"jsonrpc": "2.0", "method": "ping"},
+        {"jsonrpc": "2.0", "id": 10**400, "method": "ping"},
+    ])
+    assert [r["id"] for r in replies] == [None, 10**400]
+    assert server.handle_mcp_message([])["error"]["code"] == -32600
+    for version in (*SUPPORTED_PROTOCOL_VERSIONS, "unknown"):
+        response = server.handle_mcp_message({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": version}})
+        assert response["result"]["protocolVersion"] == (version if version in SUPPORTED_PROTOCOL_VERSIONS else SUPPORTED_PROTOCOL_VERSIONS[0])
+    server.handle_mcp_message({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "dde_prepare_audit", "arguments": {"target": "owner/repo", "stage": "series-a"}}})
+    assert recorded == [{"target": "owner/repo", "stage": "series_a"}]
+
+
+@pytest.mark.parametrize("interrupt", [False, True])
+def test_stdio_always_closes_sessions(monkeypatch, interrupt):
+    import io
+
+    from due_diligence_engine import mcp_server
+    calls = []
+    class Input(io.StringIO):
+        def readline(self):
+            if interrupt:
+                raise KeyboardInterrupt
+            return ""
+    monkeypatch.setattr(mcp_server.sys, "stdin", Input())
+    mcp_server.run_stdio_mcp_server(SimpleNamespace(close_all_sessions=lambda: calls.append(True)))
+    assert calls == [True]
+
+
+def test_ast_complexity_isolates_nested_functions_and_classes():
+    import ast
+
+    from due_diligence_engine.analyze.code import _SinglePassMetricsVisitor
+    visitor = _SinglePassMetricsVisitor()
+    visitor.visit(ast.parse('''
+def outer():
+    if a:
+        pass
+    def inner():
+        try:
+            if a and b and c:
+                pass
+        except Exception:
+            pass
+    class Nested:
+        if a:
+            pass
+        def method(self):
+            with ctx:
+                return a if b else c
+'''))
+    assert {f.name: n for f, n in visitor.functions} == {"outer": 1, "inner": 4, "method": 2}
+
+
+@pytest.mark.parametrize("path,expected", [("latest.py", False), ("contest.py", False), ("testing.py", False), ("test_one.py", True), ("one_test.py", True), ("ui.test.tsx", True), ("ui.spec.js", True), ("tests/helpers.py", True), ("__tests__/x.js", True)])
+def test_test_filename_detection(path, expected):
+    from due_diligence_engine.analyze.code import CodeAnalyzer
+    assert CodeAnalyzer._check_tests(path) is expected
+
+
+def test_exception_classes_are_not_stubs():
+    from due_diligence_engine.analyze.code import CodeAnalyzer
+    from due_diligence_engine.models import CodeAnalysisResult
+    result = CodeAnalysisResult()
+    CodeAnalyzer(None)._analyze_python_ast("errors.py", "class A(Exception): pass\nclass B(A): pass\nclass C(builtins.ValueError): pass\nclass Stub: pass", result)
+    assert result.findings == ["Empty class Stub in errors.py (possible stub)"]
+
+
+def test_pdf_scale_and_long_risk_rows(tmp_path):
+    from reportlab.platypus import KeepInFrame, Paragraph, SimpleDocTemplate
+
+    from due_diligence_engine.report.pdf_generator import inspect_flowables_scale
+    gen = _make_generator()
+    small = KeepInFrame(100, 100, [Paragraph("test", gen._styles["body"])])
+    for scale in (0.5, 12.93):
+        small._scale = scale
+        assert inspect_flowables_scale([small])
+    cr = _make_consulting_report()
+    cr.investment_thesis.key_risks = [("Long evidence-based risk assessment. " * 100) for _ in range(12)]
+    cr.investment_thesis.key_upside = [("Substantial upside with detailed evidence. " * 100) for _ in range(12)]
+    flowables = gen._build_investment_thesis_page(cr)
+    SimpleDocTemplate(str(tmp_path / "risks.pdf")).build(flowables)
+    assert (tmp_path / "risks.pdf").stat().st_size > 1000
+
+
+def test_maintenance_profile_position_and_repo_cwd(monkeypatch):
+    from due_diligence_engine import maintenance
+    calls = []
+    monkeypatch.setattr(maintenance, "run_quick_check", lambda: (True, []))
+    monkeypatch.setattr(maintenance.subprocess, "run", lambda args, **kw: calls.append((args, kw)) or SimpleNamespace(returncode=0))
+    for argv in (["--profile", "release", "check"], ["check", "--profile", "release"]):
+        assert maintenance.main(argv) == 0
+    assert len(calls) == 2 and calls[0] == calls[1]
+    assert calls[0][1]["cwd"] == _ROOT
+
+
+def test_site_scorer_requires_explicit_ai_opt_in(monkeypatch):
+    from due_diligence_engine.analyze.site_analyzer import SiteAnalysisResult
+    from due_diligence_engine.score.site_scorer import SiteScorer
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-placeholder")
+    calls = []
+    monkeypatch.setattr(SiteScorer, "_score_with_ai", lambda *args: calls.append(True) or "ai")
+    site = SiteAnalysisResult(site_url="https://example.com")
+    assert SiteScorer().score(site) != "ai"
+    assert not calls
+    assert SiteScorer(use_ai=True).score(site) == "ai"
+
+
+def test_mcp_rejects_nonstandard_json_constants(monkeypatch):
+    import io
+
+    from due_diligence_engine import mcp_server
+    output = io.StringIO()
+    monkeypatch.setattr(mcp_server.sys, "stdin", io.StringIO('{"jsonrpc":"2.0","id":1,"method":"ping","params":{"x":NaN}}\n'))
+    monkeypatch.setattr(mcp_server.sys, "stdout", output)
+    mcp_server.run_stdio_mcp_server(SimpleNamespace(close_all_sessions=lambda: {}))
+    assert json.loads(output.getvalue())["error"]["code"] == -32700
+
+
+def test_pdf_dimension_markup_and_competitor_fallback():
+    from due_diligence_engine.models import Score, ScoreDimension
+    gen = _make_generator()
+    ar = _make_analysis_result(_make_consulting_report())
+    ar.score = Score(overall_score=80, grade="B", dimensions=[ScoreDimension(
+        name='<img src="file:///does-not-exist"/>', score=80, weight=1, rationale="Evidence",
+    )])
+    # Parsing an unescaped image tag would try opening its src.
+    gen._build_score_breakdown(ar)
+    cr = _make_consulting_report()
+    ca = cr.competitive_analysis
+    assert ca and ca.markets
+    ca.markets = [ca.markets[0]]
+    ca.markets[0].market_name = "Canada"
+    assert gen._build_competitive_analysis_pages(cr)
+
+
+def test_handoff_ids_transitions_and_failed_reverification(tmp_path):
+    import subprocess
+    script = (_ROOT / "scripts/agent_handoff.sh").read_text()
+    script = script.rsplit('main "$@"', 1)[0]
+    # Exercise the real command functions with a temporary ledger and stubbed
+    # gate/HEAD; never mutate the repository's orders or Git history.
+    prelude = script + '''
+ROOT="$1"
+HANDOFF_DIR="$ROOT/.dde_handoff"
+ORDER_DIR="$HANDOFF_DIR/orders"
+TASK_DIR="$HANDOFF_DIR/tasks"
+RESULT_DIR="$HANDOFF_DIR/results"
+STAMP=20000101
+git() { printf 'test-head\\n'; }
+'''
+    def run(commands):
+        return subprocess.run(["bash", "-c", prelude + commands, "test", str(tmp_path)], capture_output=True, text=True)
+    for invalid in ("../escape", "a/b", "x.md", "", "a b"):
+        import shlex
+        assert run("order_file " + shlex.quote(invalid)).returncode != 0
+    assert run('cmd_new fix scope\ncmd_ready 20000101_fix-scope\ncmd_claim 20000101_fix-scope --as codex').returncode == 0
+    for invalid_transition in ('cmd_ready 20000101_fix-scope', 'cmd_claim 20000101_fix-scope --as codex', 'cmd_done 20000101_fix-scope'):
+        assert run(invalid_transition).returncode != 0
+    assert run('cmd_check() { return 0; }; cmd_verify 20000101_fix-scope').returncode == 0
+    order = tmp_path / '.dde_handoff/orders/20000101_fix-scope.md'
+    assert 'verified: true' in order.read_text() and 'verified_sha: test-head' in order.read_text()
+    assert run('cmd_check() { die "failed gate"; }; cmd_verify 20000101_fix-scope').returncode != 0
+    assert 'verified: false' in order.read_text()
+    assert 'verified_sha: test-head' not in order.read_text()
+    assert run('cmd_done 20000101_fix-scope').returncode != 0
+    assert run('cmd_handback 20000101_fix-scope "gate failed"').returncode == 0
+    assert run('cmd_verify 20000101_fix-scope').returncode != 0
+
+
+def test_maintenance_detects_language_provider_and_hook_drift(monkeypatch):
+    from due_diligence_engine import maintenance
+    from due_diligence_engine.ai import providers
+    missing_lang = dict(maintenance._PDF_I18N)
+    missing_lang.pop("ja")
+    monkeypatch.setattr(maintenance, "_PDF_I18N", missing_lang)
+    monkeypatch.setattr(providers, "_DEFAULT_MODELS", {})
+    original_read = Path.read_text
+    def malformed_hooks(path, *args, **kwargs):
+        if path == _ROOT / ".agents/hooks.json":
+            return '{"version":"1.0","hooks":[{"name":"broken","event":4,"command":[]}]}'
+        return original_read(path, *args, **kwargs)
+    monkeypatch.setattr(Path, "read_text", malformed_hooks)
+    valid, errors = maintenance.run_quick_check(_ROOT)
+    assert not valid
+    assert any("_PDF_I18N must contain exactly" in e for e in errors)
+    assert any("BYOK_DEFAULT_MODELS" in e for e in errors)
+    assert any("hooks.json schema" in e for e in errors)
+
+
+def test_six_readmes_document_all_native_mcp_tools_and_gemini_context():
+    from due_diligence_engine.mcp_server import TOOL_DISPATCH_MAP
+    for lang in ("", ".ja", ".es", ".ar", ".fr", ".de"):
+        content = (_ROOT / f"README{lang}.md").read_text()
+        assert "dde mcp" in content
+        assert all(tool in content for tool in TOOL_DISPATCH_MAP)
+    settings = json.loads((_ROOT / ".gemini/settings.json").read_text())
+    assert settings["contextFileName"] == settings["context"]["fileName"] == "ATLAS.md"

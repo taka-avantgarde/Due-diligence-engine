@@ -49,7 +49,7 @@ def test_purge_file_empty_file(tmp_path):
     assert not p.exists()
 
 
-def test_secure_overwrite_uses_random_then_zero_pass(tmp_path, monkeypatch):
+def test_secure_overwrite_uses_one_random_pass(tmp_path, monkeypatch):
     purger = SecurePurger()  # construct before patching os.urandom
     real = os.urandom
     calls: list[int] = []
@@ -60,8 +60,8 @@ def test_secure_overwrite_uses_random_then_zero_pass(tmp_path, monkeypatch):
 
     monkeypatch.setattr(sd.os, "urandom", counting_urandom)
     purger.purge_file(_file(tmp_path, size=64))
-    # OVERWRITE_PASSES-1 random passes of `size`, final pass writes zeros.
-    assert calls == [64] * (OVERWRITE_PASSES - 1)
+    # Only the third pass is random; the first two use zeros and ones.
+    assert calls == [64]
 
 
 # ── purge_directory ──────────────────────────────────────────────────────────
@@ -93,8 +93,8 @@ def test_purge_directory_cert_is_signed(tmp_path):
     d.mkdir()
     (d / "f.py").write_bytes(b"z" * 10)
     cert = SecurePurger().purge_directory(d, analysis_id="A", project_name="P")
-    assert "|sig:" in cert.verification_hash
-    digest = cert.verification_hash.split("|sig:")[0]
+    assert cert.signature
+    digest = cert.verification_hash
     assert len(digest) == 64
     int(digest, 16)  # valid hex — raises ValueError otherwise
 
@@ -134,7 +134,7 @@ def test_export_certificate_writes_full_json(tmp_path):
                 "files_purged", "bytes_overwritten", "method", "verification_hash",
                 "operator", "public_key"):
         assert key in data
-    assert data["method"] == "cryptographic_erasure"
+    assert data["method"].startswith("DoD 5220.22-M")
     assert data["public_key"].startswith("-----BEGIN PUBLIC KEY-----")
 
 
@@ -150,11 +150,5 @@ def test_certificate_signature_verifies_with_exported_key(tmp_path):
     pem = json.loads(out.read_text(encoding="utf-8"))["public_key"]
     pubkey = load_pem_public_key(pem.encode())
 
-    digest, sig_hex = cert.verification_hash.split("|sig:")
-    signed = (
-        f"{cert.certificate_id}|{cert.analysis_id}|{cert.project_name}|"
-        f"{cert.purge_timestamp.isoformat()}|{cert.files_purged}|"
-        f"{cert.bytes_overwritten}|{cert.method}|{cert.operator}|{digest}"
-    ).encode()
-    # Raises cryptography.exceptions.InvalidSignature if verification fails.
-    pubkey.verify(bytes.fromhex(sig_hex), signed, ec.ECDSA(hashes.SHA256()))
+    # Canonical JSON signs the payload without delimiter ambiguity.
+    pubkey.verify(bytes.fromhex(cert.signature), cert._sign_payload(), ec.ECDSA(hashes.SHA256()))

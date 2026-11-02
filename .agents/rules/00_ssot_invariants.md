@@ -49,3 +49,5 @@
   - `_DIM_NAME_MAPS`
   - `_PDF_GRADE_REC`
 - Incomplete translations or missing keys will fail `TestMultilingualReports` and `test_fourteen_language_pdf_dictionary_parity_invariant`.
+
+PDF language SSOT: `en`, `ja`, `es`, `fr`, `de`, `pt`, `nl`, `it`, `id`, `zh`, `ko`, `vi`, `th`, `ar`.

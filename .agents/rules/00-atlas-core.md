@@ -1,6 +1,8 @@
 ---
-description: Core due-diligence-engine rules and architecture.
+description: Core Due Diligence Engine Architecture, Governance, and SSOT Invariants.
 trigger: always_on
 ---
 
-@[CLAUDE.md](../../CLAUDE.md)
+@[ATLAS.md](../../ATLAS.md)
+
+PDF language SSOT: `en`, `ja`, `es`, `fr`, `de`, `pt`, `nl`, `it`, `id`, `zh`, `ko`, `vi`, `th`, `ar`.

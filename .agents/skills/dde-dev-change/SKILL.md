@@ -50,3 +50,11 @@ python3 -m due_diligence_engine.maintenance check --profile quick
 .venv/bin/python -m pytest tests/test_zero_drift_invariants.py -v
 .venv/bin/python -m pytest tests/ -q
 ```
+
+## Native MCP contract
+
+Run `dde mcp`; use the seven-tool lifecycle in [dde-audit](../dde-audit/SKILL.md).
+Use `target`, opaque `file_id`, `snapshot_sha256`, `report`, `validation_id` and `output_dir`
+as defined there. The report uses `technical_originality`, `technology_advancement`,
+`implementation_depth`, `architecture_quality`, `claim_consistency`: 0–100, 20% each.
+PDF language keys: `en`, `ja`, `es`, `fr`, `de`, `pt`, `nl`, `it`, `id`, `zh`, `ko`, `vi`, `th`, `ar`.

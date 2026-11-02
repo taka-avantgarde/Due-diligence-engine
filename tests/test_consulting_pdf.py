@@ -1020,6 +1020,7 @@ class TestRedFlagZeroFalsePositiveNoise:
             "red_flags": [
                 {
                     "title": "Gitコミット履歴の誤検知・無効化済",
+                    "status": "dismissed",
                     "description": "リベースによる日時ズレであり実質的リスクなし",
                     "severity": "low",
                     "business_impact": "なし",
@@ -1032,6 +1033,7 @@ class TestRedFlagZeroFalsePositiveNoise:
                 },
                 {
                     "title": "Excessive buzzwords (実質的なリスクなし)",
+                    "disposition": "false_positive",
                     "description": "Marketing text only.",
                     "severity": "low",
                     "business_impact": "none",

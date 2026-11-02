@@ -907,7 +907,7 @@ _DIM_NAME_ES = {
 }
 
 # Per-language dimension-name maps (en and unmapped langs use the English name as-is)
-_DIM_NAME_MAPS = {"ja": _DIM_NAME_JA, "es": _DIM_NAME_ES}
+_DIM_NAME_MAPS = {"en": {name: name for name in _DIM_NAME_JA}, "ja": _DIM_NAME_JA, "es": _DIM_NAME_ES}
 
 # Merge in additional Latin-script language packs (fr / de / pt / nl / it / id).
 # These render with the standard Helvetica font (WinAnsi), so no font work needed.
@@ -941,6 +941,7 @@ def inspect_flowables_scale(elements: list[Any], min_scale: float = 0.75) -> lis
     def _walk(item: Any, path: str = "root") -> None:
         if isinstance(item, KeepInFrame):
             scale = getattr(item, "_scale", 1.0)
+            scale = 1.0 / scale if scale > 1.0 else scale
             if scale < min_scale:
                 name = getattr(item, "name", None) or getattr(item, "_content", [None])[0] or "unnamed"
                 warnings.append(
@@ -1719,7 +1720,7 @@ class PDFReportGenerator:
         elements.append(Spacer(1, 6 * mm))
         for dim in score.dimensions:
             elements.append(
-                Paragraph(f"<b>{self._dim_name(dim.name)}</b> ({dim.score:.0f}/100)", s["body"])
+                Paragraph(f"<b>{_esc(self._dim_name(dim.name))}</b> ({dim.score:.0f}/100)", s["body"])
             )
             elements.append(Paragraph(self._esc_text(dim.rationale), s["body_small"]))
 
@@ -3194,25 +3195,16 @@ class PDFReportGenerator:
             elements.append(Paragraph(self._esc_text(thesis.rationale), s["body"]))
             elements.append(Spacer(1, 6 * mm))
 
-        # Two-column: Risks vs Upside (capped to avoid LayoutError on long strings)
-        def _cap(txt: str, max_len: int = 500) -> str:
-            val = str(txt or "").strip()
-            if len(val) > max_len:
-                return val[:max_len] + "..."
-            return val
-
-        risk_items = "".join(f"• {self._esc_text(_cap(r, 300))}<br/>" for r in thesis.key_risks[:12]) if thesis.key_risks else "—"
-        upside_items = "".join(f"• {self._esc_text(_cap(u, 300))}<br/>" for u in thesis.key_upside[:12]) if thesis.key_upside else "—"
-
-        risk_upside = Table(
-            [
-                [
-                    Paragraph(f"<b>{t['key_risks']}</b><br/>{risk_items}", s["body"]),
-                    Paragraph(f"<b>{t['key_upside']}</b><br/>{upside_items}", s["body"]),
-                ]
-            ],
-            colWidths=[225, 225],
-        )
+        # Each item is a separate row; long individual cells may split too.
+        risks, upside = thesis.key_risks, thesis.key_upside
+        rows = [[Paragraph(f"<b>{t['key_risks']}</b>", s["body"]),
+                 Paragraph(f"<b>{t['key_upside']}</b>", s["body"])]]
+        for index in range(max(len(risks), len(upside), 1)):
+            rows.append([
+                Paragraph("• " + self._esc_text(items[index]) if index < len(items) else "—", s["body"])
+                for items in (risks, upside)
+            ])
+        risk_upside = Table(rows, colWidths=[225, 225], repeatRows=1, splitByRow=1, splitInRow=1)
         risk_upside.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("LEFTPADDING", (0, 0), (-1, -1), 6),
@@ -4319,7 +4311,7 @@ class PDFReportGenerator:
         grid_rows = [
             ("Global", "US"),
             ("EMEA", "LATAM"),
-            ("Japan", "SEA"),
+            ("Japan" if "Japan" in market_charts else next(iter(market_charts)), "SEA"),
         ]
 
         cw = self._CELL_W

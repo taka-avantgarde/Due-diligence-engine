@@ -105,6 +105,26 @@ pip3 install --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-dili
 
 ---
 
+### خادم MCP الأصلي (`dde mcp`) ومهارات الوكلاء
+
+شغّل خادم stdio لوكيل البرمجة المتوافق مع MCP:
+
+```bash
+dde mcp
+```
+
+| الأداة | الوظيفة |
+|---|---|
+| `dde_prepare_audit` | إعداد لقطة للمستودع |
+| `dde_list_evidence` | عرض الأدلة ومعرّفات الملفات |
+| `dde_read_evidence` | قراءة الأدلة باستخدام معرّف الملف |
+| `dde_verify_sites` | التحقق من ادعاءات الموقع بتقييم استدلالي افتراضي |
+| `dde_validate_report` | التحقق من التقرير المرتبط باللقطة |
+| `dde_render_report` | إنشاء ملف PDF بعد التحقق |
+| `dde_close_audit` | محو البيانات المؤقتة وإرجاع شهادة موقّعة |
+
+توجد الإجراءات في `.agents/skills/dde-audit/` و`.agents/skills/dde-consulting-report/`. احتفظ بقيم `audit_id` و`snapshot_sha256` و`validation_id`. يتطلب التقييم بالذكاء الاصطناعي الخارجي تفعيل `use_ai=true` صراحةً؛ أغلق التدقيق دائمًا.
+
 ## 💭 كيف تحصل على أفضل النتائج
 
 > **باختصار**: شغّل أعلى مستوى من الذكاء الاصطناعي تملك صلاحية الوصول إليه في طرفية بيئة التطوير لديك،

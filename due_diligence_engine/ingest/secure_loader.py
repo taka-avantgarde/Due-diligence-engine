@@ -28,6 +28,7 @@ from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 
 from due_diligence_engine.config import Config
+from due_diligence_engine.purge.secure_delete import secure_overwrite_file
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ class SecureLoader:
         self._work_dir: Path | None = None
         self._clone_dir: Path | None = None
         self._git_repo_path: Path | None = None
-        self._manifest: list[dict[str, str]] = []
+        self._manifest: list[dict[str, str | int]] = []
 
     @property
     def work_dir(self) -> Path:
@@ -74,8 +75,8 @@ class SecureLoader:
         return self._work_dir
 
     @property
-    def manifest(self) -> list[dict[str, str]]:
-        return list(self._manifest)
+    def manifest(self) -> list[dict[str, str | int]]:
+        return [dict(entry) for entry in self._manifest]
 
     def _create_secure_temp(self, prefix: str = "dde_secure_") -> Path:
         """Create a temporary directory with restricted permissions.
@@ -299,17 +300,21 @@ class SecureLoader:
                 encrypted = self._fernet.encrypt(content)
                 dest.with_suffix(dest.suffix + ".enc").write_bytes(encrypted)
 
-                file_hash = hashlib.sha256(content).hexdigest()
-                self._manifest.append({
-                    "path": str(rel_path),
-                    "hash": file_hash,
-                    "size": str(len(content)),
-                    "type": _classify_file(file_path),
-                })
+                self._record_manifest(rel_path, content, _classify_file(file_path))
             except (PermissionError, OSError):
                 continue
 
         return self._work_dir
+
+    def _record_manifest(self, relative_path: Path, content: bytes, category: str) -> None:
+        digest = hashlib.sha256(content).hexdigest()
+        size = len(content)
+        self._manifest.append({
+            "path": relative_path.as_posix(),
+            "type": category, "category": category,
+            "size": size, "size_bytes": size,
+            "hash": digest, "sha256": digest, "content_hash": digest,
+        })
 
     def load_archive(self, archive_path: Path) -> Path:
         """Load a zip archive into the secure workspace.
@@ -384,11 +389,11 @@ class SecureLoader:
         encrypted = enc_path.read_bytes()
         return self._fernet.decrypt(encrypted)
 
-    def get_code_files(self) -> list[dict[str, str]]:
+    def get_code_files(self) -> list[dict[str, str | int]]:
         """Return manifest entries for code files only."""
         return [f for f in self._manifest if f["type"] == "code"]
 
-    def get_doc_files(self) -> list[dict[str, str]]:
+    def get_doc_files(self) -> list[dict[str, str | int]]:
         """Return manifest entries for document files only."""
         return [f for f in self._manifest if f["type"] == "doc"]
 
@@ -428,7 +433,7 @@ class SecureLoader:
 
     @staticmethod
     def _shred_tree(target: Path) -> int:
-        """Overwrite every file under ``target`` with random bytes, then remove
+        """Overwrite every file under ``target`` with three synced passes, then remove
         the whole tree. Returns the number of bytes overwritten.
 
         Shared by destroy() and the archive-staging cleanup so both teardown
@@ -442,31 +447,7 @@ class SecureLoader:
             for fname in files:
                 fpath = Path(root) / fname
                 try:
-                    if fpath.is_symlink():
-                        fpath.unlink()
-                        continue
-
-                    # Clear read-only attributes (e.g. git pack objects)
-                    try:
-                        fpath.chmod(stat.S_IRUSR | stat.S_IWUSR)
-                    except OSError:
-                        pass
-
-                    st = fpath.stat(follow_symlinks=False)
-                    if not stat.S_ISREG(st.st_mode):
-                        try:
-                            fpath.unlink()
-                        except OSError as e:
-                            shred_errors.append(e)
-                        continue
-
-                    size = st.st_size
-                    with open(fpath, "wb") as f:
-                        f.write(os.urandom(size))
-                        f.flush()
-                        os.fsync(f.fileno())
-                    bytes_overwritten += size
-                    fpath.unlink()
+                    bytes_overwritten += secure_overwrite_file(fpath)
                 except OSError as exc:
                     shred_errors.append(exc)
         # Only remove tree if all files were successfully overwritten/unlinked

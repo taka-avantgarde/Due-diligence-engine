@@ -43,7 +43,7 @@ To ensure supreme software engineering quality, rigorous peer review, and zero-d
 | Role | Assigned Model | Reasoning Effort | Responsibility |
 |---|---|---|---|
 | **Orchestrator / Architect / Root-Cause Analyst / Reviewer** | **Antigravity Gemini 4 Argon** (High)<br>+ **Astra Ultra** (`xhigh`) / **Astra Max** (`high`) | `high` / `xhigh` | Overall architectural decisions, Order definition, root-cause defect analysis, UX/design fidelity, and pre-merge independent verification. |
-| **Executor** | **Antigravity Gemini 3.8 Flash** | `low` / `medium` / `high` | Concrete code changes according to Order specifications, running tests, mechanical refactoring. **Never redesign or speculate**; if ambiguous, stop and hand back. |
+| **Executor** | **Astra Ultra** (`gpt-6-astra`) | `xhigh` | Concrete code changes according to Order specifications, running tests, mechanical refactoring. **Never redesign or speculate**; if ambiguous, stop and hand back. |
 
 ### Reasoning Effort Guidelines
 - **`low`**: Minor mechanical edits, single-file typo fixes, documentation synchronization.
@@ -75,8 +75,8 @@ The repository enforces strict mechanical invariants via `tests/test_zero_drift_
 | **Models & Pricing** | `due_diligence_engine/config.py` (`MODELS`, `PROVIDER_MODEL_COSTS`, `BYOK_DEFAULT_MODELS`) | `ai/providers.py` defaults, cost calculation routines, zero date-tagged legacy model IDs, zero unverified models. |
 | **HTML Templates** | `due_diligence_engine/report/templates/scorecard.html` | Canonical HTML template. Byte-for-byte parity with legacy root `templates/scorecard.html`. |
 | **Documentation** | Multilingual (6 Languages) | Every update must synchronize across `README.md` (EN), `README.ja.md` (JA), `README.es.md` (ES), `README.ar.md` (AR), `README.fr.md` (FR), `README.de.md` (DE). Localized CLI flags and zero stale strings. |
-| **PDF Dictionaries** | `due_diligence_engine/report/pdf_generator.py` & `i18n_packs.py` | Complete key parity across all 14 languages (`en`, `ja`, `es`, `fr`, `de`, `zh`, `ko`, `pt`, `it`, `ru`, `nl`, `ar`, `vi`, `th`) in `_PDF_I18N`, `_DIM_NAME_MAPS`, `_PDF_GRADE_REC`. |
-| **Security Boundaries** | `analyze/site_analyzer.py`, `purge/purger.py`, `ai/providers.py` | SSRF prevention (blocking RFC 6598 carrier-grade NAT & private IP ranges via `ip.is_global`), DoD 5220.22-M 3-pass wipe (`"r+b"`), Fernet encryption (`0o700`), ECDSA P-256 certs, fail-closed `store=False`. |
+| **PDF Dictionaries** | `due_diligence_engine/report/pdf_generator.py` & `i18n_packs.py` | Complete key parity across all 14 languages (`en`, `ja`, `es`, `fr`, `de`, `pt`, `nl`, `it`, `id`, `zh`, `ko`, `vi`, `th`, `ar`) in `_PDF_I18N`, `_DIM_NAME_MAPS`, `_PDF_GRADE_REC`. |
+| **Security Boundaries** | `analyze/site_analyzer.py`, `purge/secure_delete.py`, `ai/providers.py` | SSRF prevention (blocking RFC 6598 carrier-grade NAT & private IP ranges via `ip.is_global`), DoD 5220.22-M 3-pass wipe (`"r+b"`), Fernet encryption (`0o700`), ECDSA P-256 certs, fail-closed `store=False`. |
 | **PDF Typography** | `due_diligence_engine/report/pdf_generator.py` | ReportLab 5.1 layout safety, `KeepInFrame` overflow prevention, Rust `python-bidi` for RTL (`ar`), Latin/digit `Helvetica` wrapping in `ar`/`th`, zero Japanese fallback leakage. |
 
 ---

@@ -25,7 +25,7 @@ The release profile verifies:
 - Model and pricing consistency across providers and configurations.
 - Zero stale documentation strings.
 - 14-language PDF dictionary parity.
-- Clean git status (no uncommitted or untracked changes).
+- Review Git status separately; the maintenance CLI does not enforce a clean worktree.
 
 ---
 
@@ -33,9 +33,6 @@ The release profile verifies:
 
 Build and inspect the distributable source archive and wheel:
 ```bash
-# Clean previous builds
-rm -rf dist/ build/ *.egg-info
-
 # Build package
 .venv/bin/python -m pip install --upgrade build twine
 .venv/bin/python -m build
@@ -55,7 +52,15 @@ Verify that:
 Verify dependencies against known vulnerabilities:
 ```bash
 # Check dependencies using pip-audit
-.venv/bin/python -m pip-audit --skip-editable --desc
+.venv/bin/python -m pip_audit --skip-editable --desc
 ```
 
 Ensure no critical or high severity vulnerabilities exist prior to distribution.
+
+## Native MCP contract
+
+Run `dde mcp`; use the seven-tool lifecycle in [dde-audit](../dde-audit/SKILL.md).
+Use `target`, opaque `file_id`, `snapshot_sha256`, `report`, `validation_id` and `output_dir`
+as defined there. The report uses `technical_originality`, `technology_advancement`,
+`implementation_depth`, `architecture_quality`, `claim_consistency`: 0–100, 20% each.
+PDF language keys: `en`, `ja`, `es`, `fr`, `de`, `pt`, `nl`, `it`, `id`, `zh`, `ko`, `vi`, `th`, `ar`.

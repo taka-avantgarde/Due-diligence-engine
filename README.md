@@ -99,6 +99,26 @@ macOS Homebrew users: use `python3 -m pip` — the bare `pip` command is no long
 
 ---
 
+### Native MCP Server (`dde mcp`) & Agent Skills
+
+Start the stdio server for your MCP-compatible coding agent:
+
+```bash
+dde mcp
+```
+
+| Tool | Purpose |
+|---|---|
+| `dde_prepare_audit` | Prepare a repository snapshot |
+| `dde_list_evidence` | List evidence and opaque file IDs |
+| `dde_read_evidence` | Read evidence by file ID |
+| `dde_verify_sites` | Verify site claims (heuristic by default) |
+| `dde_validate_report` | Validate the snapshot-bound report |
+| `dde_render_report` | Render a validated PDF |
+| `dde_close_audit` | Purge temporary data and return a signed certificate |
+
+Agent workflows are in `.agents/skills/dde-audit/` and `.agents/skills/dde-consulting-report/`. Keep `audit_id`, `snapshot_sha256` and `validation_id` from tool responses. Site AI scoring requires explicit `use_ai=true`; always close the audit.
+
 ## 💭 How to Get the Best Results
 
 > **TL;DR**: Launch the highest-tier AI you have access to in your IDE terminal,

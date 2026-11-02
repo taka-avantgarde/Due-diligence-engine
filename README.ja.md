@@ -99,6 +99,26 @@ macOS Homebrew ユーザーは必ず `python3 -m pip` を使用してくださ�
 
 ---
 
+### ネイティブ MCP サーバー (`dde mcp`) とエージェントスキル
+
+MCP 対応の開発エージェント向けに stdio サーバーを起動します。
+
+```bash
+dde mcp
+```
+
+| ツール | 用途 |
+|---|---|
+| `dde_prepare_audit` | リポジトリのスナップショットを準備 |
+| `dde_list_evidence` | 証拠ファイルと専用 ID を一覧表示 |
+| `dde_read_evidence` | ファイル ID で証拠を読み取り |
+| `dde_verify_sites` | サイトの主張を検証（既定はローカル採点） |
+| `dde_validate_report` | スナップショットと結び付けてレポートを検証 |
+| `dde_render_report` | 検証済みレポートを PDF に出力 |
+| `dde_close_audit` | 一時データを消去して署名証明書を返却 |
+
+手順は `.agents/skills/dde-audit/` と `.agents/skills/dde-consulting-report/` にあります。応答の `audit_id`、`snapshot_sha256`、`validation_id` を保持してください。外部 AI 採点は明示的な `use_ai=true` が必要です。最後に必ず監査を終了してください。
+
 ## 💭 ベストな使い方
 
 > **要点**: IDE のターミナルでできるだけ高性能な AI を起動して、コマンドをコピペするだけ。

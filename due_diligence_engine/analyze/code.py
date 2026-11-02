@@ -9,7 +9,6 @@ from pathlib import Path
 from due_diligence_engine.ingest.secure_loader import SecureLoader
 from due_diligence_engine.models import CodeAnalysisResult, RedFlag, Severity
 
-
 # Patterns that suggest thin API wrapping rather than real implementation
 API_WRAPPER_PATTERNS = [
     r"openai\.",
@@ -45,7 +44,12 @@ class _SinglePassMetricsVisitor(ast.NodeVisitor):
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self.classes.append(node)
-        self.generic_visit(node)
+        enclosing = self._func_stack
+        self._func_stack = []
+        try:
+            self.generic_visit(node)
+        finally:
+            self._func_stack = enclosing
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         self._enter_func(node)
@@ -60,16 +64,24 @@ class _SinglePassMetricsVisitor(ast.NodeVisitor):
         self.functions.append((node, branches))
 
     def _branch_node(self, node: ast.AST) -> None:
-        for idx in range(len(self._func_stack)):
-            self._func_stack[idx] += 1
+        if self._func_stack:
+            self._func_stack[-1] += 1
         self.generic_visit(node)
 
     visit_If = _branch_node
     visit_For = _branch_node
     visit_AsyncFor = _branch_node
     visit_While = _branch_node
-    visit_Try = _branch_node
     visit_ExceptHandler = _branch_node
+    visit_With = _branch_node
+    visit_AsyncWith = _branch_node
+    visit_IfExp = _branch_node
+    visit_match_case = _branch_node
+
+    def visit_BoolOp(self, node: ast.BoolOp) -> None:
+        if self._func_stack:
+            self._func_stack[-1] += len(node.values) - 1
+        self.generic_visit(node)
 
 
 class CodeAnalyzer:
@@ -123,21 +135,7 @@ class CodeAnalyzer:
                 self._analyze_python_ast(path, content, result)
 
             # Check for test files
-            p_parts = Path(path.lower()).parts
-            p_stem = Path(path.lower()).stem
-            if (
-                any(
-                    part.startswith("test_")
-                    or part.endswith("_test.py")
-                    or part.endswith(".test.ts")
-                    or part.endswith(".spec.ts")
-                    or part.endswith(".test.js")
-                    or part.endswith(".spec.js")
-                    or part in ("test", "tests", "spec", "specs", "__tests__")
-                    for part in p_parts
-                )
-                or "test" in p_stem
-            ):
+            if self._check_tests(path):
                 result.has_tests = True
 
         # Pre-index manifest files for fast lookups
@@ -190,7 +188,20 @@ class CodeAnalyzer:
                     )
 
         # Check for empty classes (possible stubs)
+        exception_names = {"Exception", "BaseException", "Error"}
+        exception_names.update(name for name in dir(__import__("builtins"))
+                               if name.endswith(("Error", "Exception")))
+        # Include project exception subclasses even if declared later in the file.
+        while True:
+            derived = {cls.name for cls in visitor.classes if any(
+                (base.id if isinstance(base, ast.Name) else base.attr if isinstance(base, ast.Attribute) else "")
+                in exception_names for base in cls.bases)}
+            if derived <= exception_names:
+                break
+            exception_names.update(derived)
         for cls in visitor.classes:
+            if cls.name in exception_names:
+                continue
             body_stmts = [
                 s for s in cls.body
                 if not isinstance(s, (ast.Pass, ast.Expr))
@@ -198,6 +209,16 @@ class CodeAnalyzer:
             ]
             if len(body_stmts) == 0:
                 result.findings.append(f"Empty class {cls.name} in {path} (possible stub)")
+
+    @staticmethod
+    def _check_tests(path: str) -> bool:
+        parts = path.replace("\\", "/").lower().split("/")
+        name = parts[-1]
+        return (
+            any(part in {"test", "tests", "__tests__", "spec", "specs"} for part in parts[:-1])
+            or (name.endswith(".py") and (name.startswith("test_") or name.endswith("_test.py")))
+            or bool(re.search(r"\.(?:test|spec)\.", name))
+        )
 
     def _check_ci_cd(self, manifest_paths: list[str] | None = None) -> bool:
         """Check if CI/CD configuration exists."""

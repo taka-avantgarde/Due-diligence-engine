@@ -243,6 +243,13 @@ def test_cli_report_consulting_pdf(tmp_path):
 # ===========================================================================
 def test_skip_ai_and_prompt_isolation(monkeypatch, tmp_path):
     """Test that `dde prompt` and `dde analyze --skip-ai` never invoke AI providers even when keys are set."""
+    original_from_env = Config.from_env
+    def isolated_config():
+        cfg = original_from_env()
+        cfg.temp_dir = tmp_path / "ingest"
+        cfg.data_dir = tmp_path / "data"
+        return cfg
+    monkeypatch.setattr(Config, "from_env", isolated_config)
     monkeypatch.setenv("OPENAI_API_KEY", "sk-mock-key-123")
     monkeypatch.setenv("GOOGLE_AI_API_KEY", "AIzaSyMockKey-456")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-mock-key-789")
@@ -836,7 +843,8 @@ def test_response_parser_null_safe_and_grade_fallback():
         "grade": "",
     }
     report = parse_consulting_dict(raw)
-    assert report.grade == "B"
+    assert report.overall_score == 34.0  # Missing canonical axes contribute zero.
+    assert report.grade == "F"
     assert report.swot is not None
     assert report.strategic_advice is not None
     assert report.competitive_analysis is not None

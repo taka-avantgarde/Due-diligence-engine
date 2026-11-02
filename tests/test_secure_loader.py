@@ -123,7 +123,7 @@ def test_manifest_hash_and_size_match_plaintext(tmp_path):
     entry = next(e for e in loader.manifest if e["path"] == "main.py")
     content = (src / "main.py").read_bytes()
     assert entry["hash"] == hashlib.sha256(content).hexdigest()
-    assert entry["size"] == str(len(content))
+    assert entry["size"] == len(content)
 
 
 def test_manifest_is_a_copy(tmp_path):

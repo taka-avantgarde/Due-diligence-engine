@@ -7,6 +7,7 @@ and HTML templates in under 0.5 seconds.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -16,7 +17,11 @@ from pathlib import Path
 import due_diligence_engine
 from due_diligence_engine import config
 from due_diligence_engine.ai import providers
-from due_diligence_engine.report.pdf_generator import _PDF_I18N
+from due_diligence_engine.report.pdf_generator import (
+    _DIM_NAME_MAPS,
+    _PDF_GRADE_REC,
+    _PDF_I18N,
+)
 
 # Ensure config.calculate_token_cost exists as an alias for backwards compatibility
 if not hasattr(config, "calculate_token_cost"):
@@ -50,6 +55,7 @@ def run_quick_check(repo_root: Path | None = None) -> tuple[bool, list[str]]:
     if repo_root is None:
         repo_root = Path(__file__).resolve().parent.parent
 
+    repo_root = repo_root.resolve()
     errors: list[str] = []
     version = due_diligence_engine.__version__
     pkg_dir = repo_root / "due_diligence_engine"
@@ -80,6 +86,8 @@ def run_quick_check(repo_root: Path | None = None) -> tuple[bool, list[str]]:
             errors.append(f"Missing documentation file: {r_name}")
             continue
         content = r_path.read_text(encoding="utf-8")
+        if "dde mcp" not in content:
+            errors.append(f"{r_name} missing native MCP server documentation (dde mcp)")
         if badge_sub not in content:
             errors.append(f"{r_name} missing version badge for v{version}")
         if f"v{version}" not in content:
@@ -128,17 +136,42 @@ def run_quick_check(repo_root: Path | None = None) -> tuple[bool, list[str]]:
     except Exception as exc:  # noqa: BLE001
         errors.append(f"Pricing check exception: {exc}")
 
-    # 5. Multilingual PDF dictionaries parity (all 14 languages)
-    if "en" in _PDF_I18N:
-        base_keys = set(_PDF_I18N["en"].keys())
-        for lang, lang_dict in _PDF_I18N.items():
-            diff = base_keys.symmetric_difference(lang_dict.keys())
-            if diff:
-                errors.append(
-                    f"Language '{lang}' key mismatch in _PDF_I18N (diff: {sorted(diff)})"
-                )
-    else:
-        errors.append("_PDF_I18N missing 'en' base dictionary")
+    if config.BYOK_DEFAULT_MODELS != providers._DEFAULT_MODELS:
+        errors.append("BYOK_DEFAULT_MODELS differs from provider defaults")
+
+    # All dictionaries must cover the 14 supported languages and keys.
+    expected_langs = {"en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"}
+    for name, translations in (
+        ("_PDF_I18N", _PDF_I18N),
+        ("_DIM_NAME_MAPS", _DIM_NAME_MAPS),
+        ("_PDF_GRADE_REC", _PDF_GRADE_REC),
+    ):
+        if set(translations) != expected_langs:
+            errors.append(f"{name} must contain exactly the 14 supported language keys")
+        base_keys = set(translations.get("en", {}))
+        for lang, values in translations.items():
+            if set(values) != base_keys:
+                errors.append(f"Language '{lang}' key mismatch in {name}")
+
+    hooks_path = repo_root / ".agents" / "hooks.json"
+    try:
+        hooks = json.loads(hooks_path.read_text(encoding="utf-8"))
+        if not isinstance(hooks, dict) or hooks.get("version") != "1.0" or not isinstance(hooks.get("hooks"), list):
+            raise ValueError("expected version 1.0 and hooks array")
+        names = set()
+        for hook in hooks["hooks"]:
+            if not isinstance(hook, dict) or any(
+                not isinstance(hook.get(k), str) or not hook[k].strip()
+                for k in ("name", "event", "command")
+            ):
+                raise ValueError("each hook requires nonempty name, event and command strings")
+            if hook["name"] in names or hook["event"] not in {"post-edit", "verify"}:
+                raise ValueError("duplicate hook name or unsupported event")
+            if "description" in hook and not isinstance(hook["description"], str):
+                raise ValueError("hook description must be a string")
+            names.add(hook["name"])
+    except (OSError, ValueError) as exc:
+        errors.append(f"Invalid .agents/hooks.json schema: {exc}")
 
     return (len(errors) == 0, errors)
 
@@ -155,7 +188,7 @@ def main(argv: list[str] | None = None) -> int:
     check_parser.add_argument(
         "--profile",
         choices=["quick", "release"],
-        default="quick",
+        default=argparse.SUPPRESS,
         help="Verification profile: 'quick' (<0.5s SSOT invariants) or 'release' (quick + pytest)",
     )
 
@@ -184,7 +217,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if profile == "release":
         print("[INFO] Running comprehensive pytest suite (--profile release)...")
-        res = subprocess.run([sys.executable, "-m", "pytest", "tests/", "-q"], check=False)
+        res = subprocess.run(
+            [sys.executable, "-m", "pytest", "tests/", "-q"],
+            cwd=Path(__file__).resolve().parent.parent, check=False,
+        )
         return res.returncode
 
     return 0

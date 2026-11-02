@@ -9,16 +9,16 @@
 
 from __future__ import annotations
 
+import contextlib
 import ipaddress
 import logging
 import re
 import socket
+import threading
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import httpx
-import contextlib
-import threading
 from pydantic import BaseModel, Field
 
 from due_diligence_engine.models import RedFlag, Severity
@@ -169,6 +169,7 @@ _SKIP_EXTENSIONS = {
 # 最大クロール数
 _MAX_PAGES = 10
 _TIMEOUT_SEC = 15
+_MAX_RESPONSE_BYTES = 2_000_000
 
 
 class SiteClaim(BaseModel):
@@ -407,17 +408,32 @@ class SiteAnalyzer:
 
         try:
             current_url = url
-            with httpx.Client(timeout=_TIMEOUT_SEC, follow_redirects=False) as client:
+            with httpx.Client(timeout=_TIMEOUT_SEC, follow_redirects=False, trust_env=False) as client:
                 resp = None
                 for _ in range(6):  # max 5 redirects
                     if not is_safe:
                         logger.warning(f"Unsafe URL rejected during fetch/redirect: {current_url}")
                         return
                     with _pinned_dns_context(host, addr_info):
-                        resp = client.get(current_url, headers={
+                        with client.stream("GET", current_url, headers={
                             "User-Agent": "DDE-SiteAnalyzer/1.0 (Due Diligence Engine)",
                             "Accept": "text/html,application/xhtml+xml",
-                        })
+                            "Accept-Encoding": "identity",
+                        }) as resp:
+                            body = bytearray()
+                            # Redirect bodies are unnecessary; reject compression
+                            # before decoding to avoid decompression-bomb allocations.
+                            if resp.status_code == 200:
+                                if resp.headers.get("content-encoding", "identity").lower() != "identity":
+                                    raise ValueError("Encoded site responses are not accepted for bounded reads")
+                                length = resp.headers.get("content-length")
+                                if length and int(length) > _MAX_RESPONSE_BYTES:
+                                    raise ValueError("Site response exceeds byte limit")
+                                for chunk in resp.iter_bytes(chunk_size=64 * 1024):
+                                    if len(body) + len(chunk) > _MAX_RESPONSE_BYTES:
+                                        raise ValueError("Site response exceeds byte limit")
+                                    body.extend(chunk)
+                                html = body.decode(resp.encoding or "utf-8", errors="replace")
                     if resp.status_code in (301, 302, 303, 307, 308) and "location" in resp.headers:
                         location = resp.headers["location"]
                         next_url = urljoin(current_url, location)
@@ -437,7 +453,6 @@ class SiteAnalyzer:
                 if "text/html" not in content_type:
                     return
 
-                html = resp.text
                 text = _extract_text_from_html(html)
                 if text and len(text) > 20:
                     self._texts[url] = text
@@ -599,12 +614,12 @@ class SiteAnalyzer:
 
 def cross_validate_site_vs_code(
     site_result: SiteAnalysisResult,
-    code_languages: dict[str, int],
-    code_findings: list[str],
-    has_tests: bool,
-    has_ci_cd: bool,
-    dependency_count: int,
-    doc_claims: list[str],
+    code_languages: dict[str, Any],
+    code_findings: list[str] | None = None,
+    has_tests: bool = False,
+    has_ci_cd: bool = False,
+    dependency_count: int = 0,
+    doc_claims: list[str] | None = None,
 ) -> CrossValidationResult:
     """サイトの主張とGitHubソースコードをクロス検証。
 
@@ -620,6 +635,13 @@ def cross_validate_site_vs_code(
     Returns:
         クロス検証結果
     """
+    if "languages" in code_languages:
+        code = code_languages
+        code_languages = code.get("languages", {})
+        code_findings = code.get("findings", [])
+        has_tests = code.get("has_tests", False)
+        has_ci_cd = code.get("has_ci_cd", False)
+    code_findings = code_findings or []
     result = CrossValidationResult()
 
     lang_to_exts = {
@@ -640,7 +662,11 @@ def cross_validate_site_vs_code(
 
     # 1. 技術スタックの検証: サイトで謳っている技術がコードに存在するか
     code_langs_lower = {k.lower() for k in code_languages.keys()}
-    code_findings_text = " ".join(code_findings).lower()
+    positive_findings = [
+        finding.lower() for finding in code_findings
+        if not re.search(r"\b(?:todo|missing|unencrypted|weak|not (?:implemented|supported|enabled|available)|no encryption|without encryption)\b", finding, re.I)
+    ]
+    code_findings_text = " ".join(positive_findings)
 
     for tech in site_result.technologies_mentioned:
         tech_lower = tech.lower()

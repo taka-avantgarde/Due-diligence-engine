@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import math
 import sys
 from typing import Any
 
@@ -20,7 +21,8 @@ from due_diligence_engine.prompt.generator import (
     DIMENSIONS_JA,
 )
 
-PROTOCOL_VERSION = "2025-11-25"
+SUPPORTED_PROTOCOL_VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
+PROTOCOL_VERSION = SUPPORTED_PROTOCOL_VERSIONS[0]
 
 # Tool names mapped to internal API functions
 TOOL_DISPATCH_MAP: dict[str, str] = {
@@ -56,8 +58,8 @@ MCP_TOOLS: list[dict[str, Any]] = [
                 },
                 "stage": {
                     "type": "string",
-                    "description": "Company stage: seed, series_a, series_b, or growth. Default: 'series-a'.",
-                    "default": "series-a",
+                    "description": "Company stage: seed, series_a, series_b, or growth. Default: 'series_a'.",
+                    "default": "series_a",
                 },
                 "skip_git": {
                     "type": "boolean",
@@ -116,7 +118,7 @@ MCP_TOOLS: list[dict[str, Any]] = [
                 },
                 "file_id": {
                     "type": "string",
-                    "description": "Relative file path or file identifier in evidence catalog.",
+                    "description": "Opaque file_id returned by dde_list_evidence; raw paths are rejected.",
                 },
                 "start_line": {
                     "type": "integer",
@@ -149,9 +151,13 @@ MCP_TOOLS: list[dict[str, Any]] = [
                     "description": "Active audit session ID.",
                 },
                 "urls": {
-                    "type": "array",
+                    "type": ["array", "null"],
                     "items": {"type": "string"},
-                    "description": "Optional list of URLs to verify against public web. If omitted, uses auto-discovered URLs.",
+                    "description": "Optional public URLs to verify. Omitted or empty URLs return an empty result.",
+                },
+                "use_ai": {
+                    "type": "boolean", "default": False,
+                    "description": "Explicitly enable paid external AI scoring; default is heuristic only.",
                 },
             },
             "required": ["audit_id"],
@@ -193,7 +199,7 @@ MCP_TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "dde_render_report",
-        "description": "Render validated consulting report into PDF, HTML scorecard, and Markdown deliverables.",
+        "description": "Render a validated consulting report into a PDF.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -207,7 +213,7 @@ MCP_TOOLS: list[dict[str, Any]] = [
                 },
                 "output_dir": {
                     "type": "string",
-                    "description": "Optional directory to save rendered deliverables (default: ~/Downloads or dde_output).",
+                    "description": "Optional directory to save rendered deliverables (default: cwd/dde_output).",
                 },
                 "lang": {
                     "type": "string",
@@ -251,7 +257,7 @@ MCP_RESOURCES: list[dict[str, Any]] = [
     {
         "uri": "dde://schemas/consulting/v1",
         "name": "Consulting Report JSON Schema & Field Guide",
-        "description": "JSON schema and structural field guide for 9-dimension consulting report.",
+        "description": "JSON schema and structural field guide for 5-dimension consulting report.",
         "mimeType": "application/json",
     },
     {
@@ -286,7 +292,7 @@ MCP_PROMPTS: list[dict[str, Any]] = [
             },
             {
                 "name": "stage",
-                "description": "Company stage: seed, series_a, series_b, or growth. Default: 'series-a'.",
+                "description": "Company stage: seed, series_a, series_b, or growth. Default: 'series_a'.",
                 "required": False,
             },
         ],
@@ -414,6 +420,7 @@ def _get_atlas_4_rubric_data() -> dict[str, Any]:
 
 def _get_audit_prompt_text(target: str, lang: str = "en", stage: str = "series-a") -> str:
     """Return autonomous audit instruction prompt for AI coding agents."""
+    stage = stage.replace("-", "_")
     return f"""You are conducting an autonomous technical due diligence audit on:
 Target: {target}
 Language: {lang}
@@ -439,7 +446,7 @@ Please follow the strict DDE autonomous audit workflow using the DDE MCP tools:
    If validation reports any errors, fix the JSON and re-validate.
 
 5. **Render Deliverables**:
-   Call `dde_render_report(audit_id=..., validation_id=..., lang="{lang}")` to produce institutional PDF, HTML scorecard, and Markdown deliverables.
+   Call `dde_render_report(audit_id=..., validation_id=..., lang="{lang}")` to produce an institutional PDF.
 
 6. **Close & Cryptographically Wipe Audit Session**:
    Call `dde_close_audit(audit_id=...)` to run DoD 5220.22-M 3-pass data wipe and generate an ECDSA P-256 Purge Certificate.
@@ -467,7 +474,7 @@ class MCPServer:
     def _serialize(obj: Any) -> Any:
         """Recursively serialize Pydantic models, dataclasses, and custom objects to dict."""
         if obj is None:
-            return {}
+            return None
         if hasattr(obj, "model_dump"):
             return obj.model_dump(mode="json")
         if hasattr(obj, "to_dict"):
@@ -486,33 +493,54 @@ class MCPServer:
             }
         return str(obj)
 
-    def handle_mcp_message(self, msg: dict[str, Any]) -> dict[str, Any] | None:
-        """Handle a single parsed JSON-RPC 2.0 message.
+    @staticmethod
+    def _error(req_id: Any, code: int, message: str) -> dict[str, Any]:
+        return {"jsonrpc": "2.0", "id": req_id, "error": {"code": code, "message": message}}
 
-        Returns:
-            JSON-RPC response dictionary for requests, or None for notifications.
-        """
+    def handle_mcp_message(self, msg: Any) -> Any:
+        """Validate envelopes and handle batches, including null request IDs."""
+        if isinstance(msg, list):
+            if not msg:
+                return self._error(None, -32600, "Invalid Request: empty batch")
+            responses = [self.handle_mcp_message(item) if not isinstance(item, list)
+                         else self._error(None, -32600, "Invalid Request") for item in msg]
+            return [r for r in responses if r is not None] or None
         if not isinstance(msg, dict):
-            return {
-                "jsonrpc": "2.0",
-                "id": None,
-                "error": {"code": -32600, "message": "Invalid Request: message must be an object"},
-            }
-
+            return self._error(None, -32600, "Invalid Request: expected object")
         req_id = msg.get("id")
-        method = msg.get("method")
-        params = msg.get("params") or {}
+        valid_id = (req_id is None or isinstance(req_id, str) or
+                    (type(req_id) is int or (type(req_id) is float and math.isfinite(req_id))))
+        if (msg.get("jsonrpc") != "2.0" or not isinstance(msg.get("method"), str)
+                or not msg["method"] or not valid_id):
+            return self._error(req_id if valid_id else None, -32600, "Invalid Request")
+        notification = "id" not in msg
+        params = msg.get("params")
+        if params is not None and not isinstance(params, dict):
+            return None if notification else self._error(req_id, -32602, "Invalid Params: expected object or null")
+        response = self._handle_request(req_id, msg["method"], params or {})
+        return None if notification else response
 
-        # Notification handling (no id)
-        if req_id is None:
-            if method == "notifications/initialized":
-                return None
-            return None
+    @staticmethod
+    def _valid_argument(value: Any, schema: dict[str, Any]) -> bool:
+        expected = schema.get("type")
+        types = expected if isinstance(expected, list) else [expected]
+        checks = {
+            "string": lambda: isinstance(value, str),
+            "integer": lambda: type(value) is int,
+            "boolean": lambda: type(value) is bool,
+            "object": lambda: isinstance(value, dict),
+            "array": lambda: isinstance(value, list) and all(
+                MCPServer._valid_argument(v, schema.get("items", {})) for v in value),
+            "null": lambda: value is None,
+        }
+        return any(checks[t]() for t in types if t in checks)
 
+    def _handle_request(self, req_id: Any, method: str, params: dict[str, Any]) -> dict[str, Any]:
         # Protocol methods
         if method == "initialize":
             client_version = params.get("protocolVersion")
-            chosen_version = client_version if client_version else PROTOCOL_VERSION
+            chosen_version = client_version if client_version in SUPPORTED_PROTOCOL_VERSIONS else PROTOCOL_VERSION
+            self._protocol_version = chosen_version
             return {
                 "jsonrpc": "2.0",
                 "id": req_id,
@@ -548,7 +576,9 @@ class MCPServer:
 
         if method == "tools/call":
             tool_name = params.get("name")
-            arguments = params.get("arguments") or {}
+            arguments = params.get("arguments", {})
+            if not isinstance(tool_name, str) or not isinstance(arguments, dict):
+                return self._error(req_id, -32602, "Invalid Params: name and object arguments required")
 
             if not tool_name or tool_name not in TOOL_DISPATCH_MAP:
                 return {
@@ -560,6 +590,15 @@ class MCPServer:
                     },
                 }
 
+            schema = next(t["inputSchema"] for t in MCP_TOOLS if t["name"] == tool_name)
+            if any(k not in arguments for k in schema.get("required", [])):
+                return self._error(req_id, -32602, "Invalid Params: missing required tool argument")
+            for key, value in arguments.items():
+                if key not in schema["properties"] or not self._valid_argument(value, schema["properties"][key]):
+                    return self._error(req_id, -32602, f"Invalid Params: {key}")
+            arguments = dict(arguments)
+            if "stage" in arguments:
+                arguments["stage"] = arguments["stage"].replace("-", "_")
             func_name = TOOL_DISPATCH_MAP[tool_name]
 
             # Direct all standard output to stderr during tool invocation so stdout remains pristine JSON-RPC
@@ -662,7 +701,9 @@ class MCPServer:
 
         if method == "prompts/get":
             prompt_name = params.get("name")
-            prompt_args = params.get("arguments") or {}
+            prompt_args = params.get("arguments", {})
+            if not isinstance(prompt_args, dict) or any(not isinstance(v, str) for v in prompt_args.values()):
+                return self._error(req_id, -32602, "Invalid Params: prompt arguments must be strings")
             if prompt_name != "dde-audit":
                 return {
                     "jsonrpc": "2.0",
@@ -725,41 +766,49 @@ def run_stdio_mcp_server(api_module: Any | None = None) -> None:
     )
     sys.stderr.flush()
 
-    while True:
-        try:
-            line = sys.stdin.readline()
-            if not line:
-                break  # EOF reached
-
-            stripped = line.strip()
-            if not stripped:
-                continue
-
+    try:
+        while True:
             try:
-                msg = json.loads(stripped)
-            except json.JSONDecodeError as decode_err:
-                err_resp = {
-                    "jsonrpc": "2.0",
-                    "id": None,
-                    "error": {
-                        "code": -32700,
-                        "message": f"Parse error: {decode_err}",
-                    },
-                }
-                sys.stdout.write(json.dumps(err_resp, ensure_ascii=False) + "\n")
-                sys.stdout.flush()
-                continue
+                line = sys.stdin.readline()
+                if not line:
+                    break  # EOF reached
 
-            resp = server.handle_mcp_message(msg)
-            if resp is not None:
-                sys.stdout.write(json.dumps(resp, ensure_ascii=False) + "\n")
-                sys.stdout.flush()
+                stripped = line.strip()
+                if not stripped:
+                    continue
 
-        except (KeyboardInterrupt, SystemExit):
-            break
-        except Exception as unhandled_err:  # noqa: BLE001
-            sys.stderr.write(f"[DDE MCP ERROR] {unhandled_err}\n")
-            sys.stderr.flush()
+                try:
+                    def invalid_constant(value):
+                        raise ValueError(f"Invalid JSON constant: {value}")
+                    msg = json.loads(stripped, parse_constant=invalid_constant)
+                except (json.JSONDecodeError, ValueError) as decode_err:
+                    err_resp = {
+                        "jsonrpc": "2.0",
+                        "id": None,
+                        "error": {
+                            "code": -32700,
+                            "message": f"Parse error: {decode_err}",
+                        },
+                    }
+                    sys.stdout.write(json.dumps(err_resp, ensure_ascii=False) + "\n")
+                    sys.stdout.flush()
+                    continue
+
+                resp = server.handle_mcp_message(msg)
+                if resp is not None:
+                    sys.stdout.write(json.dumps(resp, ensure_ascii=False) + "\n")
+                    sys.stdout.flush()
+
+            except (KeyboardInterrupt, SystemExit):
+                break
+            except Exception as unhandled_err:  # noqa: BLE001
+                sys.stderr.write(f"[DDE MCP ERROR] {unhandled_err}\n")
+                sys.stderr.flush()
+    finally:
+        with contextlib.redirect_stdout(sys.stderr):
+            cleanup = server._get_api().close_all_sessions()
+        if cleanup and cleanup.get("failed"):
+            sys.stderr.write(f"[DDE MCP] Cleanup failed for {len(cleanup['failed'])} session(s)\n")
 
     sys.stderr.write("[DDE MCP] Server stopped cleanly.\n")
     sys.stderr.flush()

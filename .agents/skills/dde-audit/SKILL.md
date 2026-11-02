@@ -1,107 +1,26 @@
 ---
 name: dde-audit
-description: Audit software repositories using Due Diligence Engine's native MCP server tools (prepare, collect evidence, validate report, and cryptographic purge).
+description: Audit repositories using the seven native DDE MCP tools with snapshot-bound validation and signed cleanup.
 ---
 
-# Skill: dde-audit (Repository Audit via Native MCP Server)
+# Repository audit via native MCP
 
-This skill instructs any AI agent on conducting an end-to-end, bank-grade software due diligence audit using Due Diligence Engine's native MCP tools.
+Start the stdio server with `dde mcp` (or `python3 -m due_diligence_engine.cli mcp`).
+Never execute code from the target repository. Use the following MCP tool arguments:
 
----
+1. `dde_prepare_audit(target="owner/repo", name="Example", lang="en", stage="series_a", skip_git=true)`
+   returns `audit_id` and `snapshot_sha256`. Local directories and zip files are supported.
+2. `dde_list_evidence(audit_id="<audit_id>", offset=0, limit=100)` returns opaque file IDs, paths, categories, byte sizes and SHA-256 hashes.
+3. `dde_read_evidence(audit_id="<audit_id>", file_id="f_0001", start_line=1, max_lines=200)` reads source evidence. Raw paths are rejected.
+4. `dde_verify_sites(audit_id="<audit_id>", urls=["https://example.com"], use_ai=false)` verifies public claims with heuristic scoring. Empty URLs return an empty result. Paid AI requires explicit `use_ai=true`.
+5. `dde_validate_report(audit_id="<audit_id>", snapshot_sha256="<snapshot_sha256>", report={...})` validates the report and returns `validation_id`.
+6. `dde_render_report(audit_id="<audit_id>", validation_id="<validation_id>", output_dir="./dde_output", lang="en")` returns PDF path, SHA-256 and byte size.
+7. Always call `dde_close_audit(audit_id="<audit_id>")` after an audit, including error paths. It returns `closed`, `bytes_overwritten` and `purge_certificate` with ECDSA P-256 `signature` and `public_key`. Retry failed cleanup with the same audit ID.
 
-## 1. Prerequisites & Starting MCP Server
+Read `dde://schemas/consulting/v1` before preparing the report. Its five canonical dimensions are
+`technical_originality`, `technology_advancement`, `implementation_depth`, `architecture_quality`,
+and `claim_consistency`. Scores are 0–100, weighted 20% each. Dimension objects accept `score` and
+`rationale`; `level` is a separate 1–10 descriptor. Validation is bound to the audit, snapshot and report.
+See [consulting report](../dde-consulting-report/SKILL.md) for a complete submission example.
 
-To start the native Model Context Protocol (MCP) server for Due Diligence Engine:
-```bash
-python3 -m due_diligence_engine.cli mcp
-# or via entrypoint:
-dde mcp
-```
-
-The MCP server runs over standard I/O (stdio) and provides JSON-RPC 2.0 tool and resource endpoints.
-
----
-
-## 2. Standard Audit Tool Lifecycle
-
-Follow this exact sequence to ensure strict security isolation and cryptographic cleanup:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Agent as AI Agent / Auditor
-    participant MCP as DDE MCP Server
-    participant Engine as Core Diligence Engine
-    participant Purge as DoD Purger
-
-    Agent->>MCP: dde_prepare_audit(target_path, name)
-    MCP->>Engine: Ingest, unpack safely & encrypt tmpfs
-    Engine-->>Agent: {audit_id, total_files, lines_of_code, languages}
-
-    Agent->>MCP: dde_list_evidence(audit_id)
-    MCP-->>Agent: Evidence inventory (AST, dependencies, licenses, commits)
-
-    Agent->>MCP: dde_read_evidence(audit_id, evidence_key)
-    MCP-->>Agent: Extracted code metrics & static analysis findings
-
-    Agent->>MCP: dde_validate_report(audit_id, report_json)
-    MCP->>Engine: Schema validation & monotonic score check
-    Engine-->>Agent: {valid: true, overall_score: 8.4, grade: "A"}
-
-    Agent->>MCP: dde_close_audit(audit_id)
-    MCP->>Purge: DoD 5220.22-M 3-pass overwrite & unlink
-    Purge-->>Agent: {purged: true, certificate_sha256: "...", signature: "..."}
-```
-
-### Step 1: Prepare Audit (`dde_prepare_audit`)
-- **Parameters**:
-  - `target_path` (string, required): Local directory or repository path to inspect.
-  - `name` (string, optional): Project name.
-  - `max_files` (integer, optional): Maximum files to ingest (default: 5000).
-- **Behavior**:
-  - Ingests repository safely (blocking Zip Slip, symlink escapes, FIFOs).
-  - Initializes ephemeral memory-backed storage with `0o700` POSIX permissions.
-  - Returns `audit_id`.
-
-### Step 2: List Evidence (`dde_list_evidence`)
-- **Parameters**:
-  - `audit_id` (string, required): The active audit session ID.
-- **Behavior**:
-  - Surfaces available evidence files: AST metadata, dependency manifests (`package.json`, `pyproject.toml`, `Cargo.toml`), git commit statistics, and cyclomatic complexity distributions.
-
-### Step 3: Read Evidence (`dde_read_evidence`)
-- **Parameters**:
-  - `audit_id` (string, required): Active audit ID.
-  - `evidence_key` (string, required): Specific evidence item to inspect.
-- **Behavior**:
-  - Returns extracted metrics, vulnerability alerts, and filtered code samples without executing target code.
-
-### Step 4: Validate Report (`dde_validate_report`)
-- **Parameters**:
-  - `audit_id` (string, required): Active audit ID.
-  - `report_data` (object, required): Full JSON structure adhering to the 9-dimension consulting schema.
-- **Behavior**:
-  - Validates dimension scores (`1.0` - `10.0`), weights, red flag criteria, and investment recommendations.
-
-### Step 5: Close Audit & Cryptographic Purge (`dde_close_audit`)
-- **Parameters**:
-  - `audit_id` (string, required): Audit session to terminate.
-- **Behavior**:
-  - Executes DoD 5220.22-M 3-pass overwrite (`0x00`, `0xFF`, `urandom`) on all temporary files.
-  - Signs and emits an ECDSA P-256 purge certificate.
-
----
-
-## 3. CLI Direct Fallback
-
-If running standalone without an active MCP client:
-```bash
-# Ingest and generate consulting prompt
-dde prompt /path/to/repo --pdf --lang en --output /tmp/prompt.txt
-
-# Run full score analysis
-dde audit /path/to/repo --output-dir /tmp/dde_output
-
-# Trigger manual purge of audit artifacts
-dde purge --target /tmp/dde_output
-```
+For a CLI prompt without a client: `dde prompt /path/to/repo --pdf --lang en --output ./prompt.txt`.

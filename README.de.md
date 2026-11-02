@@ -99,6 +99,26 @@ macOS-Homebrew-Nutzer: verwende `python3 -m pip` — der reine `pip`-Befehl wird
 
 ---
 
+### Nativer MCP-Server (`dde mcp`) und Agenten-Skills
+
+Starte den stdio-Server für deinen MCP-kompatiblen Agenten:
+
+```bash
+dde mcp
+```
+
+| Werkzeug | Zweck |
+|---|---|
+| `dde_prepare_audit` | Repository-Snapshot vorbereiten |
+| `dde_list_evidence` | Belege und Datei-IDs auflisten |
+| `dde_read_evidence` | Belege anhand der Datei-ID lesen |
+| `dde_verify_sites` | Website-Aussagen prüfen (standardmäßig heuristisch) |
+| `dde_validate_report` | Bericht gegen den Snapshot validieren |
+| `dde_render_report` | Validierten Bericht als PDF erstellen |
+| `dde_close_audit` | Temporäre Daten löschen und signiertes Zertifikat ausgeben |
+
+Die Abläufe stehen in `.agents/skills/dde-audit/` und `.agents/skills/dde-consulting-report/`. Bewahre `audit_id`, `snapshot_sha256` und `validation_id` auf. Externe KI-Bewertung erfordert ausdrücklich `use_ai=true`; schließe das Audit immer ab.
+
 ## 💭 So erzielst du die besten Ergebnisse
 
 > **Kurzfassung**: Starte die leistungsstärkste KI, auf die du in deinem IDE-Terminal Zugriff hast,

@@ -271,6 +271,22 @@ class PurgeCertificate(BaseModel):
     method: str = "cryptographic_erasure"
     verification_hash: str = ""
     operator: str = ""
+    signature: str = ""
+    public_key: str = ""
+
+    def _sign_payload(self) -> bytes:
+        """Versioned, unambiguous payload shared by signing and verification."""
+        import json
+
+        return json.dumps({
+            "v": 1,
+            "analysis_id": self.analysis_id,
+            "project_name": self.project_name,
+            "timestamp": self.purge_timestamp.isoformat(),
+            "files_purged": self.files_purged,
+            "bytes_overwritten": self.bytes_overwritten,
+            "verification_hash": self.verification_hash,
+        }, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
 
 # ---------------------------------------------------------------------------

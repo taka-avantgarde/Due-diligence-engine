@@ -99,6 +99,26 @@ Utilisateurs de macOS Homebrew : utilisez `python3 -m pip` — la commande `pip`
 
 ---
 
+### Serveur MCP natif (`dde mcp`) et compétences des agents
+
+Lancez le serveur stdio pour votre agent compatible MCP :
+
+```bash
+dde mcp
+```
+
+| Outil | Fonction |
+|---|---|
+| `dde_prepare_audit` | Préparer un instantané du dépôt |
+| `dde_list_evidence` | Lister les preuves et identifiants de fichiers |
+| `dde_read_evidence` | Lire les preuves par identifiant |
+| `dde_verify_sites` | Vérifier les affirmations du site (heuristique par défaut) |
+| `dde_validate_report` | Valider le rapport lié à l’instantané |
+| `dde_render_report` | Générer le PDF validé |
+| `dde_close_audit` | Effacer les données temporaires et fournir un certificat signé |
+
+Les procédures se trouvent dans `.agents/skills/dde-audit/` et `.agents/skills/dde-consulting-report/`. Conservez `audit_id`, `snapshot_sha256` et `validation_id`. L’évaluation par IA externe exige `use_ai=true` explicite ; clôturez toujours l’audit.
+
 ## 💭 Comment obtenir les meilleurs résultats
 
 > **En bref** : lancez l'IA la plus performante à laquelle vous avez accès dans le terminal de votre IDE,

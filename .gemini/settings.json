@@ -1,3 +1,6 @@
 {
-  "contextFileName": "ATLAS.md"
+  "contextFileName": "ATLAS.md",
+  "context": {
+    "fileName": "ATLAS.md"
+  }
 }

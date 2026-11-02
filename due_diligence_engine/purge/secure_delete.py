@@ -1,7 +1,7 @@
 """Cryptographic erasure and purge certificate generation.
 
 Implements secure deletion by:
-1. Overwriting files with random data (3 passes)
+1. Overwriting files with zero, ones, then random data (3 passes)
 2. Destroying encryption keys
 3. Generating a verifiable purge certificate
 """
@@ -13,20 +13,44 @@ import json
 import os
 import shutil
 import stat
-from datetime import datetime
 from pathlib import Path
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric.utils import (
-    decode_dss_signature,
-    encode_dss_signature,
-)
 
 from due_diligence_engine.models import PurgeCertificate
 
-
 OVERWRITE_PASSES = 3
+
+
+def secure_overwrite_file(file_path: Path) -> int:
+    """Overwrite in place in bounded chunks; propagate failure for retry.
+
+    Never fall back to truncation, or unlink a file after an incomplete pass.
+    Symlinks and special files are unlinked without opening their targets.
+    """
+    st = file_path.lstat()
+    if not stat.S_ISREG(st.st_mode):
+        file_path.unlink()
+        return 0
+    file_path.chmod(st.st_mode | stat.S_IRUSR | stat.S_IWUSR)
+    size = st.st_size
+    with open(file_path, "r+b") as stream:
+        for pass_num in range(OVERWRITE_PASSES):
+            stream.seek(0)
+            remaining = size
+            while remaining:
+                chunk_size = min(1024 * 1024, remaining)
+                chunk = (b"\x00" * chunk_size if pass_num == 0 else
+                         b"\xff" * chunk_size if pass_num == 1 else
+                         os.urandom(chunk_size))
+                if stream.write(chunk) != chunk_size:
+                    raise OSError("Incomplete secure overwrite")
+                remaining -= chunk_size
+            stream.flush()
+            os.fsync(stream.fileno())
+    file_path.unlink()
+    return size * OVERWRITE_PASSES
 
 
 class SecurePurger:
@@ -80,12 +104,8 @@ class SecurePurger:
 
         if not directory.exists():
             return PurgeCertificate(
-                analysis_id=analysis_id,
-                project_name=project_name,
-                files_purged=0,
-                bytes_overwritten=0,
-                operator=operator,
-                verification_hash="directory_not_found",
+                analysis_id=analysis_id, project_name=project_name,
+                operator=operator, verification_hash="directory_not_found",
             )
 
         files_purged = 0
@@ -109,7 +129,17 @@ class SecurePurger:
             except OSError:
                 failed_files += 1
         else:
-            for root, _dirs, files in os.walk(str(directory)):
+            walk_errors: list[OSError] = []
+            for root, dirs, files in os.walk(str(directory), onerror=walk_errors.append):
+                for dirname in dirs[:]:
+                    link = Path(root) / dirname
+                    if link.is_symlink():
+                        try:
+                            link.unlink()
+                            files_purged += 1
+                        except OSError:
+                            failed_files += 1
+                        dirs.remove(dirname)
                 for fname in files:
                     fpath = Path(root) / fname
                     try:
@@ -127,9 +157,13 @@ class SecurePurger:
                     except OSError:
                         failed_files += 1
 
-            shutil.rmtree(str(directory), ignore_errors=True)
-            if directory.exists():
-                failed_files += 1
+            failed_files += len(walk_errors)
+            # Keep failed files for a future overwrite attempt.
+            if not failed_files:
+                try:
+                    shutil.rmtree(str(directory))
+                except OSError:
+                    failed_files += 1
 
         if failed_files > 0:
             return PurgeCertificate(
@@ -168,69 +202,18 @@ class SecurePurger:
         Returns:
             Total bytes overwritten across all passes.
         """
-        try:
-            st = file_path.lstat()
-        except OSError:
-            return 0
-
-        if not stat.S_ISREG(st.st_mode):
-            try:
-                file_path.unlink()
-            except OSError:
-                pass
-            return 0
-
-        size = st.st_size
-        total_overwritten = 0
-        chunk_limit = 1024 * 1024  # 1 MB
-
-        if size > 0:
-            for pass_num in range(OVERWRITE_PASSES):
-                try:
-                    f = open(file_path, "r+b")
-                except OSError:
-                    f = open(file_path, "wb")
-
-                with f:
-                    f.seek(0)
-                    remaining = size
-                    if pass_num < OVERWRITE_PASSES - 1:
-                        # Random data passes
-                        while remaining > 0:
-                            chunk_size = min(chunk_limit, remaining)
-                            f.write(os.urandom(chunk_size))
-                            remaining -= chunk_size
-                    else:
-                        # Final pass: zeros
-                        while remaining > 0:
-                            chunk_size = min(chunk_limit, remaining)
-                            f.write(b"\x00" * chunk_size)
-                            remaining -= chunk_size
-                    f.flush()
-                    os.fsync(f.fileno())
-                total_overwritten += size
-
-        # Delete the file
-        try:
-            file_path.unlink()
-        except OSError:
-            pass
-
-        return total_overwritten
+        return secure_overwrite_file(file_path)
 
     def _sign_certificate(self, cert: PurgeCertificate) -> None:
-        """Sign the purge certificate with the ephemeral key."""
-        data = (
-            f"{cert.certificate_id}|{cert.analysis_id}|{cert.project_name}|"
-            f"{cert.purge_timestamp.isoformat()}|{cert.files_purged}|"
-            f"{cert.bytes_overwritten}|{cert.method}|{cert.operator}|{cert.verification_hash}"
-        ).encode()
-
-        signature = self._signing_key.sign(data, ec.ECDSA(hashes.SHA256()))
-        # Store the signature as hex in the verification hash field
-        cert.verification_hash = (
-            f"{cert.verification_hash}|sig:{signature.hex()}"
-        )
+        """Sign the canonical payload without changing its verification hash."""
+        cert.method = "DoD 5220.22-M (0x00, 0xFF, random; fsync each pass)"
+        cert.signature = self._signing_key.sign(
+            cert._sign_payload(), ec.ECDSA(hashes.SHA256())
+        ).hex()
+        cert.public_key = self._verify_key.public_bytes(
+            serialization.Encoding.PEM,
+            serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode("ascii")
 
     def export_certificate(self, cert: PurgeCertificate, output_path: Path) -> Path:
         """Export the purge certificate to a JSON file.
@@ -244,21 +227,7 @@ class SecurePurger:
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        cert_data = {
-            "certificate_id": cert.certificate_id,
-            "analysis_id": cert.analysis_id,
-            "project_name": cert.project_name,
-            "purge_timestamp": cert.purge_timestamp.isoformat(),
-            "files_purged": cert.files_purged,
-            "bytes_overwritten": cert.bytes_overwritten,
-            "method": cert.method,
-            "verification_hash": cert.verification_hash,
-            "operator": cert.operator,
-            "public_key": self._verify_key.public_bytes(
-                serialization.Encoding.PEM,
-                serialization.PublicFormat.SubjectPublicKeyInfo,
-            ).decode(),
-        }
+        cert_data = cert.model_dump(mode="json")
 
         output_path.write_text(
             json.dumps(cert_data, indent=2), encoding="utf-8"
@@ -274,6 +243,6 @@ class SecurePurger:
         Returns:
             Bytes overwritten.
         """
-        if not file_path.exists():
+        if not file_path.exists() and not file_path.is_symlink():
             return 0
         return self._secure_overwrite(file_path)

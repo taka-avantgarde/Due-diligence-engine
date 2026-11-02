@@ -75,21 +75,34 @@ fm_set() {
   mv -f "$tmp" "$file"
 }
 
+validate_id() {
+  [[ "${1:-}" =~ ^[A-Za-z0-9_-]+$ ]] || die "Invalid Order ID: ${1:-}"
+}
+
+require_state() {
+  local file="$1" allowed="$2" current
+  current="$(fm_get "$file" status)"
+  case " $allowed " in
+    *" $current "*) ;;
+    *) die "Invalid transition from '$current'; expected: $allowed" ;;
+  esac
+}
+
 order_file() {
   local id="$1"
-  id="${id%.md}"
+  validate_id "$id"
   printf '%s/%s.md' "$ORDER_DIR" "$id"
 }
 
 task_file() {
   local id="$1"
-  id="${id%.md}"
+  validate_id "$id"
   printf '%s/%s.md' "$TASK_DIR" "$id"
 }
 
 result_file() {
   local id="$1"
-  id="${id%.md}"
+  validate_id "$id"
   printf '%s/%s.md' "$RESULT_DIR" "$id"
 }
 
@@ -97,6 +110,7 @@ result_file() {
 
 cmd_check() {
   info "===> Running Verification Gates for Due Diligence Engine"
+  cd "$ROOT"
   local exit_code=0
   local python_bin="python3"
   if [ -x "$ROOT/.venv/bin/python" ]; then
@@ -225,7 +239,7 @@ cmd_new() {
     feat|fix|chore|docs|refactor|perf|test) ;;
     *) die "Usage: agent_handoff.sh new <feat|fix|chore|docs|refactor|perf|test> <slug> [title]" ;;
   esac
-  [ -n "$slug" ] || die "Slug required"
+  validate_id "$slug"
   [ -n "$title" ] || title="${type}: ${slug}"
 
   local id="${STAMP}_${type}-${slug}"
@@ -270,7 +284,10 @@ cmd_ready() {
   [ -n "$id" ] || die "Usage: agent_handoff.sh ready <id>"
   local file; file="$(order_file "$id")"
   [ -f "$file" ] || die "Order not found: $id"
+  require_state "$file" "draft blocked"
 
+  fm_set "$file" "verified" "false"
+  fm_set "$file" "verified_sha" ""
   fm_set "$file" "status" "ready"
   fm_set "$file" "updated" "$TODAY"
   ok "Order marked ready: $id"
@@ -292,6 +309,7 @@ cmd_dispatch() {
 
   local file; file="$(order_file "$id")"
   [ -f "$file" ] || die "Order not found: $id"
+  require_state "$file" "ready"
 
   printf '\n===== Dispatch Instructions for %s =====\n' "$tool"
   printf 'You are assigned order: %s\n' "$id"
@@ -317,7 +335,10 @@ cmd_claim() {
 
   local file; file="$(order_file "$id")"
   [ -f "$file" ] || die "Order not found: $id"
+  require_state "$file" "ready"
 
+  fm_set "$file" "verified" "false"
+  fm_set "$file" "verified_sha" ""
   fm_set "$file" "status" "in_progress"
   fm_set "$file" "owner" "$tool"
   fm_set "$file" "updated" "$TODAY"
@@ -345,9 +366,14 @@ cmd_verify() {
   [ -n "$id" ] || die "Usage: agent_handoff.sh verify <id>"
   local file; file="$(order_file "$id")"
   [ -f "$file" ] || die "Order not found: $id"
+  require_state "$file" "in_progress"
 
   info "Verifying Order $id..."
-  if cmd_check; then
+  fm_set "$file" "verified" "false"
+  fm_set "$file" "verified_sha" ""
+  local checked_sha; checked_sha="$(git -C "$ROOT" rev-parse HEAD)"
+  if (cmd_check) && [ "$checked_sha" = "$(git -C "$ROOT" rev-parse HEAD)" ]; then
+    fm_set "$file" "verified_sha" "$checked_sha"
     fm_set "$file" "verified" "true"
     fm_set "$file" "updated" "$TODAY"
     ok "Verification PASSED for $id"
@@ -365,12 +391,11 @@ cmd_done() {
   [ -n "$id" ] || die "Usage: agent_handoff.sh done <id>"
   local file; file="$(order_file "$id")"
   [ -f "$file" ] || die "Order not found: $id"
+  require_state "$file" "in_progress"
 
   local verified; verified="$(fm_get "$file" "verified" || echo "false")"
-  if [ "$verified" != "true" ]; then
-    warn "Order $id has not been verified yet. Running verification gates now..."
-    cmd_verify "$id"
-  fi
+  [ "$verified" = "true" ] || die "Run verify successfully before done"
+  [ "$(fm_get "$file" verified_sha)" = "$(git -C "$ROOT" rev-parse HEAD)" ] || die "HEAD changed; run verify again"
 
   local rfile; rfile="$(result_file "$id")"
   if [ ! -f "$rfile" ]; then
@@ -381,11 +406,16 @@ Owner: $(fm_get "$file" "owner")
 Status: completed
 
 ## Summary of Changes
-- Completed deliverables as specified in $id
+- TODO: Describe the completed changes and remaining limitations.
 
 ## Verification Evidence
-- Gate verification: PASSED (exit 0)
+- TODO: Record verification commands, results, and risks.
 EOF
+  fi
+
+  if grep -q 'TODO:' "$rfile"; then
+    info "Fill the Result artifact, then run done again: $rfile"
+    return 0
   fi
 
   fm_set "$file" "status" "done"
@@ -399,7 +429,11 @@ cmd_handback() {
   [ -n "$id" ] && [ -n "$reason" ] || die "Usage: agent_handoff.sh handback <id> \"reason\""
   local file; file="$(order_file "$id")"
   [ -f "$file" ] || die "Order not found: $id"
+  require_state "$file" "in_progress"
 
+  fm_set "$file" "verified" "false"
+  fm_set "$file" "verified_sha" ""
+  fm_set "$file" "owner" "-"
   fm_set "$file" "status" "blocked"
   fm_set "$file" "updated" "$TODAY"
 
