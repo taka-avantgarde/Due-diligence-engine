@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+from pathlib import Path
 
 from due_diligence_engine.models import AnalysisResult
 

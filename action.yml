@@ -85,9 +85,9 @@ runs:
           GRADE="?"
           FLAGS="0"
         else
-          SCORE=$( (grep -oE '\*\*Overall Score:\*\*\s*[0-9]+' "$REPORT" 2>/dev/null || true) | (grep -oE '[0-9]+' || true) | head -1)
+          SCORE=$( (grep -oE '\*\*Overall Score:\*\*\s*[0-9]+([.][0-9]+)?' "$REPORT" 2>/dev/null || true) | (grep -oE '[0-9]+([.][0-9]+)?' || true) | head -1)
           if [ -z "$SCORE" ]; then
-            SCORE=$( (grep -oE 'Overall Score:\s*[0-9]+' "$REPORT" 2>/dev/null || true) | (grep -oE '[0-9]+' || true) | head -1)
+            SCORE=$( (grep -oE 'Overall Score:\s*[0-9]+([.][0-9]+)?' "$REPORT" 2>/dev/null || true) | (grep -oE '[0-9]+([.][0-9]+)?' || true) | head -1)
           fi
           GRADE=$( (grep -oE '\(Grade:\s*[A-F]\)' "$REPORT" 2>/dev/null || true) | (grep -oE '[A-F]' || true) | head -1)
           if [ -z "$GRADE" ]; then
@@ -123,8 +123,18 @@ runs:
         FAIL_BELOW: ${{ inputs.fail_below }}
         SCORE: ${{ steps.run_dde.outputs.score }}
       run: |
-        SCORE="${SCORE:-0}"
-        if [ "$SCORE" -lt "$FAIL_BELOW" ]; then
-          echo "::error::DDE Score ($SCORE) is below threshold ($FAIL_BELOW)"
-          exit 1
-        fi
+        python3 -c '
+        import math
+        import os
+        import sys
+
+        try:
+            score = float(os.environ["SCORE"])
+            threshold = float(os.environ["FAIL_BELOW"])
+            if not all(math.isfinite(value) and 0 <= value <= 100 for value in (score, threshold)):
+                raise ValueError
+        except (KeyError, ValueError):
+            sys.exit("::error::SCORE and FAIL_BELOW must be finite numbers from 0 to 100")
+        if score < threshold:
+            sys.exit(f"::error::DDE Score ({score}) is below threshold ({threshold})")
+        '

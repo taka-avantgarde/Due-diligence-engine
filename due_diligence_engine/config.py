@@ -273,7 +273,7 @@ def calculate_token_cost(
     output_tokens: int,
     saas_multiplier: float = 1.0,
 ) -> float:
-    """Calculate token cost for any known model ID or provider tier.
+    """Calculate token cost, estimating unknown models at the default Sonnet rate.
 
     Args:
         model_or_provider: Model ID, tier name ('haiku', 'sonnet', 'fable'),
@@ -297,7 +297,8 @@ def calculate_token_cost(
 
     costs = PROVIDER_MODEL_COSTS.get(model_id) or PROVIDER_COSTS.get(model_or_provider)
     if not costs:
-        return 0.0
+        default = MODELS["sonnet"]
+        costs = {"input": default.input_cost_per_mtok, "output": default.output_cost_per_mtok}
 
     input_rate = costs.get("input", 0.0)
     output_rate = costs.get("output", 0.0)

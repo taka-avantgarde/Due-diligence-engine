@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import PurePosixPath
 
 from due_diligence_engine.models import (
     CodeAnalysisResult,
@@ -161,13 +162,31 @@ class ConsistencyAnalyzer:
             if re.search(r"\d+[kKmM]\+?\s*(user|request|transaction)", c, re.IGNORECASE)
         ]
 
-        for claim in scale_claims:
-            # Check if there's infrastructure code to support scale claims
-            infra_indicators = any(
-                f["path"] for f in code.complexity_metrics.get("files", [])
-            ) if isinstance(code.complexity_metrics.get("files"), list) else False
+        deployment_pattern = re.compile(
+            r"(?:^|[/.\s_-])(?:docker|dockerfile|compose|kubernetes|k8s|helm|"
+            r"terraform|workflows?|ci|cd|deploy|deployment|fly|vercel|netlify|"
+            r"procfile|cloudbuild|render|jenkinsfile|azure-pipelines|travis)"
+            r"(?:$|[/.\s_-])",
+            re.IGNORECASE,
+        )
+        files = code.complexity_metrics.get("files", [])
+        infra_indicators = code.has_ci_cd
+        if isinstance(files, list):
+            for entry in files:
+                if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+                    continue
+                path = PurePosixPath(entry["path"].replace("\\", "/").lower())
+                is_config = (
+                    path.suffix in {".yaml", ".yml", ".json", ".toml", ".tf", ".tfvars", ".sh"}
+                    or path.name in {"dockerfile", "procfile", "jenkinsfile"}
+                    or path.name.startswith(("dockerfile.", "procfile."))
+                )
+                if is_config and (deployment_pattern.search(str(path)) or path.suffix in {".tf", ".tfvars"}):
+                    infra_indicators = True
+                    break
 
-            if not infra_indicators and code.total_files < 30:
+        for claim in scale_claims:
+            if not infra_indicators:
                 result.unverified_claims.append(
                     f"Scale claim unverifiable from code alone: {claim[:80]}"
                 )

@@ -38,12 +38,12 @@ due_diligence_engine/
 
 ## §2 AI Model Split Policy
 
-To ensure supreme software engineering quality, rigorous peer review, and zero-defect execution:
+To ensure supreme software engineering quality, rigorous peer review, and zero-defect execution (Claude development agents are not used):
 
-| Role | Assigned Model | Reasoning Effort | Responsibility |
+| Period | Assigned Model(s) | Reasoning Effort | Responsibility |
 |---|---|---|---|
-| **Orchestrator / Architect / Root-Cause Analyst / Reviewer** | **Antigravity Gemini 4 Argon** (High)<br>+ **Astra Ultra** (`xhigh`) / **Astra Max** (`high`) | `high` / `xhigh` | Overall architectural decisions, Order definition, root-cause defect analysis, UX/design fidelity, and pre-merge independent verification. |
-| **Executor** | **Astra Ultra** (`gpt-6-astra`) | `xhigh` | Concrete code changes according to Order specifications, running tests, mechanical refactoring. **Never redesign or speculate**; if ambiguous, stop and hand back. |
+| **Through 2026-11-08** | **Astra Ultra** (`gpt-6-astra`, `xhigh`)<br>+ **Antigravity Gemini 4 Argon** (High) | `xhigh` / `high` | Full-spectrum analysis, root-cause investigation, architectural design, holistic cross-layer implementation, and independent verification. |
+| **From 2026-11-09 Onward** | **Antigravity Gemini 4 Argon** (High) **Only** | `high` | Exclusive unified model for all orchestration, analysis, design, implementation, and verification (zero external agent dependency). |
 
 ### Reasoning Effort Guidelines
 - **`low`**: Minor mechanical edits, single-file typo fixes, documentation synchronization.

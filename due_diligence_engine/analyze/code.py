@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ast
+import json
 import re
+import tomllib
 from pathlib import Path
 
 from due_diligence_engine.ingest.secure_loader import SecureLoader
@@ -99,7 +101,8 @@ class CodeAnalyzer:
         result = CodeAnalysisResult()
         code_files = self._loader.get_code_files()
         result.total_files = len(code_files)
-        result.complexity_metrics["files"] = [{"path": e["path"]} for e in code_files]
+        # Consistency checks need deployment configs as well as source files.
+        result.complexity_metrics["files"] = [{"path": e["path"]} for e in self._loader.manifest]
 
         api_call_files = 0
         real_impl_files = 0
@@ -258,19 +261,50 @@ class CodeAnalyzer:
             "Gemfile",
         ]
         for entry in self._loader.manifest:
-            if any(entry["path"].endswith(df) for df in dep_files):
+            name = Path(entry["path"]).name
+            if name in dep_files:
                 try:
                     content = self._loader.read_file(entry["path"])
-                    # Rough line count as proxy for dependency count
-                    dep_count += sum(
-                        1
-                        for line in content.splitlines()
-                        if line.strip()
-                        and not line.strip().startswith("#")
-                        and not line.strip().startswith("//")
-                    )
                 except (FileNotFoundError, UnicodeDecodeError):
+                    continue
+                try:
+                    if name == "package.json":
+                        package = json.loads(content)
+                        if isinstance(package, dict):
+                            for section in ("dependencies", "devDependencies", "peerDependencies", "optionalDependencies"):
+                                dependencies = package.get(section, {})
+                                if isinstance(dependencies, dict):
+                                    dep_count += len(dependencies)
+                        continue
+                    if name == "pyproject.toml":
+                        project_config = tomllib.loads(content)
+                        project = project_config.get("project", {})
+                        if isinstance(project, dict):
+                            dependencies = project.get("dependencies", [])
+                            if isinstance(dependencies, list):
+                                dep_count += sum(isinstance(dep, str) for dep in dependencies)
+                            optional = project.get("optional-dependencies", {})
+                            if isinstance(optional, dict):
+                                dep_count += sum(
+                                    sum(isinstance(dep, str) for dep in group)
+                                    for group in optional.values() if isinstance(group, list)
+                                )
+                        tool = project_config.get("tool", {})
+                        poetry = tool.get("poetry", {}) if isinstance(tool, dict) else {}
+                        dependencies = poetry.get("dependencies", {}) if isinstance(poetry, dict) else {}
+                        if isinstance(dependencies, dict):
+                            # Poetry's Python version constraint is not a package dependency.
+                            dep_count += sum(name != "python" for name in dependencies)
+                        continue
+                except (json.JSONDecodeError, tomllib.TOMLDecodeError):
+                    # Malformed manifests retain the legacy best-effort estimate.
                     pass
+                dep_count += sum(
+                    1
+                    for line in content.splitlines()
+                    if line.strip()
+                    and not line.strip().startswith(("#", "//"))
+                )
         return dep_count
 
     def _generate_red_flags(

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # agent_handoff.sh — Multi-Agent Order Ledger & Gate Orchestrator
-# For Due Diligence Engine (Claude Code, OpenAI Codex, Google Gemini CLI, Antigravity)
+# For Due Diligence Engine (ATLAS.md §2: Astra Ultra + Antigravity, then Antigravity only)
 #
 # SSOT: ATLAS.md
 # Local state storage: .dde_handoff/ (gitignored)
@@ -31,7 +31,8 @@ ok()   { printf '\033[32m✓ %s\033[0m\n' "$*"; }
 
 is_agent() {
   case "${1:-}" in
-    claude|codex|gemini|antigravity|human) return 0 ;;
+    antigravity|human) return 0 ;;
+    codex) [[ "$TODAY" < "2026-11-09" ]] ;;
     *) return 1 ;;
   esac
 }
@@ -176,8 +177,8 @@ cmd_doctor() {
   chk "ATLAS.md exists and is canonical SSOT" "$([ -f "$ROOT/ATLAS.md" ] && printf 0 || printf 1)"
   chk "AGENTS.md exists" "$([ -f "$ROOT/AGENTS.md" ] && printf 0 || printf 1)"
   chk ".gemini/settings.json exists and points to ATLAS.md" "$([ -f "$ROOT/.gemini/settings.json" ] && printf 0 || printf 1)"
-  chk "CLAUDE.md exists and points to ATLAS.md" \
-    "$([ -f "$ROOT/CLAUDE.md" ] && grep -q 'ATLAS.md' "$ROOT/CLAUDE.md" && printf 0 || printf 1)"
+  chk "Claude development agents disabled (ATLAS.md §2)" \
+    "$(is_agent claude && printf 1 || printf 0)"
 
   chk ".agents/rules/00_ssot_invariants.md exists" "$([ -f "$ROOT/.agents/rules/00_ssot_invariants.md" ] && printf 0 || printf 1)"
   chk ".agents/rules/10_security_boundaries.md exists" "$([ -f "$ROOT/.agents/rules/10_security_boundaries.md" ] && printf 0 || printf 1)"
@@ -291,7 +292,7 @@ cmd_ready() {
   fm_set "$file" "status" "ready"
   fm_set "$file" "updated" "$TODAY"
   ok "Order marked ready: $id"
-  info "Dispatch with: ./scripts/agent_handoff.sh dispatch $id --to <claude|codex|gemini|antigravity>"
+  info "Dispatch with: ./scripts/agent_handoff.sh dispatch $id --to <antigravity|codex|human> (codex through 2026-11-08 only)"
 }
 
 cmd_dispatch() {
@@ -304,8 +305,8 @@ cmd_dispatch() {
       *) die "Unknown option: $1" ;;
     esac
   done
-  [ -n "$id" ] && [ -n "$tool" ] || die "Usage: agent_handoff.sh dispatch <id> --to <claude|codex|gemini|antigravity>"
-  is_agent "$tool" || die "Invalid agent tool: $tool"
+  [ -n "$id" ] && [ -n "$tool" ] || die "Usage: agent_handoff.sh dispatch <id> --to <antigravity|codex|human>"
+  is_agent "$tool" || die "Agent tool not permitted by ATLAS.md §2 on $TODAY: $tool"
 
   local file; file="$(order_file "$id")"
   [ -f "$file" ] || die "Order not found: $id"
@@ -331,7 +332,7 @@ cmd_claim() {
     esac
   done
   [ -n "$id" ] && [ -n "$tool" ] || die "Usage: agent_handoff.sh claim <id> --as <agent>"
-  is_agent "$tool" || die "Invalid agent tool: $tool"
+  is_agent "$tool" || die "Agent tool not permitted by ATLAS.md §2 on $TODAY: $tool"
 
   local file; file="$(order_file "$id")"
   [ -f "$file" ] || die "Order not found: $id"
@@ -462,7 +463,10 @@ Commands:
   handback <id> "reason"        Halt execution and return order to orchestrator (status: blocked)
 
 Supported Agents:
-  claude | codex | gemini | antigravity | human
+  Through 2026-11-08: codex (Astra Ultra, gpt-6-astra, xhigh)
+                     + antigravity (Gemini 4 Argon, High)
+  From 2026-11-09:    antigravity (Gemini 4 Argon, High) only
+  human remains available for oversight. Claude development agents are not used.
 
 SSOT Reference: ATLAS.md
 USAGE

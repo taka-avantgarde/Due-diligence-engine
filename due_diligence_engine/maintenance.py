@@ -1,7 +1,7 @@
 """Fast Repository Governance & SSOT Invariant Verification CLI.
 
 Enforces zero-drift invariants across versioning, pricing, multilingual docs,
-and HTML templates in under 0.5 seconds.
+and HTML templates, plus fatal Python lint errors.
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ if not hasattr(config, "calculate_token_cost"):
 def run_quick_check(repo_root: Path | None = None) -> tuple[bool, list[str]]:
     """Run fast mechanical SSOT consistency checks across the repository.
 
-    Executes in <0.5 seconds:
+    Checks:
     1. Version SSOT: due_diligence_engine.__version__ matches pyproject.toml,
        all 6 READMEs, and scorecard.html.
     2. Template Parity: root templates/scorecard.html does not drift from
@@ -48,6 +48,7 @@ def run_quick_check(repo_root: Path | None = None) -> tuple[bool, list[str]]:
     3. Model ID Modernity: zero dated model IDs (e.g. claude-*-YYYYMMDD) in package.
     4. Pricing Consistency: config pricing SSOT matches provider cost estimates.
     5. Multilingual PDF Parity: all 14 languages in _PDF_I18N have identical key sets.
+    6. Fatal Python errors: Ruff E9,F63,F7,F82 across the package and tests.
 
     Returns:
         tuple of (is_clean: bool, error_messages: list[str])
@@ -59,6 +60,18 @@ def run_quick_check(repo_root: Path | None = None) -> tuple[bool, list[str]]:
     errors: list[str] = []
     version = due_diligence_engine.__version__
     pkg_dir = repo_root / "due_diligence_engine"
+
+    # Fail closed if the development lint dependency is missing or cannot run.
+    try:
+        lint = subprocess.run(
+            [sys.executable, "-m", "ruff", "check", "--select", "E9,F63,F7,F82",
+             "due_diligence_engine/", "tests/"],
+            cwd=repo_root, capture_output=True, text=True, timeout=30, check=False,
+        )
+        if lint.returncode != 0:
+            errors.append(f"Ruff fatal-error check failed: {lint.stdout.strip()} {lint.stderr.strip()}".strip())
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        errors.append(f"Ruff fatal-error check could not run: {exc}")
 
     # 1. Version SSOT Check
     pyproject_path = repo_root / "pyproject.toml"

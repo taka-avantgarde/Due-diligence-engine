@@ -14,7 +14,10 @@ import json
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import anthropic
 
 from due_diligence_engine.ai.providers import (
     AIProvider,
@@ -568,7 +571,8 @@ def _parse_json_response(text: str) -> dict[str, Any]:
         text = "\n".join(lines)
 
     try:
-        return json.loads(text)
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, dict) else {"raw_response": text}
     except json.JSONDecodeError:
         start = text.find("{")
         end = text.rfind("}") + 1

@@ -1,7 +1,12 @@
 # Due Diligence Engine — Agent Entrypoint (`AGENTS.md`)
 
 > **SSOT Notice**: The canonical architectural and governance specification for this repository is [`ATLAS.md`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/ATLAS.md).  
-> All agents (Claude Code, OpenAI Codex, Google Gemini CLI, Antigravity) must read `ATLAS.md` before performing any tasks.
+> All assigned agents must read `ATLAS.md` before performing any tasks.
+
+Development model policy (ATLAS.md §2):
+- **Through 2026-11-08**: Astra Ultra (`gpt-6-astra`, `xhigh`) + Antigravity Gemini 4 Argon (High).
+- **From 2026-11-09 onward**: Antigravity Gemini 4 Argon (High) only.
+- Claude development agents are not used. This policy does not change the product's AI providers.
 
 ---
 
@@ -27,7 +32,8 @@ Use `scripts/agent_handoff.sh` for all task management:
 ./scripts/agent_handoff.sh doctor
 
 # Claim an order
-./scripts/agent_handoff.sh claim <id> --as <antigravity|gemini|claude|codex>
+./scripts/agent_handoff.sh claim <id> --as <antigravity|codex|human>
+# codex is accepted only through 2026-11-08; human remains available for oversight.
 
 # Verify work
 ./scripts/agent_handoff.sh verify <id>

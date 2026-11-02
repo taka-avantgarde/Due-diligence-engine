@@ -16,6 +16,7 @@ Dimensions (weights sum to 1.0):
 from __future__ import annotations
 
 import math
+from typing import Any
 
 from due_diligence_engine.models import (
     AnalysisResult,

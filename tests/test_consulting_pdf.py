@@ -17,12 +17,14 @@ import pytest
 
 from due_diligence_engine.models import (
     AnalysisResult,
+    AtlasFourAxisEvaluation,
     CompetitiveAnalysis,
     CompetitorDataPoint,
     ConsultingReport,
     DataFreshness,
     EnhancedDimensionScore,
     FutureOutlook,
+    ImplementationMatrix,
     InvestmentThesis,
     MarketChart,
     MarketPosition,

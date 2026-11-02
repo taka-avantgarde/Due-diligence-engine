@@ -14,7 +14,11 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import os
 import re
+import subprocess
+import sys
+import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -1134,6 +1138,7 @@ ORDER_DIR="$HANDOFF_DIR/orders"
 TASK_DIR="$HANDOFF_DIR/tasks"
 RESULT_DIR="$HANDOFF_DIR/results"
 STAMP=20000101
+TODAY=2026-11-08
 git() { printf 'test-head\\n'; }
 '''
     def run(commands):
@@ -1183,3 +1188,226 @@ def test_six_readmes_document_all_native_mcp_tools_and_gemini_context():
         assert all(tool in content for tool in TOOL_DISPATCH_MAP)
     settings = json.loads((_ROOT / ".gemini/settings.json").read_text())
     assert settings["contextFileName"] == settings["context"]["fileName"] == "ATLAS.md"
+
+
+# Remaining S6–S8 precision and maintenance invariants.
+def test_no_fatal_python_errors_in_package_or_tests():
+    result = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--select", "E9,F63,F7,F82",
+         "due_diligence_engine/", "tests/"],
+        cwd=_ROOT, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("source, diagnostic", [
+    ("print(undefined_name)\n", "F821"),
+    ("def broken(:\n", "invalid-syntax"),
+])
+def test_maintenance_rejects_fatal_python_errors(tmp_path, source, diagnostic):
+    from due_diligence_engine.maintenance import run_quick_check
+    (tmp_path / "due_diligence_engine").mkdir()
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests/broken.py").write_text(source, encoding="utf-8")
+    valid, errors = run_quick_check(tmp_path)
+    assert not valid
+    assert any("Ruff fatal-error check failed" in error and diagnostic in error for error in errors)
+
+
+@pytest.mark.parametrize("failure", [FileNotFoundError("ruff missing"), subprocess.TimeoutExpired("ruff", 30)])
+def test_maintenance_fails_closed_when_lint_cannot_run(monkeypatch, failure):
+    from due_diligence_engine import maintenance
+    def fail(*args, **kwargs):
+        raise failure
+    monkeypatch.setattr(maintenance.subprocess, "run", fail)
+    valid, errors = maintenance.run_quick_check(_ROOT)
+    assert not valid
+    assert any("Ruff fatal-error check could not run" in error for error in errors)
+
+
+@pytest.mark.parametrize("shallow, count", [(True, 30), (False, 30), (True, 100), (False, 100)])
+def test_uniform_git_intervals_do_not_cap_score(tmp_path, monkeypatch, shallow, count):
+    from datetime import datetime, timedelta, timezone
+    from due_diligence_engine.analyze.git_forensics import GitForensicsAnalyzer
+    from due_diligence_engine.models import Score, ScoreDimension, Severity
+    (tmp_path / ".git").mkdir()
+    analyzer = GitForensicsAnalyzer(tmp_path)
+    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    commits = [
+        {"author": f"bot-{i % 2}", "date": start + timedelta(hours=i), "message": f"Release version {i}"}
+        for i in range(count)
+    ]
+    monkeypatch.setattr(analyzer, "_get_commit_log", lambda: commits)
+    monkeypatch.setattr(analyzer, "_check_date_tampering", lambda result: None)
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: SimpleNamespace(
+        returncode=0, stdout="true\n" if shallow else "false\n",
+    ))
+    result = analyzer.analyze()
+    assert len(result.red_flags) == 1
+    assert result.red_flags[0].severity == Severity.MEDIUM
+    assert "CI/release" in result.red_flags[0].description
+    assert any("Shallow clone" in finding for finding in result.findings) == shallow
+    assert any("Limited history sample" in finding for finding in result.findings) == (count <= 50)
+    score = Score(
+        dimensions=[ScoreDimension(name="quality", score=90, weight=1, rationale="verified")],
+        red_flags=result.red_flags,
+    )
+    score.compute()
+    assert score.overall_score == 90
+
+
+@pytest.mark.parametrize("filename, content, expected", [
+    ("package.json", json.dumps({
+        "name": "example", "scripts": {"test": "pytest"},
+        "dependencies": {"a": "1", "b": "2"}, "devDependencies": {"test": "1"},
+        "peerDependencies": {"peer": "1"}, "optionalDependencies": {"optional": "1"},
+    }), 5),
+    ("pyproject.toml", '''
+[project]
+name = "example"
+version = "1.0"
+dependencies = ["a>=1", "b>=2"]
+[project.optional-dependencies]
+test = ["pytest", "ruff"]
+docs = ["sphinx"]
+[tool.poetry.dependencies]
+python = "^3.11"
+c = "^1"
+d = {version = "^2", optional = true}
+[tool.ruff]
+line-length = 100
+''', 7),
+    ("pyproject.toml", '[tool.poetry.dependencies]\npython = "^3.11"\na = "^1"', 1),
+    ("pyproject.toml", '[project]\nname="empty"\n[tool.ruff]\nline-length=100', 0),
+    ("package.json", '{"name":"empty", "dependencies": [], "devDependencies": null}', 0),
+    ("package.json", '["not a package object"]', 0),
+    ("pyproject.toml", 'project="invalid schema"\ntool=3', 0),
+    ("package.json", '# comment\n{\ninvalid\n}', 3),
+    ("pyproject.toml", '# comment\n[broken\nvalue =', 2),
+    ("requirements.txt", '# comment\nrequests>=2\n\nclick', 2),
+    ("not-package.json", '{"dependencies":{"a":"1"}}', 0),
+])
+def test_manifest_dependency_counts(filename, content, expected):
+    from due_diligence_engine.analyze.code import CodeAnalyzer
+    loader = SimpleNamespace(manifest=[{"path": f"nested/{filename}"}], read_file=lambda path: content)
+    assert CodeAnalyzer(loader)._count_dependencies() == expected
+
+
+@pytest.mark.parametrize("path, backed", [
+    ("src/app.py", False), ("src/deploy.py", False), ("docs/deployment.md", False),
+    ("config/decision.json", False), ("config/city.yaml", False),
+    ("Dockerfile", True), ("Dockerfile.prod", True), ("docker-compose.yml", True),
+    ("k8s/service.yaml", True), ("helm/Chart.yaml", True), ("infra/main.tf", True),
+    (".github/workflows/check.yml", True), (".gitlab-ci.yml", True),
+    ("fly.toml", True), ("vercel.json", True), ("netlify.toml", True),
+    ("Procfile", True), ("cloudbuild.yaml", True), ("render.yaml", True),
+    ("scripts/deploy.sh", True),
+])
+def test_scale_claims_require_deployment_files(path, backed):
+    from due_diligence_engine.analyze.code import CodeAnalyzer
+    from due_diligence_engine.analyze.consistency import ConsistencyAnalyzer
+    from due_diligence_engine.models import DocAnalysisResult
+    # Exercise the producer/consumer boundary: non-source configs must survive
+    # code analysis, and arbitrary source files must not count as infrastructure.
+    loader = SimpleNamespace(
+        manifest=[{"path": "app.py"}, {"path": path}],
+        get_code_files=lambda: [{"path": "app.py"}], get_doc_files=lambda: [],
+        read_file=lambda path: "def run():\n    return 1\n",
+    )
+    code = CodeAnalyzer(loader).analyze()
+    docs = DocAnalysisResult(performance_claims=["Supports 100k users"])
+    result = ConsistencyAnalyzer().analyze(code, docs)
+    assert bool(result.unverified_claims) == (not backed)
+    # File count is not evidence either.
+    code.total_files = 100
+    assert bool(ConsistencyAnalyzer().analyze(code, docs).unverified_claims) == (not backed)
+
+
+@pytest.mark.parametrize("input_tokens, output_tokens", [(1_000_000, 0), (0, 1_000_000), (1_000_000, 1_000_000)])
+def test_unknown_model_uses_positive_default_cost(input_tokens, output_tokens):
+    tier = config.MODELS["sonnet"]
+    expected = (input_tokens * tier.input_cost_per_mtok + output_tokens * tier.output_cost_per_mtok) / 1_000_000
+    actual = config.calculate_token_cost("unregistered-model", input_tokens, output_tokens)
+    assert actual == pytest.approx(expected)
+    assert actual > 0
+    assert config.calculate_token_cost("unregistered-model", input_tokens, output_tokens, 2) == pytest.approx(2 * expected)
+    assert config.calculate_token_cost("unregistered-model", -1, -1) == 0
+
+
+@pytest.mark.parametrize("text", ['[]', '[{"score": 90}]', '42', '"text"', 'null', 'true'])
+def test_analysis_json_non_object_roots_are_raw_responses(text):
+    from due_diligence_engine.analyze.engine import _parse_json_response
+    assert _parse_json_response(text) == {"raw_response": text}
+    assert _parse_json_response(f"```json\n{text}\n```") == {"raw_response": text}
+
+
+@pytest.mark.parametrize("text, expected", [
+    ('{"score": 90}', {"score": 90}),
+    ('```json\n{"score": 90}\n```', {"score": 90}),
+    ('Result: {"score": 90}', {"score": 90}),
+    ('not json', {"raw_response": "not json", "parse_error": True}),
+])
+def test_analysis_json_object_and_text_recovery(text, expected):
+    from due_diligence_engine.analyze.engine import _parse_json_response
+    assert _parse_json_response(text) == expected
+
+
+def _action_step_script(name):
+    action = (_ROOT / "action.yml").read_text(encoding="utf-8")
+    step = action.split(f"    - name: {name}\n", 1)[1].split("\n    - name:", 1)[0]
+    return textwrap.dedent(step.split("      run: |\n", 1)[1])
+
+
+@pytest.mark.parametrize("score, threshold, success", [
+    ("75.5", "75.4", True), ("75.5", "75.5", True), ("75.5", "75.6", False),
+    ("75", "75.5", False), ("0", "0.0", True), ("100", "100.0", True),
+    ("nan", "75", False), ("75", "inf", False), ("", "75", False),
+    ("75", "no", False), ("-1", "50", False), ("75", "101", False),
+    ("$(exit 0)", "75", False),
+])
+def test_action_threshold_validates_and_compares_decimals(score, threshold, success):
+    result = subprocess.run(
+        ["bash", "-e", "-c", _action_step_script("Score Threshold Check")],
+        env={"PATH": os.environ["PATH"], "SCORE": score, "FAIL_BELOW": threshold},
+        capture_output=True, text=True, timeout=10,
+    )
+    assert (result.returncode == 0) == success, result.stdout + result.stderr
+    if not success:
+        assert "::error::" in result.stderr
+
+
+@pytest.mark.parametrize("score_line", ["**Overall Score:** 75.5/100", "Overall Score: 75.5/100"])
+def test_action_report_extraction_preserves_decimals(tmp_path, score_line):
+    (tmp_path / "dde_output").mkdir()
+    (tmp_path / "dde_output/dde_report_test.md").write_text(score_line, encoding="utf-8")
+    output = tmp_path / "output.txt"
+    result = subprocess.run(
+        ["bash", "-eo", "pipefail", "-c", "dde() { return 0; }\n" + _action_step_script("Run Analysis")],
+        cwd=tmp_path, env={
+            "PATH": os.environ["PATH"], "INPUT_OUTPUT_FORMAT": "md", "INPUT_SKIP_AI": "true",
+            "ANTHROPIC_API_KEY": "", "GITHUB_OUTPUT": str(output),
+            "GITHUB_STEP_SUMMARY": str(tmp_path / "summary.txt"),
+        }, capture_output=True, text=True, timeout=10,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "score=75.5\n" in output.read_text()
+
+
+@pytest.mark.parametrize("day, tool, allowed", [
+    ("2026-11-08", "codex", True), ("2026-11-09", "codex", False),
+    ("2026-11-08", "antigravity", True), ("2026-11-09", "antigravity", True),
+    ("2026-11-08", "claude", False), ("2026-11-09", "claude", False),
+    ("2026-11-08", "gemini", False), ("2026-11-09", "gemini", False),
+    ("2026-11-09", "human", True),
+])
+def test_handoff_model_policy_date_boundary(day, tool, allowed):
+    script = (_ROOT / "scripts/agent_handoff.sh").read_text().rsplit('main "$@"', 1)[0]
+    result = subprocess.run(
+        ["bash", "-c", script + '\nTODAY="$1"\nis_agent "$2"', "test", day, tool],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert (result.returncode == 0) == allowed
+    for document in ("ATLAS.md", "AGENTS.md"):
+        text = (_ROOT / document).read_text()
+        assert all(token in text for token in ("2026-11-08", "2026-11-09", "gpt-6-astra", "xhigh"))
+        assert "Claude development agents are not used" in text

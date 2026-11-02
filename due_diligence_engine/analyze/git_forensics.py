@@ -45,6 +45,26 @@ class GitForensicsAnalyzer:
             return result
 
         result.total_commits = len(commits)
+        try:
+            shallow = subprocess.run(
+                ["git", "rev-parse", "--is-shallow-repository"],
+                cwd=str(self._repo_path), capture_output=True, text=True, timeout=30,
+            )
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            result.findings.append("Could not determine whether the inspected history is shallow.")
+        else:
+            if shallow.returncode != 0:
+                result.findings.append("Could not determine whether the inspected history is shallow.")
+            elif shallow.stdout.strip() == "true":
+                result.findings.append(
+                    "Shallow clone: inspected history is incomplete; commit patterns "
+                    "may not represent the full development timeline."
+                )
+        if len(commits) <= 50:
+            result.findings.append(
+                f"Limited history sample ({len(commits)} commits inspected); "
+                "timing patterns alone are inconclusive."
+            )
         authors = set()
         dates: list[datetime] = []
         hour_counter: Counter[int] = Counter()
@@ -176,7 +196,7 @@ class GitForensicsAnalyzer:
 
                 if cv < 0.1 and len(intervals) > 20:
                     result.suspicious_patterns.append(
-                        "Suspiciously uniform commit intervals (possible automated/fake history)"
+                        "Uniform commit intervals (may reflect automated CI/release workflows)"
                     )
                     result.red_flags.append(
                         RedFlag(
@@ -184,10 +204,11 @@ class GitForensicsAnalyzer:
                             title="Suspiciously uniform commit intervals",
                             description=(
                                 f"Commit interval coefficient of variation is {cv:.3f} "
-                                f"(near-zero variance). Natural development has irregular "
-                                f"commit patterns."
+                                f"(near-zero variance). Automated CI/release workflows can "
+                                f"produce this pattern; timing alone does not establish "
+                                f"fabricated history."
                             ),
-                            severity=Severity.CRITICAL,
+                            severity=Severity.MEDIUM,
                         )
                     )
 

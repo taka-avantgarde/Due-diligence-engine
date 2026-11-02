@@ -50,7 +50,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from due_diligence_engine.models import AIProviderResult, AnalysisResult, PurgeCertificate, Severity
+from due_diligence_engine.models import AIProviderResult, AnalysisResult, ConsultingReport, PurgeCertificate, Severity
 
 logger = logging.getLogger(__name__)
 
