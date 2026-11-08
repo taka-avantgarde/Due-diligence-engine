@@ -40,10 +40,11 @@ due_diligence_engine/
 
 To ensure supreme software engineering quality, rigorous peer review, and zero-defect execution (Claude development agents are not used):
 
-| Period | Assigned Model(s) | Reasoning Effort | Responsibility |
+| Role / Phase | Assigned Model(s) | Reasoning Effort | Responsibility |
 |---|---|---|---|
-| **Through 2026-11-08** | **Astra Ultra** (`gpt-6-astra`, `xhigh`)<br>+ **Antigravity Gemini 4 Argon** (High) | `xhigh` / `high` | Full-spectrum analysis, root-cause investigation, architectural design, holistic cross-layer implementation, and independent verification. |
-| **From 2026-11-09 Onward** | **Antigravity Gemini 4 Argon** (High) **Only** | `high` | Exclusive unified model for all orchestration, analysis, design, implementation, and verification (zero external agent dependency). |
+| **Planning / Analysis / Investigation / Bug Resolution / Audit** | **Antigravity Gemini 4 Argon** (`gemini-4-argon-high`) | `high` | Development planning, architectural analysis, codebase investigation, root-cause bug diagnosis & complex bug resolution, orchestration, and clean-room verification. |
+| **Implementation** | **Gemini 3.8 Flash** (`gemini-3.8-flash-low` / `gemini-3.8-flash-medium` / `gemini-3.8-flash-high`) | `low` / `medium` / `high` (conductor-selected) | Contract-bound cross-layer implementation using the optimal reasoning tier selected per task by Argon High (`Argon High` may also implement complex bug fixes). |
+| **Calendar Compatibility (JST)** | **Through 2026-11-08**: **Astra Ultra** (`gpt-6-astra`, `xhigh`) also permitted<br>**From 2026-11-09 onward**: **Argon High + Gemini 3.8 Flash** (`low` / `medium` / `high`) **Only** | `xhigh` / `high` / `medium` / `low` | Full transition to Gemini-only multi-tier governance from 2026-11-09 JST onward (zero Claude or untiered legacy Flash usage). |
 
 ### Reasoning Effort Guidelines
 - **`low`**: Minor mechanical edits, single-file typo fixes, documentation synchronization.

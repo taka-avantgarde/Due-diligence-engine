@@ -4,8 +4,10 @@
 > All assigned agents must read `ATLAS.md` before performing any tasks.
 
 Development model policy (ATLAS.md §2):
-- **Through 2026-11-08**: Astra Ultra (`gpt-6-astra`, `xhigh`) + Antigravity Gemini 4 Argon (High).
-- **From 2026-11-09 onward**: Antigravity Gemini 4 Argon (High) only.
+- **Planning / Analysis / Investigation / Bug Resolution / Audit**: Antigravity Gemini 4 Argon (`gemini-4-argon-high`, `high`).
+- **Implementation**: Gemini 3.8 Flash (`gemini-3.8-flash-low` / `gemini-3.8-flash-medium` / `gemini-3.8-flash-high`), with optimal reasoning tier selected per task by Argon High.
+- **Through 2026-11-08**: Astra Ultra (`gpt-6-astra`, `xhigh`) is also permitted alongside Argon High + Gemini 3.8 Flash.
+- **From 2026-11-09 onward**: Argon High + Gemini 3.8 Flash (`low` / `medium` / `high`) only.
 - Claude development agents are not used. This policy does not change the product's AI providers.
 
 ---
@@ -32,8 +34,8 @@ Use `scripts/agent_handoff.sh` for all task management:
 ./scripts/agent_handoff.sh doctor
 
 # Claim an order
-./scripts/agent_handoff.sh claim <id> --as <antigravity|codex|human>
-# codex is accepted only through 2026-11-08; human remains available for oversight.
+./scripts/agent_handoff.sh claim <id> --as <antigravity|gemini|codex|human>
+# codex is accepted only through 2026-11-08; gemini and antigravity remain active in all periods; human remains available for oversight.
 
 # Verify work
 ./scripts/agent_handoff.sh verify <id>

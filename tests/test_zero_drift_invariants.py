@@ -1396,8 +1396,8 @@ def test_action_report_extraction_preserves_decimals(tmp_path, score_line):
 @pytest.mark.parametrize("day, tool, allowed", [
     ("2026-11-08", "codex", True), ("2026-11-09", "codex", False),
     ("2026-11-08", "antigravity", True), ("2026-11-09", "antigravity", True),
+    ("2026-11-08", "gemini", True), ("2026-11-09", "gemini", True),
     ("2026-11-08", "claude", False), ("2026-11-09", "claude", False),
-    ("2026-11-08", "gemini", False), ("2026-11-09", "gemini", False),
     ("2026-11-09", "human", True),
 ])
 def test_handoff_model_policy_date_boundary(day, tool, allowed):
@@ -1409,5 +1409,17 @@ def test_handoff_model_policy_date_boundary(day, tool, allowed):
     assert (result.returncode == 0) == allowed
     for document in ("ATLAS.md", "AGENTS.md"):
         text = (_ROOT / document).read_text()
-        assert all(token in text for token in ("2026-11-08", "2026-11-09", "gpt-6-astra", "xhigh"))
+        assert all(
+            token in text
+            for token in (
+                "2026-11-08",
+                "2026-11-09",
+                "gemini-4-argon-high",
+                "gemini-3.8-flash-low",
+                "gemini-3.8-flash-medium",
+                "gemini-3.8-flash-high",
+                "gpt-6-astra",
+                "xhigh",
+            )
+        )
         assert "Claude development agents are not used" in text

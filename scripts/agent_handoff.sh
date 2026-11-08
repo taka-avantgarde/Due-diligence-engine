@@ -31,7 +31,7 @@ ok()   { printf '\033[32m✓ %s\033[0m\n' "$*"; }
 
 is_agent() {
   case "${1:-}" in
-    antigravity|human) return 0 ;;
+    antigravity|gemini|human) return 0 ;;
     codex) [[ "$TODAY" < "2026-11-09" ]] ;;
     *) return 1 ;;
   esac
