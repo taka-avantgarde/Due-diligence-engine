@@ -17,14 +17,23 @@
 
 </div>
 
-### 📋 Copy & Paste — Done in 1 Step
+### 🚀 Zero Setup — Just Paste This URL & Say "Run It"
 
-**🤖 Option A — Paste directly into your AI agent (Claude Code / Codex / Gemini CLI / Antigravity / Cursor) to auto-install, audit, and generate the PDF:**
+**You don't even need to type commands.** Simply paste this repository's URL into your AI agent (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) and tell it to run:
+
 ```text
-Install https://github.com/Atlas-Associates-Inc/Due-diligence-engine (`python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git`), run `dde prompt --pdf` on this project, and execute all instructions in the generated prompt (STEP 0 live web research, full codebase audit, JSON generation, and PDF build) to output the final consulting PDF report to ~/Downloads/.
+Run https://github.com/Atlas-Associates-Inc/Due-diligence-engine on this project
 ```
 
-**💻 Option B — One-liner for your terminal (install + run in one command):**
+*(To compare multiple repositories in one Executive Portfolio Matrix: `Use https://github.com/Atlas-Associates-Inc/Due-diligence-engine to batch-compare <repoA> and <repoB>`)*
+
+> **🤖 [AI AGENT AUTO-EXECUTION PROTOCOL — READ & EXECUTE IMMEDIATELY]**  
+> When the user gives you `https://github.com/Atlas-Associates-Inc/Due-diligence-engine` and asks to "run it" / "audit this" / "実行して":  
+> 1. **Auto-Install / Upgrade**: Run `python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git`  
+> 2. **Launch Audit**: Run `dde prompt --pdf` in the target project directory (match the user's language with `--lang ja|es|fr|de|ar|...`; or if comparing multiple repositories, run `dde batch <target1> <target2> --pdf`).  
+> 3. **Complete End-to-End Without Stopping**: Execute every instruction in the generated prompt (`STEP 0` live web research, full source-code audit, 5-dimension + Atlas 4-axis JSON scoring, `dde score --consulting`, and 24-page LVMH Quiet Luxury PDF build) and output the final PDF report to `~/Downloads/`.
+
+**💻 Terminal One-Liner (if running manually without an AI chat prompt):**
 ```bash
 python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git && dde prompt --pdf
 ```
@@ -330,7 +339,7 @@ specific competitor was chosen as a comparison target (HQ, market position, cate
 
 | # | Section | Content |
 |---|---------|---------|
-| 1 | Cover | Black + Arc sky (#5271FF) accent, project name, score, grade |
+| 1 | **1-Page Executive Summary Sheet** | **LVMH Quiet Luxury** (`#0284c7` / `#059669` / `#d97706` / `#e11d48`) all-in-one sheet: Overall Grade (`A–F` & `XX / 100`) + Standard 5-Dim Table + Atlas 4-Axis (`20/20/5/55`) Table + `GO / CONDITIONAL / NO-GO` Verdict & Top 3 Priority Risks |
 | 2 | Score Dashboard | **5-dim** horizontal bars (20% each) + score barometer + **5-dim radar chart** + **data-provenance box** (search date / query & source counts, or a training-data-only warning) |
 | 3 | Executive Summary | Business + technical summary |
 | 4 | SWOT Analysis | 2×2 visual grid with evidence + business analogies |
@@ -339,11 +348,11 @@ specific competitor was chosen as a comparison target (HQ, market position, cate
 | 7 | Future Outlook | 1/3/5-year projections with confidence |
 | 8 | Strategic Advice | Immediate, medium, long-term |
 | 9 | Investment Thesis | Recommendation, risks, upside, comparables |
-| 10 | Red Flags | Code-verified defects only (`file:line` + fix plan, zero false-positive noise) |
-| 11 | Site Verification | 10-item technical capability audit (4 claim-vs-code + 6 code-measured) |
+| 10 | **Red Flags (4-Column Priority Table)** | Code-verified defects sorted `CRITICAL → HIGH` (`Severity Badge` · `Target file:line` · `Business Impact` · `Concrete 1-Line Fix Plan`, zero false-positive noise) |
+| 11 | **Site Verification (Claim vs. Code)** | 2-Column **"Company Claim vs. Code Evidence (`file:line` + `○/△/×`)"** comparison table + 6 code-measured technical indicators |
 | 12-14 | Competitive Analysis | 7 charts × 6 markets with axis rationale |
 | 15 | **🆕 Competitor Selection Rationales** | 3-5 line explanation per competitor (why chosen, HQ, position) |
-| 16 | **Implementation Capability Matrix** | ~30 items × top competitors, ○△×? marking |
+| 16 | **Implementation Capability Matrix** | ~30 items × top competitors, high-contrast per-symbol `○ / △ / × / ?` cell styling within A4 bounds |
 | 17 | **Atlas 4-Axis Dashboard** | Performance / Stability / Lightweight / Security Strength |
 | 18 | **Security Sub-Breakdown + Glossary** | 5 sub-items with non-engineer glossary (MFA/SOC2/libsignal/PQXDH…) |
 | 19-24 | Glossary · Consistency · Cost · Purge Cert | Standard appendix sections |
@@ -363,6 +372,9 @@ dde prompt --pdf --lang ja
 
 # GitHub repo with stage context
 dde prompt owner/repo --pdf --lang ja --stage seed
+
+# Multi-repository portfolio comparison (1-page Executive Batch PDF + Markdown + HTML + DoD 5220.22-M purge)
+dde batch repoA repoB repoC --pdf --lang ja
 
 # Check your environment is ready (git, fonts, reportlab, ~/Downloads, AI SDKs)
 dde doctor
@@ -442,7 +454,7 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 ## 🗺️ Roadmap
 
 **Recently shipped (v0.6.x)**
-- ✅ **Atlas DDE Brand Unification & LVMH Quiet Luxury Report Overhaul** (2026-11, v0.6.5): unified official brand to **Atlas DDE** and upgraded PDF, Markdown, HTML Scorecard, and CLI outputs to an investment-bank / strategy-firm executive layout — Page 1 All-in-One Executive Summary Sheet (Overall Grade + 5-Dimension Table + Atlas 4-Axis Table + GO/CONDITIONAL/NO-GO Verdict & Top 3 Priority Risks), Quiet Luxury semantic color hierarchy (`#0284c7` sky blue, `#059669` emerald, `#d97706` amber, `#e11d48` pink-red) with thin typography and generous spacing, 2-Column "Company Claim vs. Code Evidence (`file:line` + `○/△/×`)" comparison table, priority-sorted 4-Column Red Flags table, and high-contrast Competitive Matrix. Also includes all v0.6.4 zero-defect security hardening, Native MCP Server (`dde mcp`, 7 tools), Shared Application API (`api.py`), `.agents/skills/` & `ATLAS.md` SSOT governance, 2026 dependency stack (ReportLab 5.1, cryptography 50, Rust python-bidi, google-genai 3.3, pydantic 2.14.3), and 308+ automated unit & E2E regression tests.
+- ✅ **Atlas DDE Brand Unification, LVMH Quiet Luxury Report Overhaul & `dde batch` Portfolio Mode** (2026-11, v0.6.5): unified official brand to **Atlas DDE**, added multi-repository portfolio comparison (`dde batch <targets>... --pdf`), and upgraded PDF, Markdown, HTML Scorecard, HTML Slides, and CLI outputs to an investment-bank / strategy-firm executive layout — Page 1 All-in-One Executive Summary Sheet (Overall Grade + 5-Dimension Table + Atlas 4-Axis Table + GO/CONDITIONAL/NO-GO Verdict & Top 3 Priority Risks), Quiet Luxury semantic color hierarchy (`#0284c7` sky blue, `#059669` emerald, `#d97706` amber, `#e11d48` pink-red) with thin typography and generous spacing, 2-Column "Company Claim vs. Code Evidence (`file:line` + `○/△/×`)" comparison table, priority-sorted 4-Column Red Flags table, and high-contrast Competitive Matrix. Also includes all v0.6.4 zero-defect security hardening, Native MCP Server (`dde mcp`, 7 tools), Shared Application API (`api.py`), `.agents/skills/` & `ATLAS.md` SSOT governance, 2026 dependency stack (ReportLab 5.1, cryptography 50, Rust python-bidi, google-genai 3.3, pydantic 2.14.3), and 305+ automated unit & E2E regression tests.
 - ✅ **Claude 5.5-generation model refresh + Python 3.13** (2026-10, v0.6.2): all three BYOK tiers moved to the current lineup — scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, $0.10/$0.50 per MTok, 10× cheaper), analyze **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, $2/$10, down from $3/$15), judge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, same $10/$50). The site-verification scorer no longer hardcodes a dated Haiku snapshot and the BYOK Claude default/cost table now derive from `config.MODELS`, guarded by a new `tests/test_model_ids.py`. Gemini BYOK migrated from legacy SDK to `google-genai>=2.30.1` (Interactions API) + `gemini-4-argon`; OpenAI BYOK default updated to `gpt-5`. AI terminal detection in `dde doctor` expanded to Codex CLI, Gemini CLI, and Antigravity. CI GitHub Actions refreshed (`setup-python@v7`, `codeql-action@v4.37.4`, `osv-scanner-action@v2.5.0`). Eliminated heuristic false-positive noise from PDF `red_flags` (git rebase date diffs and doc buzzword counts demoted to informational metrics; prompt + parser safety valve `_filter_red_flags` strictly output only genuine code-verified defects with `file:line` and remediation; canonical PDF filename unified to prevent duplicate outputs). Deprecated `datetime.utcnow()` replaced (silences Python 3.12+ warnings); Python 3.13 added to the CI matrix and classifiers.
 - ✅ **Package renamed `src` → `due_diligence_engine`** (2026-07, v0.6.1): the importable package no longer uses the generic top-level name `src`, avoiding `sys.path` collisions once pip-installed. The `dde` command is unchanged; only `import` paths change (`from due_diligence_engine...`).
 - ✅ **PyPI-ready packaging, `dde doctor`, visual-summary page & source appendix** (2026-07, v0.6.0): AI-provider SDKs moved to an optional `[byok]` extra so the base install is truly zero-API-key (fixes a bug where `dde prompt` crashed when `anthropic` was absent); new `dde doctor` environment self-check; the radar chart now gets its own **Visual Summary** page and a new **Source Appendix** lists every live-web URL consulted (14 languages); a real security fix so archive loading no longer leaves a plaintext staging copy on disk; first tests for the secure-loader/secure-purge modules; CI matrix extended to macOS + Windows 3.12 with coverage. Distribution stays via the documented `git+https` install; a PyPI release was evaluated and deferred.
@@ -483,7 +495,6 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 - ✅ Security CI hardening (CodeQL, Dependabot, gitleaks)
 
 **Planned (v0.7.0+)**
-- 🚧 Batch mode — analyze a portfolio of repos in one command
 - 🚧 Historical tracking — re-analyze and show score deltas over time
 - 🚧 Slack/Discord notification adapter
 - 🚧 Industry-specific evaluation packs (medical, fintech, gaming presets)

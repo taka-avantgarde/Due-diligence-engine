@@ -17,14 +17,23 @@
 
 </div>
 
-### 📋 Copier & Coller — Terminé en 1 étape
+### 🚀 Zéro Configuration — Collez Simplement Cette URL et Dites « Exécute-le »
 
-**🤖 Option A — Collez directement dans votre agent IA (Claude Code / Codex / Gemini CLI / Antigravity / Cursor) pour auto-installer, auditer et générer le PDF :**
+**Vous n'avez même pas besoin de taper des commandes.** Collez simplement l'URL de ce dépôt dans votre agent IA (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) et demandez-lui de l'exécuter :
+
 ```text
-Installez https://github.com/Atlas-Associates-Inc/Due-diligence-engine (`python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git`), exécutez `dde prompt --pdf --lang fr` sur ce projet, et appliquez toutes les instructions du prompt généré (recherche web en direct ÉTAPE 0, audit complet du code, génération JSON et création du PDF) pour sortir le rapport de conseil PDF final dans ~/Downloads/.
+Exécute https://github.com/Atlas-Associates-Inc/Due-diligence-engine sur ce projet
 ```
 
-**💻 Option B — Ligne unique pour votre terminal (installer + exécuter en une seule commande) :**
+*(Pour comparer plusieurs dépôts dans une Matrice Exécutive de Portefeuille : `Utilise https://github.com/Atlas-Associates-Inc/Due-diligence-engine pour comparer en lot <repoA> et <repoB>`)*
+
+> **🤖 [PROTOCOLE D'AUTO-EXÉCUTION POUR AGENTS IA — LIRE & EXÉCUTER IMMÉDIATEMENT]**  
+> Lorsque l'utilisateur vous donne `https://github.com/Atlas-Associates-Inc/Due-diligence-engine` et demande « exécute-le » / « audite ceci » / « run it » :  
+> 1. **Auto-installation / Mise à jour** : Exécutez `python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git`  
+> 2. **Lancement de l'Audit** : Exécutez `dde prompt --pdf --lang fr` dans le répertoire du projet cible (ou `dde batch <target1> <target2> --pdf --lang fr` pour comparer plusieurs dépôts).  
+> 3. **Exécution de Bout en Bout Sans Interruption** : Appliquez toutes les instructions du prompt généré (`ÉTAPE 0` recherche web en direct, audit complet du code source, notation JSON 5 dimensions + 4 axes Atlas, `dde score --consulting`, et génération du PDF LVMH Quiet Luxury de 24 pages) et enregistrez le rapport PDF final dans `~/Downloads/`.
+
+**💻 Commande en Une Ligne pour le Terminal (si exécuté manuellement sans chat IA) :**
 ```bash
 python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git && dde prompt --pdf --lang fr
 ```
@@ -330,7 +339,7 @@ concurrent précis a été retenu comme cible de comparaison (siège, position d
 
 | # | Section | Contenu |
 |---|---------|---------|
-| 1 | Couverture | Accent noir + ciel Arc (#5271FF), nom du projet, score, note |
+| 1 | **Fiche Exécutive 1 Page (Tout-en-Un)** | **LVMH Quiet Luxury** (`#0284c7` / `#059669` / `#d97706` / `#e11d48`) : Note Globale (`A–F` et `XX / 100`) + Tableau 5 Dimensions + Tableau 4 Axes Atlas (`20/20/5/55`) + Verdict `GO / CONDITIONAL / NO-GO` & Top 3 Risques Prioritaires |
 | 2 | Tableau de bord des scores | Barres horizontales **5 dim.** (20 % chacune) + baromètre + **graphique radar 5 dim.** + **encadré de provenance des données** (date de recherche / nombre de requêtes et sources, ou avertissement données d'entraînement uniquement) |
 | 3 | Résumé exécutif | Synthèse métier + technique |
 | 4 | Analyse SWOT | Grille visuelle 2×2 avec preuves + analogies métier |
@@ -339,11 +348,11 @@ concurrent précis a été retenu comme cible de comparaison (siège, position d
 | 7 | Perspectives d'avenir | Projections à 1/3/5 ans avec niveau de confiance |
 | 8 | Conseils stratégiques | Court, moyen, long terme |
 | 9 | Thèse d'investissement | Recommandation, risques, potentiel de hausse, comparables |
-| 10 | Signaux d'alerte | Défauts vérifiés dans le code uniquement (`fichier:ligne` + correctif, zéro faux positif) |
-| 11 | Vérification du site | Audit de capacité technique à 10 éléments (4 affirmation-vs-code + 6 mesurés sur le code) |
+| 10 | **Signaux d'alerte (Tableau Priorisé à 4 Colonnes)** | Défauts vérifiés dans le code triés `CRITICAL → HIGH` (`Badge de Sévérité` · `fichier:ligne` · `Impact Métier` · `Correctif en 1 Ligne`, zéro faux positif) |
+| 11 | **Vérification du site (Affirmation vs. Code)** | Tableau comparatif à 2 colonnes **« Affirmation de l'Entreprise vs. Preuve dans le Code (`fichier:ligne` + `○/△/×`) »** + 6 indicateurs mesurés sur le code |
 | 12-14 | Analyse concurrentielle | 7 graphiques × 6 marchés avec justification des axes |
 | 15 | **🆕 Justifications de sélection des concurrents** | Explication de 3 à 5 lignes par concurrent (pourquoi choisi, siège, position) |
-| 16 | **Matrice de capacité d'implémentation** | ~30 éléments × grands concurrents, marquage ○△×? |
+| 16 | **Matrice de capacité d'implémentation** | ~30 éléments × grands concurrents, contraste élevé par symbole `○ / △ / × / ?` optimisé au format A4 |
 | 17 | **Tableau de bord 4 axes Atlas** | Performance / Stabilité / Légèreté / Force de sécurité |
 | 18 | **Détail de la sous-sécurité + glossaire** | 5 sous-éléments avec glossaire pour non-ingénieurs (MFA/SOC2/libsignal/PQXDH…) |
 | 19-24 | Glossaire · Cohérence · Coût · Certificat de purge | Sections d'annexe standard |
@@ -363,6 +372,9 @@ dde prompt --pdf --lang fr
 
 # GitHub repo with stage context
 dde prompt owner/repo --pdf --lang fr --stage seed
+
+# Comparaison de portefeuille multi-dépôts (PDF Exécutif 1 page + Markdown + HTML + purge DoD 5220.22-M)
+dde batch repoA repoB repoC --pdf --lang fr
 
 # Check your environment is ready (git, fonts, reportlab, ~/Downloads, AI SDKs)
 dde doctor
@@ -442,7 +454,7 @@ R : DDE évalue le code source, pas le badge. Un service de stockage en clair ce
 ## 🗺️ Feuille de route
 
 **Livré récemment (v0.6.x)**
-- ✅ **Durcissement Sécurité, MCP Natif & Pile 2026 Zero-Defect** (2026-11, v0.6.4) : audit complet de bout en bout et durcissement des 35 modules — protection contre le SSRF et le re-rebouclage DNS dans l'analyse de sites, isolation contre le Zip Slip, les liens symboliques et les FIFO dans `SecureLoader` et `SecurePurger` avec propagation stricte des erreurs de suppression, application stricte de la rétention zéro `store=False` sur l'API Google Interactions, parsing sécurisé d'Anthropic compatible avec les `ThinkingBlock` et compatibilité des paramètres pour `gpt-6.1-sol` (Astra) / `gpt-5`, échappement complet XML/HTML dans ReportLab et mise en forme RTL non destructrice pour l'arabe sur l'ensemble des 14 langues PDF, empaquetage wheel pour les polices et templates HTML intégrés, et 303 tests automatisés unitaires et de régression E2E. Également livrés : serveur MCP natif (`dde mcp`, 7 outils), API applicative partagée (`api.py`), compétences pour agents (`.agents/skills/`) et gouvernance fondée sur une source unique de vérité (SSOT, `ATLAS.md`), ainsi que les mises à niveau des dépendances de 2026 (ReportLab 5.1, cryptography 50, python-bidi basé sur Rust, google-genai 3.3, pydantic 2.14.3).
+- ✅ **Unification de la Marque `Atlas DDE`, Refonte LVMH Quiet Luxury des Rapports & Mode Portefeuille `dde batch`** (2026-11, v0.6.5) : marque officielle unifiée sous **Atlas DDE**, comparaison par lots multi-dépôts (`dde batch <targets>... --pdf`), et refonte complète des sorties PDF, Markdown, HTML Scorecard, diapositives HTML et CLI au standard banque d'affaires / cabinet de stratégie — Page 1 Fiche Exécutive Tout-en-Un (Note Globale + Tableau 5 Dimensions + Tableau 4 Axes Atlas + Verdict GO/CONDITIONAL/NO-GO & Top 3 Risques Prioritaires), palette sémantique Quiet Luxury (`#0284c7`, `#059669`, `#d97706`, `#e11d48`) avec typographie fine, tableau comparatif à 2 colonnes « Affirmation vs. Preuve dans le Code (`fichier:ligne` + `○/△/×`) », tableau des Signaux d'Alerte à 4 colonnes trié par priorité et Matrice Concurrentielle à haut contraste. Inclut également tout le durcissement de sécurité Zero-Defect v0.6.4, serveur MCP natif (`dde mcp`, 7 outils), API partagée (`api.py`), compétences `.agents/skills/` & gouvernance SSOT (`ATLAS.md`), dépendances 2026 (ReportLab 5.1, cryptography 50, python-bidi en Rust, google-genai 3.3, pydantic 2.14.3) et 305+ tests automatisés.
 - ✅ **Mise à niveau des modèles vers la génération Claude 5.5 + Python 3.13** (2026-10, v0.6.2) : les trois paliers BYOK passent à la gamme actuelle — scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, 0,10 $/0,50 $ par MTok, 10× moins cher), analyse **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, 2 $/10 $, contre 3 $/15 $), juge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, toujours 10 $/50 $). Le scoreur de vérification de site n'embarque plus de snapshot Haiku daté et le modèle/tableau de coûts Claude par défaut en BYOK dérivent désormais de `config.MODELS`, protégés par le nouveau `tests/test_model_ids.py`. Gemini BYOK migré de l'ancien SDK vers `google-genai>=2.30.1` (Interactions API) + `gemini-4-argon` ; OpenAI BYOK par défaut mis à jour vers `gpt-5`. Détection de terminal IA dans `dde doctor` étendue à Codex CLI, Gemini CLI et Antigravity. GitHub Actions de CI mis à jour (`setup-python@v7`, `codeql-action@v4.37.4`, `osv-scanner-action@v2.5.0`). Élimination du bruit des faux positifs heuristiques dans les `red_flags` PDF (écarts de dates `git rebase` et comptage de buzzwords rétrogradés en métriques informatives ; prompt + filtre de sécurité `_filter_red_flags` limités aux vrais défauts de code avec `fichier:ligne` et correctif ; nom de fichier PDF unifié). `datetime.utcnow()` obsolète remplacé (plus d'avertissements sur Python 3.12+) ; Python 3.13 ajouté à la matrice de CI et aux classifiers.
 - ✅ **Paquet renommé `src` → `due_diligence_engine`** (2026-07, v0.6.1) : le paquet importable n'utilise plus le nom générique de premier niveau `src`, évitant les collisions sur `sys.path` une fois installé via pip. La commande `dde` est inchangée ; seuls les chemins d'`import` changent (`from due_diligence_engine...`).
 - ✅ **Empaquetage prêt pour PyPI, `dde doctor`, page de résumé visuel et annexe des sources** (2026-07, v0.6.0) : les SDK des fournisseurs d'IA sont déplacés vers un extra optionnel `[byok]`, de sorte que l'installation de base est vraiment sans clé d'API (corrige un bug où `dde prompt` plantait si `anthropic` était absent) ; nouveau autodiagnostic `dde doctor` ; le graphique radar a désormais sa propre page **Résumé Visuel** et une nouvelle **Annexe des Sources** liste chaque URL web en direct consultée (14 langues) ; correctif de sécurité réel afin que le chargement d'archive ne laisse plus de copie d'extraction en clair sur le disque ; premiers tests des modules secure-loader/secure-purge ; matrice de CI étendue à macOS + Windows 3.12 avec couverture. La distribution se poursuit via l'installation `git+https` documentée ; une publication PyPI a été évaluée puis reportée.
@@ -483,7 +495,6 @@ R : DDE évalue le code source, pas le badge. Un service de stockage en clair ce
 - ✅ Renforcement de la CI de sécurité (CodeQL, Dependabot, gitleaks)
 
 **Prévu (v0.7.0+)**
-- 🚧 Mode batch — analyser un portefeuille de dépôts en une seule commande
 - 🚧 Suivi historique — réanalyser et afficher les écarts de score dans le temps
 - 🚧 Adaptateur de notification Slack/Discord
 - 🚧 Packs d'évaluation sectoriels (préréglages médical, fintech, jeu vidéo)

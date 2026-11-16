@@ -178,6 +178,15 @@ def test_six_language_readme_parity_invariant():
         assert "Claude Fable 5.1" in content, f"Missing Claude Fable 5.1 in {fname}"
         assert "Gemini 4 Argon" in content, f"Missing Gemini 4 Argon in {fname}"
 
+        # Top-of-page 1-Step URL Auto-Execution, dde batch, and v0.6.5 Quiet Luxury palette in all 6 files
+        top_section = "\n".join(content.splitlines()[:45])
+        assert "https://github.com/Atlas-Associates-Inc/Due-diligence-engine" in top_section, (
+            f"Missing 1-step repository URL prompt in top section of {fname}"
+        )
+        assert "dde batch" in content, f"Missing 'dde batch' portfolio command in {fname}"
+        for hex_color in ("#0284c7", "#059669", "#d97706", "#e11d48"):
+            assert hex_color in content, f"Missing Quiet Luxury color {hex_color} in {fname}"
+
         # Zero stale strings
         assert "22 ページ" not in content, f"Found stale '22 ページ' in {fname}"
         assert "v0.3.x+" not in content, f"Found stale roadmap header 'v0.3.x+' in {fname}"
