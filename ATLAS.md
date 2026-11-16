@@ -9,6 +9,13 @@
 
 Due Diligence Engine (DDE) is a bank-grade, enterprise-ready software due diligence and M&A code audit platform. It combines static source-tree inspection, live site/infrastructure verification, AI-driven evaluation across 9 institutional dimensions, and cryptographic zero-retention data wiping.
 
+| Metadata | Value |
+|---|---|
+| **Portfolio Category** | **OSS** (`Apache-2.0` Open Source Software — Header/Footer `OSS` category on `https://www.atlasassociates.io/`) |
+| **Canonical Repository** | `https://github.com/Atlas-Associates-Inc/Due-diligence-engine` |
+| **Website Showcase URL** | `https://www.atlasassociates.io/{locale}/due-diligence-engine/` (`src/lib/dde.ts`) |
+| **Dedicated Website Update Project ID** | `afab5825-2982-4ba2-b3ab-c08f099e00a4` |
+
 ### Key Components
 
 ```
@@ -36,15 +43,15 @@ due_diligence_engine/
 
 ---
 
-## §2 AI Model Split Policy
+## §2 AI Model Split Policy (Gemini 4 Argon / Carbon / Hydrogen × Gemini 3.8 Flash Periodic Table)
 
 To ensure supreme software engineering quality, rigorous peer review, and zero-defect execution (Claude development agents are not used):
 
 | Role / Phase | Assigned Model(s) | Reasoning Effort | Responsibility |
 |---|---|---|---|
-| **Planning / Analysis / Investigation / Bug Resolution / Audit** | **Antigravity Gemini 4 Argon** (`gemini-4-argon-high`) | `high` | Development planning, architectural analysis, codebase investigation, root-cause bug diagnosis & complex bug resolution, orchestration, and clean-room verification. |
-| **Implementation** | **Gemini 3.8 Flash** (`gemini-3.8-flash-low` / `gemini-3.8-flash-medium` / `gemini-3.8-flash-high`) | `low` / `medium` / `high` (conductor-selected) | Contract-bound cross-layer implementation using the optimal reasoning tier selected per task by Argon High (`Argon High` may also implement complex bug fixes). |
-| **Calendar Compatibility (JST)** | **Through 2026-11-08**: **Astra Ultra** (`gpt-6-astra`, `xhigh`) also permitted<br>**From 2026-11-09 onward**: **Argon High + Gemini 3.8 Flash** (`low` / `medium` / `high`) **Only** | `xhigh` / `high` / `medium` / `low` | Full transition to Gemini-only multi-tier governance from 2026-11-09 JST onward (zero Claude or untiered legacy Flash usage). |
+| **Planning / Analysis / Investigation / Bug Resolution / Audit** | **Antigravity Gemini 4 Argon** (`gemini-4-argon-high`)<br>+ **Hydrogen** (`gemini-4-hydrogen-xhigh` / `medium` / `low`) | `high` / `xhigh` / `medium` | Development planning, architectural analysis, fast codebase scouting (`Hydrogen medium/low`), root-cause bug diagnosis & $O(N^2)\to O(1)$ optimization (`Hydrogen xhigh`), orchestration, and clean-room verification (`Argon High` × `Hydrogen XHigh`). |
+| **Implementation (Structural & Cross-Layer)** | **Carbon** (`gemini-4-carbon-high` / `gemini-4-carbon-medium`)<br>+ **Gemini 3.8 Flash** (`gemini-3.8-flash-low` / `gemini-3.8-flash-medium` / `gemini-3.8-flash-high`) | `low` / `medium` / `high` (conductor-selected) | Multi-file structural refactoring (`Carbon high/medium`) and contract-bound implementation (`Gemini 3.8 Flash low/medium/high`) using the optimal reasoning tier selected per task by Argon High (`Argon High` / `Hydrogen XHigh` may also implement complex bug fixes). |
+| **Calendar Compatibility (JST)** | **Through 2026-11-08**: **Astra Ultra** (`gpt-6-astra`, `xhigh`) also permitted<br>**From 2026-11-09 onward**: **Gemini 4 (`Argon` / `Carbon` / `Hydrogen`) + Gemini 3.8 Flash** (`low` / `medium` / `high`) **Only** | `xhigh` / `high` / `medium` / `low` | Full transition to Gemini-only multi-tier governance from 2026-11-09 JST onward (zero Claude, zero Codex/OpenAI after 2026-11-08, zero untiered legacy Flash usage). |
 
 ### Reasoning Effort Guidelines
 - **`low`**: Minor mechanical edits, single-file typo fixes, documentation synchronization.
