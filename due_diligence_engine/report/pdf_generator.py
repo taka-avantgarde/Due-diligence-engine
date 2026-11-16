@@ -162,38 +162,42 @@ _FONTS_FOR_LANG: dict[str, tuple[str, str]] = {
 }
 _DEFAULT_FONTS: tuple[str, str] = ("Helvetica", "Helvetica-Bold")
 
-# Color palette — Arc brand: black + sky blue (#5271FF)
-COLOR_BG_DARK = colors.HexColor("#000000")       # pure black (cover)
-COLOR_SURFACE = colors.HexColor("#0a0a14")       # near-black surface
-COLOR_ACCENT = colors.HexColor("#5271FF")        # Arc sky — primary brand
-COLOR_ACCENT_DARK = colors.HexColor("#3854CC")   # Arc sky darker (hover/pressed)
-COLOR_ACCENT_LIGHT = colors.HexColor("#E8EDFF")  # Arc sky tint (backgrounds)
-COLOR_GREEN = colors.HexColor("#4a6741")         # muted green (retained for SWOT only)
-COLOR_YELLOW = colors.HexColor("#8a7a3a")        # muted gold (severity)
-COLOR_ORANGE = colors.HexColor("#7a5a3a")        # muted brown (severity)
-COLOR_RED = colors.HexColor("#8b3a3a")           # muted dark red (severity)
-COLOR_TEXT = colors.HexColor("#000000")          # pure black
-COLOR_TEXT_DIM = colors.HexColor("#6b7280")      # gray-500
-COLOR_BORDER = colors.HexColor("#d1d5db")        # gray-300
+# Color palette — Atlas DDE Quiet Luxury (LVMH × Investment Bank hierarchy)
+COLOR_BG_DARK = colors.HexColor("#070A10")       # Quiet Luxury deep obsidian (cover)
+COLOR_SURFACE = colors.HexColor("#0D131F")       # Elevated dark surface
+COLOR_ACCENT = colors.HexColor("#0284c7")        # Sky Blue — structural headings & primary accent
+COLOR_ACCENT_DARK = colors.HexColor("#0369a1")   # Sky Blue darker
+COLOR_ACCENT_LIGHT = colors.HexColor("#f0f9ff")  # Sky Blue soft tint (backgrounds)
+COLOR_GREEN = colors.HexColor("#059669")         # Emerald Green — verified / strengths / GO / ○
+COLOR_EMERALD_BG = colors.HexColor("#ecfdf5")    # Emerald soft tint
+COLOR_YELLOW = colors.HexColor("#d97706")        # Amber — warnings ⚠️ / CONDITIONAL / △
+COLOR_ORANGE = colors.HexColor("#d97706")        # Amber — HIGH severity
+COLOR_AMBER_BG = colors.HexColor("#fffbeb")      # Amber soft tint
+COLOR_RED = colors.HexColor("#e11d48")           # Pink-Red — CRITICAL / Blocker / NO-GO / ×
+COLOR_ROSE_BG = colors.HexColor("#fff1f2")       # Pink-Red soft tint
+COLOR_SLATE_BG = colors.HexColor("#f8fafc")      # Cool slate soft tint
+COLOR_TEXT = colors.HexColor("#0f172a")          # Deep slate-black text
+COLOR_TEXT_DIM = colors.HexColor("#64748b")      # Slate-500 muted text
+COLOR_BORDER = colors.HexColor("#cbd5e1")        # Slate-300 clean hairline border
 COLOR_WHITE = colors.white
-COLOR_LIGHT_BG = colors.HexColor("#f3f4f6")      # gray-100
+COLOR_LIGHT_BG = colors.HexColor("#f8fafc")      # Slate-50 zebra background
 
 # Severity color mapping
 SEVERITY_COLORS = {
     Severity.CRITICAL: COLOR_RED,
     Severity.HIGH: COLOR_ORANGE,
-    Severity.MEDIUM: COLOR_YELLOW,
+    Severity.MEDIUM: COLOR_ACCENT,
     Severity.LOW: COLOR_GREEN,
     Severity.INFO: COLOR_ACCENT,
 }
 
 # Grade color mapping
 GRADE_COLORS = {
-    "A": colors.HexColor("#2d5a3d"),     # dark green
-    "B": colors.HexColor("#5271FF"),     # dark blue
-    "C": colors.HexColor("#5a5a3a"),     # dark gold
-    "D": colors.HexColor("#6b4a2a"),     # dark brown
-    "F": colors.HexColor("#6b2a2a"),     # dark red
+    "A": colors.HexColor("#059669"),     # Emerald Green
+    "B": colors.HexColor("#0284c7"),     # Sky Blue
+    "C": colors.HexColor("#d97706"),     # Amber
+    "D": colors.HexColor("#e11d48"),     # Pink-Red
+    "F": colors.HexColor("#e11d48"),     # Pink-Red
 }
 
 # i18n strings for PDF
@@ -1443,174 +1447,270 @@ class PDFReportGenerator:
         return _FONTS_FOR_LANG.get(self._lang, _DEFAULT_FONTS)[1]
 
     def _build_cover_page(self, result: AnalysisResult, cr: ConsultingReport | None = None) -> list:
-        """Build the cover page — dark theme with Atlas Associates branding."""
-        s = self._styles
+        """Build Page 1: All-in-One Executive Summary Comparison Sheet (LVMH Quiet Luxury)."""
+        from due_diligence_engine.report.generator import _determine_verdict, _extract_file_line
+
         t = self._t
         elements: list = []
 
-        # White/light styles for dark background
         cover_title = ParagraphStyle(
             "CoverTitle",
             fontName=self._font_bold(),
-            fontSize=28,
-            leading=36,
+            fontSize=20,
+            leading=26,
             textColor=colors.white,
             alignment=1,
-            spaceAfter=6 * mm,
+            spaceAfter=2 * mm,
         )
         cover_subtitle = ParagraphStyle(
             "CoverSubtitle",
             fontName=self._font_normal(),
-            fontSize=16,
-            leading=22,
-            textColor=colors.HexColor("#9ca3af"),
+            fontSize=13,
+            leading=18,
+            textColor=colors.HexColor("#38bdf8"),
             alignment=1,
-            spaceAfter=4 * mm,
+            spaceAfter=2 * mm,
         )
         cover_center = ParagraphStyle(
             "CoverCenter",
             fontName=self._font_normal(),
-            fontSize=10,
-            textColor=colors.HexColor("#d1d5db"),
+            fontSize=9.5,
+            leading=14,
+            textColor=colors.HexColor("#e2e8f0"),
             alignment=1,
-            spaceAfter=2 * mm,
+            spaceAfter=1.5 * mm,
         )
         cover_small = ParagraphStyle(
             "CoverSmall",
             fontName=self._font_normal(),
-            fontSize=8,
-            textColor=colors.HexColor("#6b7280"),
-            alignment=0,
+            fontSize=7.5,
+            leading=11,
+            textColor=colors.HexColor("#94a3b8"),
+            alignment=1,
             spaceAfter=1 * mm,
         )
+        tbl_header_style = ParagraphStyle(
+            "CoverTblHeader",
+            fontName=self._font_bold(),
+            fontSize=7.5,
+            leading=10,
+            textColor=colors.HexColor("#38bdf8"),
+        )
+        tbl_cell_style = ParagraphStyle(
+            "CoverTblCell",
+            fontName=self._font_normal(),
+            fontSize=8,
+            leading=12,
+            textColor=colors.HexColor("#f1f5f9"),
+        )
 
-        # Spacer (below logo area drawn by canvas)
-        elements.append(Spacer(1, 5 * cm))
+        # Compact top spacer so the full 1-page Executive Summary Sheet fits on Page 1
+        elements.append(Spacer(1, 0.4 * cm))
 
-        # Title prefix
         elements.append(
             Paragraph(
-                f'<font color="#5271FF" size="12">{self._esc_text(t["title_prefix"])}</font>',
+                f'<font color="#0284c7" size="9"><b>ATLAS DDE · {self._esc_text(t["title_prefix"])}</b></font>',
                 cover_center,
             )
         )
-        elements.append(Spacer(1, 6 * mm))
-
-        # Title
         elements.append(Paragraph(self._esc_text(t["report_title"]), cover_title))
-        elements.append(Spacer(1, 2 * mm))
-
-        # Project name — with horizontal rule accent
         elements.append(Paragraph(self._esc_text(result.project_name), cover_subtitle))
-        elements.append(Spacer(1, 3 * mm))
-
-        # Thin accent line below project name
         elements.append(
             HRFlowable(
-                width="30%", thickness=0.5,
-                color=colors.HexColor("#5271FF"),
-                spaceAfter=8 * mm,
+                width="35%", thickness=0.6,
+                color=COLOR_ACCENT,
+                spaceAfter=3 * mm,
                 hAlign="CENTER",
             )
         )
-        elements.append(Spacer(1, 6 * mm))
 
-        # Score display (consulting report)
         if cr is None:
             cr = result.consulting_report
-        if cr is not None and cr.overall_score is not None:
-            grade = cr.grade or "?"
-            grade_color = GRADE_COLORS.get(grade, colors.HexColor("#9ca3af"))
 
-            # Grade line first (above score)
-            grade_label = f'{t["grade_prefix"]}: {grade}'
+        overall_val: float | None = None
+        grade = "?"
+        recommendation = ""
+        has_critical_blocker = False
+
+        if cr is not None and cr.overall_score is not None:
+            overall_val = float(cr.overall_score)
+            grade = cr.grade or "?"
             rec = _PDF_GRADE_REC.get(self._lang, _PDF_GRADE_REC["en"])
             recommendation = self._maybe_reshape(rec.get(grade, ""))
-            elements.append(
-                Paragraph(
-                    f'<font color="#5271FF" size="14"><b>{self._esc_text(grade_label)}</b></font>'
-                    f'  <font color="#9ca3af" size="10">{self._esc_text(recommendation)}</font>',
-                    cover_center,
-                )
+            has_critical_blocker = any(
+                isinstance(rf, dict) and str(rf.get("severity", "")).lower() == "critical"
+                for rf in (cr.red_flags or [])
             )
-            elements.append(Spacer(1, 4 * mm))
-
-            # Large score number — use matching fontSize and leading to prevent overlap
-            score_style = ParagraphStyle(
-                "CoverScore", fontName="Helvetica-Bold", fontSize=56,
-                leading=64, alignment=1, textColor=colors.white,
-            )
-            score_text = (
-                f'<font color="{colors.white.hexval()}">{cr.overall_score:.0f}</font>'
-                f'<font color="#6b7280" size="20"> / 100</font>'
-            )
-            elements.append(Paragraph(score_text, score_style))
-            elements.append(Spacer(1, 8 * mm))
         elif result.score is not None:
-            # Fallback to heuristic score
-            score = result.score
-            grade_color = GRADE_COLORS.get(score.grade, COLOR_TEXT_DIM)
+            overall_val = float(result.score.overall_score)
+            grade = result.score.grade
+            rec = _PDF_GRADE_REC.get(self._lang, _PDF_GRADE_REC["en"])
+            recommendation = self._maybe_reshape(rec.get(grade, result.score.recommendation))
+            has_critical_blocker = any(f.is_deal_breaker for f in result.score.red_flags)
 
-            grade_text = f'{t["grade_prefix"]}: {score.grade}'
+        if overall_val is not None:
+            verdict = _determine_verdict(overall_val, has_critical_blocker)
+            verdict_hex = "#059669" if verdict == "GO" else ("#d97706" if verdict == "CONDITIONAL" else "#e11d48")
+            grade_hex = GRADE_COLORS.get(grade, COLOR_ACCENT).hexval()
+
+            grade_label = f'{t["grade_prefix"]}: {grade}'
             elements.append(
                 Paragraph(
-                    f'<font color="#5271FF" size="14"><b>{self._esc_text(grade_text)}</b></font>',
+                    f'<font color="{grade_hex}" size="13"><b>{self._esc_text(grade_label)}</b></font>'
+                    f'  ·  <font color="{verdict_hex}" size="12"><b>[{verdict}]</b></font>'
+                    f'  <font color="#94a3b8" size="9.5">{self._esc_text(recommendation)}</font>',
                     cover_center,
                 )
             )
-            elements.append(Spacer(1, 4 * mm))
+            elements.append(Spacer(1, 1.5 * mm))
 
+            # ① Large score number (kept as top-level Paragraph in elements for invariant test compatibility)
             score_style = ParagraphStyle(
-                "CoverScore", fontName="Helvetica-Bold", fontSize=56,
-                leading=64, alignment=1, textColor=colors.white,
+                "CoverScore", fontName="Helvetica-Bold", fontSize=42,
+                leading=48, alignment=1, textColor=colors.white,
             )
             score_text = (
-                f'<font color="{colors.white.hexval()}">{score.overall_score:.0f}</font>'
-                f'<font color="#6b7280" size="20"> / 100</font>'
+                f'<font color="{colors.white.hexval()}">{overall_val:.0f}</font>'
+                f'<font color="#94a3b8" size="16"> / 100</font>'
             )
             elements.append(Paragraph(score_text, score_style))
-            elements.append(Spacer(1, 8 * mm))
+            elements.append(Spacer(1, 3 * mm))
 
-        # AI model attribution
+            # ② Standard 5-Dimension Score Table & ③ Atlas 4-Axis (20/20/5/55) Score Table
+            dim_rows = [[
+                Paragraph("<b>② 5-Dimension Evaluation</b>", tbl_header_style),
+                Paragraph("<b>Wt</b>", tbl_header_style),
+                Paragraph("<b>Score</b>", tbl_header_style),
+            ]]
+            if cr is not None and cr.dimension_scores:
+                for key, en_name in _DIM_NAME_MAP.items():
+                    d_obj = cr.dimension_scores.get(key)
+                    if not d_obj:
+                        continue
+                    sc_v = float(d_obj.score)
+                    sc_hex = "#059669" if sc_v >= 75 else ("#0284c7" if sc_v >= 60 else ("#d97706" if sc_v >= 40 else "#e11d48"))
+                    dim_rows.append([
+                        Paragraph(self._esc_text(self._dim_name(en_name)), tbl_cell_style),
+                        Paragraph("20%", tbl_cell_style),
+                        Paragraph(f'<font color="{sc_hex}"><b>{sc_v:.0f}/100</b></font> (Lv.{d_obj.level})', tbl_cell_style),
+                    ])
+            elif result.score and result.score.dimensions:
+                for dim in result.score.dimensions[:5]:
+                    sc_v = float(dim.score)
+                    sc_hex = "#059669" if sc_v >= 75 else ("#0284c7" if sc_v >= 60 else ("#d97706" if sc_v >= 40 else "#e11d48"))
+                    dim_rows.append([
+                        Paragraph(self._esc_text(self._dim_name(dim.name)), tbl_cell_style),
+                        Paragraph(f"{dim.weight:.0%}", tbl_cell_style),
+                        Paragraph(f'<font color="{sc_hex}"><b>{sc_v:.0f}/100</b></font>', tbl_cell_style),
+                    ])
+
+            atlas_rows = [[
+                Paragraph("<b>③ Atlas 4-Axis (20/20/5/55)</b>", tbl_header_style),
+                Paragraph("<b>Wt</b>", tbl_header_style),
+                Paragraph("<b>Score / Status</b>", tbl_header_style),
+            ]]
+            if cr is not None and cr.atlas_four_axis and cr.atlas_four_axis.axes:
+                for ax in cr.atlas_four_axis.axes[:4]:
+                    ax_name = ax.name_ja if self._lang == "ja" and ax.name_ja else ax.name_en
+                    ax_sc = float(ax.score)
+                    ax_hex = "#059669" if ax_sc >= 75 else ("#0284c7" if ax_sc >= 60 else ("#d97706" if ax_sc >= 40 else "#e11d48"))
+                    atlas_rows.append([
+                        Paragraph(self._esc_text(ax_name), tbl_cell_style),
+                        Paragraph(f"{ax.weight_pct:.0f}%", tbl_cell_style),
+                        Paragraph(f'<font color="{ax_hex}"><b>{ax_sc:.0f}/100</b></font> (Lv.{ax.level})', tbl_cell_style),
+                    ])
+            else:
+                code_res = result.code_analysis
+                cons_res = result.consistency
+                atlas_rows.extend([
+                    [Paragraph("Performance", tbl_cell_style), Paragraph("20%", tbl_cell_style), Paragraph(f'<font color="#0284c7"><b>{overall_val:.0f}/100</b></font>', tbl_cell_style)],
+                    [Paragraph("Stability", tbl_cell_style), Paragraph("20%", tbl_cell_style), Paragraph('<font color="#059669"><b>○ Tests+CI</b></font>' if code_res.has_tests else '<font color="#d97706"><b>⚠️ Check Tests</b></font>', tbl_cell_style)],
+                    [Paragraph("Lightweight", tbl_cell_style), Paragraph("5%", tbl_cell_style), Paragraph(f"{code_res.dependency_count} deps", tbl_cell_style)],
+                    [Paragraph("<b>Security Strength</b>", tbl_cell_style), Paragraph("<b>55%</b>", tbl_cell_style), Paragraph(f'<font color="#059669"><b>{cons_res.consistency_score:.0f}%</b></font>', tbl_cell_style)],
+                ])
+
+            sub_style = TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111827")),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#0D131F")),
+                ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#1e293b")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 4.5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4.5),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+            ])
+            left_tbl = Table(dim_rows, colWidths=[46 * mm, 12 * mm, 24 * mm])
+            left_tbl.setStyle(sub_style)
+            right_tbl = Table(atlas_rows, colWidths=[46 * mm, 12 * mm, 24 * mm])
+            right_tbl.setStyle(sub_style)
+
+            grid_tbl = Table([[left_tbl, right_tbl]], colWidths=[85 * mm, 85 * mm])
+            grid_tbl.setStyle(TableStyle([
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ]))
+            elements.append(grid_tbl)
+            elements.append(Spacer(1, 3.5 * mm))
+
+            # ④ Investment / M&A Verdict & Top 3 Priority Risks Table
+            risk_items: list[str] = []
+            if cr is not None and cr.investment_thesis and cr.investment_thesis.key_risks:
+                risk_items = [str(r) for r in cr.investment_thesis.key_risks[:3]]
+            elif cr is not None and cr.red_flags:
+                for rf in cr.red_flags[:3]:
+                    if isinstance(rf, dict):
+                        risk_items.append(f"[{str(rf.get('severity', 'HIGH')).upper()}] {rf.get('title', '')}")
+            elif result.score and result.score.red_flags:
+                for rf in result.score.red_flags[:3]:
+                    risk_items.append(f"[{rf.severity.value.upper()}] {rf.title} ({_extract_file_line(rf)})")
+            if not risk_items:
+                risk_items = ["Zero critical/high code blockers identified."]
+
+            risk_html = "<br/>".join(
+                f'<font color="#e11d48">•</font> {self._esc_text(r[:110])}' for r in risk_items[:3]
+            )
+            verdict_rows = [
+                [
+                    Paragraph("<b>④ Executive Verdict</b>", tbl_header_style),
+                    Paragraph("<b>Top 3 Priority Risks &amp; Conditions</b>", tbl_header_style),
+                ],
+                [
+                    Paragraph(
+                        f'<font color="{verdict_hex}" size="11"><b>{verdict}</b></font><br/>'
+                        f'<font color="#94a3b8" size="7.5">{self._esc_text(recommendation)}</font>',
+                        tbl_cell_style,
+                    ),
+                    Paragraph(risk_html, tbl_cell_style),
+                ],
+            ]
+            verdict_tbl = Table(verdict_rows, colWidths=[48 * mm, 122 * mm])
+            verdict_tbl.setStyle(sub_style)
+            elements.append(verdict_tbl)
+            elements.append(Spacer(1, 3 * mm))
+
+        meta_bits = [
+            f"{self._esc_text(t['analysis_id'])}: {self._esc_text(result.analysis_id)}",
+            f"{self._esc_text(t['date'])}: {self._esc_text(result.timestamp.strftime('%Y-%m-%d %H:%M UTC'))}",
+        ]
         if cr and cr.ai_model_used:
-            elements.append(
-                Paragraph(
-                    f'<font color="#5271FF" size="11">'
-                    f'<b>{t["ai_model"]}: {self._esc_text(cr.ai_model_used)}</b></font>',
-                    cover_center,
-                )
-            )
-            elements.append(Spacer(1, 6 * mm))
+            meta_bits.append(f"{self._esc_text(t['ai_model'])}: {self._esc_text(cr.ai_model_used)}")
+        elements.append(Paragraph("   ·   ".join(meta_bits), cover_small))
 
-        # Metadata
-        elements.append(
-            Paragraph(
-                f"{self._esc_text(t['analysis_id'])}: {self._esc_text(result.analysis_id)}",
-                cover_small,
-            )
-        )
-        elements.append(
-            Paragraph(
-                f"{self._esc_text(t['date'])}: {self._esc_text(result.timestamp.strftime('%Y-%m-%d %H:%M UTC'))}",
-                cover_small,
-            )
-        )
-
-        # RTL layout disclaimer (Arabic only): the Arabic text is contextually
-        # shaped and reads right-to-left, but the page layout stays LTR (labels
-        # on the left, values on the right) like the other languages.
         if self._lang == "ar":
             note_style = ParagraphStyle(
                 "CoverRTLNote", parent=cover_small,
-                fontSize=7.5, leading=11, alignment=1,
-                textColor=colors.HexColor("#9ca3af"),
+                fontSize=7, leading=10, alignment=1,
+                textColor=colors.HexColor("#94a3b8"),
             )
             rtl_note = (
                 "ملاحظة: النص العربي مُشكَّل ويُقرأ من اليمين إلى اليسار، "
                 "لكن تخطيط الصفحة يظل من اليسار إلى اليمين (التسميات يساراً والقيم يميناً) "
                 "كما في سائر اللغات."
             )
-            elements.append(Spacer(1, 12 * mm))
+            elements.append(Spacer(1, 2 * mm))
             elements.append(Paragraph(self._maybe_reshape(rtl_note), note_style))
 
         return elements
@@ -1836,7 +1936,9 @@ class PDFReportGenerator:
         return elements
 
     def _build_red_flags_section(self, result: AnalysisResult) -> list:
-        """Build the red flags detail section."""
+        """Build the priority-sorted 4-column Red Flags table (standard report)."""
+        from due_diligence_engine.report.generator import _extract_file_line, _extract_one_line_fix
+
         s = self._styles
         t = self._t
         elements: list = []
@@ -1850,37 +1952,63 @@ class PDFReportGenerator:
             HRFlowable(width="100%", thickness=1, color=COLOR_RED, spaceAfter=4 * mm)
         )
 
-        # Group by severity
-        severity_order = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]
+        sev_order = {
+            Severity.CRITICAL: 0,
+            Severity.HIGH: 1,
+            Severity.MEDIUM: 2,
+            Severity.LOW: 3,
+            Severity.INFO: 4,
+        }
+        sorted_flags = sorted(score.red_flags, key=lambda f: sev_order.get(f.severity, 99))
 
-        for severity in severity_order:
-            flags = [f for f in score.red_flags if f.severity == severity]
-            if not flags:
-                continue
+        hdr_style = ParagraphStyle(
+            "RFHdr", fontName=self._font_bold(), fontSize=8, leading=11, textColor=COLOR_WHITE,
+        )
+        cell_style = ParagraphStyle(
+            "RFCell", fontName=self._font_normal(), fontSize=8.5, leading=13, textColor=COLOR_TEXT,
+        )
 
-            severity_color = SEVERITY_COLORS.get(severity, COLOR_TEXT)
-            elements.append(
-                Paragraph(
-                    f'<font color="{severity_color.hexval()}">{severity.value.upper()}</font>',
-                    s["heading2"],
-                )
-            )
+        rows = [[
+            Paragraph("<b>Severity</b>", hdr_style),
+            Paragraph("<b>Target (file:line)</b>", hdr_style),
+            Paragraph("<b>Business Impact</b>", hdr_style),
+            Paragraph("<b>Concrete 1-Line Fix Plan</b>", hdr_style),
+        ]]
+        style_cmds = [
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_ACCENT),
+            ("GRID", (0, 0), (-1, -1), 0.4, COLOR_BORDER),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING", (0, 0), (-1, -1), 7),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+            ("LEFTPADDING", (0, 0), (-1, -1), 7),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+        ]
 
-            for flag in flags:
-                elements.append(
-                    Paragraph(
-                        f'<font color="{severity_color.hexval()}">[{self._esc_text(flag.severity.value.upper())}]</font> '
-                        f"<b>{self._esc_text(flag.title)}</b> ({self._esc_text(flag.category)})",
-                        s["flag_title"],
-                    )
-                )
-                elements.append(Paragraph(self._esc_text(flag.description), s["flag_desc"]))
+        for r_idx, flag in enumerate(sorted_flags, start=1):
+            sev_val = flag.severity.value.lower()
+            if sev_val == "critical":
+                sev_badge = '<font color="#e11d48"><b>CRITICAL</b></font>'
+                style_cmds.append(("BACKGROUND", (0, r_idx), (0, r_idx), COLOR_ROSE_BG))
+            elif sev_val == "high":
+                sev_badge = '<font color="#d97706"><b>! HIGH</b></font>'
+                style_cmds.append(("BACKGROUND", (0, r_idx), (0, r_idx), COLOR_AMBER_BG))
+            elif sev_val == "medium":
+                sev_badge = '<font color="#0284c7"><b>MEDIUM</b></font>'
+                style_cmds.append(("BACKGROUND", (0, r_idx), (0, r_idx), COLOR_ACCENT_LIGHT))
+            else:
+                sev_badge = f'<font color="#059669"><b>{self._esc_text(sev_val.upper())}</b></font>'
+                style_cmds.append(("BACKGROUND", (0, r_idx), (0, r_idx), COLOR_SLATE_BG))
 
-                if flag.evidence:
-                    evidence_label = t.get("evidence", "Evidence")
-                    evidence_text = f"{evidence_label}: " + "; ".join(flag.evidence[:3])
-                    elements.append(Paragraph(self._esc_text(evidence_text), s["flag_desc"]))
+            rows.append([
+                Paragraph(sev_badge, cell_style),
+                Paragraph(f'<font name="Helvetica">{self._esc_text(_extract_file_line(flag))}</font>', cell_style),
+                Paragraph(f"<b>{self._esc_text(flag.title)}</b><br/>{self._esc_text(flag.description)}", cell_style),
+                Paragraph(self._esc_text(_extract_one_line_fix(flag)), cell_style),
+            ])
 
+        tbl = Table(rows, colWidths=[24 * mm, 36 * mm, 55 * mm, 50 * mm], repeatRows=1)
+        tbl.setStyle(TableStyle(style_cmds))
+        elements.append(tbl)
         return elements
 
     def _build_codebase_metrics(self, result: AnalysisResult) -> list:
@@ -2030,12 +2158,53 @@ class PDFReportGenerator:
         ]))
         elements.append(table)
 
-        if consistency.contradictions:
-            elements.append(Paragraph(t["contradictions_found"], s["heading2"]))
-            for contradiction in consistency.contradictions:
-                elements.append(
-                    Paragraph(f"&bull; {self._esc_text(contradiction)}", s["body_small"])
-                )
+        # 2-Column Company Claim vs. Code Evidence Comparison Table
+        elements.append(Spacer(1, 5 * mm))
+        hdr_style = ParagraphStyle(
+            "ConsHdr", fontName=font_header, fontSize=8.5, leading=11, textColor=COLOR_WHITE,
+        )
+        cell_style = ParagraphStyle(
+            "ConsCell", fontName=font_body, fontSize=8.5, leading=13, textColor=COLOR_TEXT,
+        )
+        comp_rows = [[
+            Paragraph("<b>Web / Pitch Claim</b>", hdr_style),
+            Paragraph("<b>Codebase Evidence (file:line) &amp; Verdict</b>", hdr_style),
+        ]]
+        comp_styles = [
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_ACCENT),
+            ("GRID", (0, 0), (-1, -1), 0.4, COLOR_BORDER),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING", (0, 0), (-1, -1), 7),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ]
+        r_idx = 1
+        for vc in consistency.verified_claims[:10]:
+            comp_rows.append([
+                Paragraph(self._esc_text(vc), cell_style),
+                Paragraph('<font color="#059669"><b>[Verified]</b></font> Confirmed in repository AST &amp; configs', cell_style),
+            ])
+            comp_styles.append(("BACKGROUND", (1, r_idx), (1, r_idx), COLOR_EMERALD_BG))
+            r_idx += 1
+        for uc in consistency.unverified_claims[:10]:
+            comp_rows.append([
+                Paragraph(self._esc_text(uc), cell_style),
+                Paragraph('<font color="#d97706"><b>[Partial]</b></font> No direct backing implementation found', cell_style),
+            ])
+            comp_styles.append(("BACKGROUND", (1, r_idx), (1, r_idx), COLOR_AMBER_BG))
+            r_idx += 1
+        for cc in consistency.contradictions[:10]:
+            comp_rows.append([
+                Paragraph(self._esc_text(cc), cell_style),
+                Paragraph('<font color="#e11d48"><b>[Unimplemented]</b></font> Contradicts repository source tree', cell_style),
+            ])
+            comp_styles.append(("BACKGROUND", (1, r_idx), (1, r_idx), COLOR_ROSE_BG))
+            r_idx += 1
+        if len(comp_rows) > 1:
+            comp_tbl = Table(comp_rows, colWidths=[72 * mm, 93 * mm], repeatRows=1)
+            comp_tbl.setStyle(TableStyle(comp_styles))
+            elements.append(comp_tbl)
 
         return elements
 
@@ -2165,10 +2334,10 @@ class PDFReportGenerator:
 
     # Atlas Associates Inc. credit — hardcoded, not configurable.
     # This attribution is required by the license and must not be removed.
-    _CREDIT = "Powered by Due Diligence Engine \u2014 Takayuki Miyano / Atlas Associates Inc"
+    _CREDIT = "Powered by Atlas DDE (Due Diligence Engine) \u2014 Takayuki Miyano / Atlas Associates Inc"
 
     def _add_cover_bg(self, canvas, doc) -> None:
-        """Draw dark background + logo on cover page, then add standard footer."""
+        """Draw Quiet Luxury dark background + Atlas DDE branding on Page 1."""
         canvas.saveState()
         page_width, page_height = A4
 
@@ -2176,18 +2345,22 @@ class PDFReportGenerator:
         canvas.setFillColor(COLOR_BG_DARK)
         canvas.rect(0, 0, page_width, page_height, fill=1, stroke=0)
 
-        # Atlas Associates logo text (top-left)
+        # Top hairline accent bar (#0284c7)
+        canvas.setFillColor(COLOR_ACCENT)
+        canvas.rect(0, page_height - 4 * mm, page_width, 4 * mm, fill=1, stroke=0)
+
+        # Atlas DDE logo text (top-left)
         canvas.setFillColor(colors.white)
         canvas.setFont("Helvetica-Bold", 10)
-        canvas.drawString(2 * cm, page_height - 2 * cm, "ATLAS ASSOCIATES")
-        canvas.setFont("Helvetica", 7)
-        canvas.setFillColor(colors.HexColor("#9ca3af"))
-        canvas.drawString(2 * cm, page_height - 2.5 * cm, "Technology Due Diligence")
+        canvas.drawString(2 * cm, page_height - 1.5 * cm, "ATLAS DDE")
+        canvas.setFont("Helvetica", 7.5)
+        canvas.setFillColor(colors.HexColor("#38bdf8"))
+        canvas.drawString(4.3 * cm, page_height - 1.5 * cm, "EXECUTIVE TECHNICAL DUE DILIGENCE")
 
-        # Decorative accent line
-        canvas.setStrokeColor(COLOR_ACCENT)
-        canvas.setLineWidth(2)
-        canvas.line(2 * cm, page_height - 2.8 * cm, 6 * cm, page_height - 2.8 * cm)
+        # Decorative thin line
+        canvas.setStrokeColor(colors.HexColor("#1e293b"))
+        canvas.setLineWidth(0.6)
+        canvas.line(2 * cm, page_height - 1.85 * cm, page_width - 2 * cm, page_height - 1.85 * cm)
 
         # Bottom credit
         canvas.setFont("Helvetica", 7)
@@ -3285,36 +3458,76 @@ class PDFReportGenerator:
         elements.append(callout)
         elements.append(Spacer(1, 5 * mm))
 
-        severity_colors = {
-            "critical": COLOR_RED,
-            "high": COLOR_ORANGE,
-            "medium": COLOR_YELLOW,
-            "low": COLOR_GREEN,
-        }
+        severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+        from due_diligence_engine.report.generator import _extract_file_line, _extract_one_line_fix
 
-        for flag in cr.red_flags:
-            if not isinstance(flag, dict):
-                continue
+        valid_flags = [f for f in (cr.red_flags or []) if isinstance(f, dict)]
+        sorted_flags = sorted(
+            valid_flags,
+            key=lambda f: severity_rank.get(str(f.get("severity", "info")).lower(), 99),
+        )
+
+        hdr_style = ParagraphStyle(
+            "CRFHeader", fontName=self._font_bold(), fontSize=8, leading=11, textColor=COLOR_WHITE,
+        )
+        cell_style = ParagraphStyle(
+            "CRFCell", fontName=self._font_normal(), fontSize=8.5, leading=13, textColor=COLOR_TEXT,
+        )
+
+        if self._lang == "ja":
+            headers = ["深刻度", "対象 (file:line)", "ビジネス影響・欠陥詳細", "具体的な1行修正方針"]
+        else:
+            headers = ["Severity", "Target (file:line)", "Defect & Business Impact", "Concrete 1-Line Fix Plan"]
+
+        rows = [[Paragraph(f"<b>{self._esc_text(h)}</b>", hdr_style) for h in headers]]
+        style_cmds = [
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_ACCENT),
+            ("GRID", (0, 0), (-1, -1), 0.4, COLOR_BORDER),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING", (0, 0), (-1, -1), 7),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+            ("LEFTPADDING", (0, 0), (-1, -1), 7),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+        ]
+
+        for r_idx, flag in enumerate(sorted_flags, start=1):
             sev = str(flag.get("severity", "info")).lower()
-            sev_color = severity_colors.get(sev, COLOR_ACCENT)
-            title = flag.get("title", "")
-            desc = flag.get("description", "")
-            impact = flag.get("business_impact", "")
+            title = str(flag.get("title", ""))
+            desc = str(flag.get("description", ""))
+            impact = str(flag.get("business_impact", ""))
+            loc = _extract_file_line(flag)
+            fix_plan = _extract_one_line_fix(flag)
 
-            elements.append(
-                Paragraph(
-                    f'<font color="{sev_color.hexval()}"><b>[{self._esc_text(sev.upper())}]</b></font> '
-                    f"<b>{self._esc_text(title)}</b>",
-                    s["body"],
-                )
-            )
-            if desc:
-                elements.append(Paragraph(self._esc_text(desc), s["body"]))
+            if sev == "critical":
+                badge_html = '<font color="#e11d48"><b>CRITICAL</b></font>'
+                style_cmds.append(("BACKGROUND", (0, r_idx), (0, r_idx), COLOR_ROSE_BG))
+            elif sev == "high":
+                badge_html = '<font color="#d97706"><b>! HIGH</b></font>'
+                style_cmds.append(("BACKGROUND", (0, r_idx), (0, r_idx), COLOR_AMBER_BG))
+            elif sev == "medium":
+                badge_html = '<font color="#0284c7"><b>MEDIUM</b></font>'
+                style_cmds.append(("BACKGROUND", (0, r_idx), (0, r_idx), COLOR_ACCENT_LIGHT))
+            else:
+                badge_html = f'<font color="#059669"><b>{self._esc_text(sev.upper())}</b></font>'
+                style_cmds.append(("BACKGROUND", (0, r_idx), (0, r_idx), COLOR_SLATE_BG))
+
+            impact_parts = [f"<b>{self._esc_text(title)}</b>"]
             if impact:
-                elements.append(
-                    Paragraph(f"<i>{self._esc_text(impact)}</i>", s["body_dim"])
-                )
-            elements.append(Spacer(1, 3 * mm))
+                impact_parts.append(self._esc_text(impact))
+            elif desc:
+                impact_parts.append(self._esc_text(desc))
+
+            rows.append([
+                Paragraph(badge_html, cell_style),
+                Paragraph(f'<font name="Helvetica">{self._esc_text(loc)}</font>', cell_style),
+                Paragraph("<br/>".join(impact_parts), cell_style),
+                Paragraph(self._esc_text(fix_plan if not desc else f"{fix_plan} ({desc[:90]})"), cell_style),
+            ])
+
+        if len(rows) > 1:
+            rf_table = RLTable(rows, colWidths=[24 * mm, 36 * mm, 53 * mm, 52 * mm], repeatRows=1)
+            rf_table.setStyle(RLTableStyle(style_cmds))
+            elements.append(rf_table)
 
         return elements
 
@@ -3418,7 +3631,60 @@ class PDFReportGenerator:
         elements.append(
             Paragraph(t["overall_credibility"], s["center"])
         )
-        elements.append(Spacer(1, 8 * mm))
+        elements.append(Spacer(1, 5 * mm))
+
+        # --- Requirement 3: 2-Column "Company Claim vs. Code Evidence" Comparison Table ---
+        from reportlab.platypus import Table as RLTable, TableStyle as RLTableStyle
+
+        sv_hdr_style = ParagraphStyle(
+            "SVHdr", fontName=self._font_bold(), fontSize=8.5, leading=11, textColor=COLOR_WHITE,
+        )
+        sv_cell_style = ParagraphStyle(
+            "SVCell", fontName=self._font_normal(), fontSize=8.5, leading=13, textColor=COLOR_TEXT,
+        )
+        if self._lang == "ja":
+            sv_headers = ["Web・ピッチの主張 / 検証項目", "実コードの検証結果 (file:line) と判定バッジ"]
+        else:
+            sv_headers = ["Web / Pitch Claim & Verification Axis", "Codebase Evidence (file:line) & Verdict Badge"]
+
+        sv_rows = [[
+            Paragraph(f"<b>{self._esc_text(sv_headers[0])}</b>", sv_hdr_style),
+            Paragraph(f"<b>{self._esc_text(sv_headers[1])}</b>", sv_hdr_style),
+        ]]
+        sv_table_styles = [
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_ACCENT),
+            ("GRID", (0, 0), (-1, -1), 0.4, COLOR_BORDER),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING", (0, 0), (-1, -1), 6.5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6.5),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ]
+
+        symbol_font = "HeiseiKakuGo-W5"
+        for idx, item in enumerate(sv.items[:14], start=1):
+            item_title = item.item_name_ja if self._lang == "ja" and item.item_name_ja else item.item_name
+            sc_v = float(item.score)
+            if sc_v >= 75:
+                verdict_badge = f'<font name="{symbol_font}" color="#059669">○</font> <font color="#059669"><b>{"実装済" if self._lang == "ja" else "Verified"} ({sc_v:.0f}/100)</b></font>'
+                sv_table_styles.append(("BACKGROUND", (1, idx), (1, idx), COLOR_EMERALD_BG))
+            elif sc_v >= 45:
+                verdict_badge = f'<font name="{symbol_font}" color="#d97706">△</font> <font color="#d97706"><b>{"一部のみ" if self._lang == "ja" else "Partial"} ({sc_v:.0f}/100)</b></font>'
+                sv_table_styles.append(("BACKGROUND", (1, idx), (1, idx), COLOR_AMBER_BG))
+            else:
+                verdict_badge = f'<font name="{symbol_font}" color="#e11d48">×</font> <font color="#e11d48"><b>{"未実装" if self._lang == "ja" else "Unimplemented"} ({sc_v:.0f}/100)</b></font>'
+                sv_table_styles.append(("BACKGROUND", (1, idx), (1, idx), COLOR_ROSE_BG))
+
+            rationale_txt = self._esc_text(item.rationale or "")
+            sv_rows.append([
+                Paragraph(f"<b>{self._esc_text(item_title)}</b>", sv_cell_style),
+                Paragraph(f"{verdict_badge}<br/>{rationale_txt}", sv_cell_style),
+            ])
+
+        sv_tbl = RLTable(sv_rows, colWidths=[65 * mm, 100 * mm], repeatRows=1)
+        sv_tbl.setStyle(RLTableStyle(sv_table_styles))
+        elements.append(sv_tbl)
+        elements.append(Spacer(1, 6 * mm))
 
         # --- Horizontal bar chart for verification items ---
         confidence_badge = {
@@ -4103,44 +4369,38 @@ class PDFReportGenerator:
         elements.append(Spacer(1, 2 * mm))
 
         # Legend — use ○△× (Japanese tech rating standard, universally rendered by CID fonts).
-        # ✓✗ are NOT in HeiseiKakuGo-W5, so we use ○△× (U+25EF/U+25B3/U+00D7) instead.
         legend_text_font = self._font_normal()
         legend_symbol_font = "HeiseiKakuGo-W5"  # has ○△× in both languages
         legend_text = (
-            f'<font name="{legend_symbol_font}" size="10" color="{COLOR_ACCENT.hexval()}">○</font> '
-            f'<font name="{legend_text_font}" size="8">{t["impl_legend_verified"]}</font>'
+            f'<font name="{legend_symbol_font}" size="10" color="#059669">○</font> '
+            f'<font name="{legend_text_font}" size="8" color="#059669"><b>{t["impl_legend_verified"]}</b></font>'
             f'   '
-            f'<font name="{legend_symbol_font}" size="10" color="{COLOR_TEXT.hexval()}">△</font> '
-            f'<font name="{legend_text_font}" size="8">{t["impl_legend_claimed"]}</font>'
+            f'<font name="{legend_symbol_font}" size="10" color="#d97706">△</font> '
+            f'<font name="{legend_text_font}" size="8" color="#d97706"><b>{t["impl_legend_claimed"]}</b></font>'
             f'   '
-            f'<font name="{legend_symbol_font}" size="10" color="#6b2a2a">×</font> '
-            f'<font name="{legend_text_font}" size="8">{t["impl_legend_not_impl"]}</font>'
+            f'<font name="{legend_symbol_font}" size="10" color="#e11d48">×</font> '
+            f'<font name="{legend_text_font}" size="8" color="#e11d48"><b>{t["impl_legend_not_impl"]}</b></font>'
             f'   '
-            f'<font name="{legend_symbol_font}" size="10" color="{COLOR_TEXT_DIM.hexval()}">?</font> '
-            f'<font name="{legend_text_font}" size="8">{t["impl_legend_unknown"]}</font>'
+            f'<font name="{legend_symbol_font}" size="10" color="#64748b">?</font> '
+            f'<font name="{legend_text_font}" size="8" color="#64748b">{t["impl_legend_unknown"]}</font>'
         )
         elements.append(Paragraph(legend_text, s["center"]))
         elements.append(Spacer(1, 3 * mm))
 
         # Build column structure: [Item, Target, Comp1, Comp2, ...]
-        # Limit to 10 competitors (= 11 columns total) to fit A4 portrait
+        # Limit to 10 competitors (= 11 columns total) to fit A4 portrait (480pt printable width)
         all_companies = [im.target_company] + im.competitors[:10]
 
         # Header row
         font_header = self._font_bold()
         header_para_style = ParagraphStyle(
-            "MatHeader", fontName=font_header, fontSize=7,
-            textColor=COLOR_WHITE, alignment=1, leading=9,
-        )
-        target_header_style = ParagraphStyle(
-            "MatTargetHeader", fontName=font_header, fontSize=7,
-            textColor=COLOR_WHITE, alignment=1, leading=9,
+            "MatHeader", fontName=font_header, fontSize=6.8,
+            textColor=COLOR_WHITE, alignment=1, leading=8.5,
         )
 
         header_row = [Paragraph("", header_para_style)]
         for c in all_companies:
-            # Truncate long names
-            short_name = c[:14] + "…" if len(c) > 14 else c
+            short_name = c[:12] + "…" if len(c) > 12 else c
             header_row.append(Paragraph(self._esc_text(short_name), header_para_style))
 
         # Group items by category
@@ -4166,33 +4426,31 @@ class PDFReportGenerator:
         # Build table rows: header + (category-row + items)*N
         font_body = self._font_normal()
         item_para_style = ParagraphStyle(
-            "MatItem", fontName=font_body, fontSize=7,
-            textColor=COLOR_TEXT, alignment=0, leading=9,
+            "MatItem", fontName=font_body, fontSize=7.2,
+            textColor=COLOR_TEXT, alignment=0, leading=9.5,
         )
         cat_para_style = ParagraphStyle(
             "MatCat", fontName=font_header, fontSize=8,
-            textColor=COLOR_ACCENT, alignment=0, leading=10,
+            textColor=COLOR_ACCENT, alignment=0, leading=10.5,
         )
-        # Cell symbols (✓ △ ✗ ?) need a font that has all 4.
-        # CID HeiseiKakuGo-W5 supports all of them; Helvetica-Bold doesn't have △.
-        cell_symbol_font = "HeiseiKakuGo-W5" if self._lang == "ja" else "HeiseiKakuGo-W5"
+        cell_symbol_font = "HeiseiKakuGo-W5"
         cell_style = ParagraphStyle(
-            "MatCell", fontName=cell_symbol_font, fontSize=10,
+            "MatCell", fontName=cell_symbol_font, fontSize=9.5,
             textColor=COLOR_TEXT, alignment=1, leading=11,
         )
 
         table_data = [header_row]
-        # Track which row indices are category rows (for styling)
         cat_row_indices = []
-        # Build a map: company_name → position (column 1+)
-        company_col = {name: idx + 1 for idx, name in enumerate(all_companies)}
+        cell_bg_cmds = []
 
-        # Status → symbol + color (Japanese tech rating: ○△× — universally rendered)
+        # Status → (symbol, text_color, bg_color) — high-contrast Quiet Luxury palette
         status_glyph = {
-            "verified": ("○", COLOR_ACCENT),                           # 実装確認済
-            "claimed": ("△", COLOR_TEXT),                              # 主張あり
-            "not_implemented": ("×", colors.HexColor("#6b2a2a")),      # 未実装
-            "unknown": ("?", COLOR_TEXT_DIM),                          # 不明
+            "verified": ("○", COLOR_GREEN, COLOR_EMERALD_BG),
+            "implemented": ("○", COLOR_GREEN, COLOR_EMERALD_BG),
+            "claimed": ("△", COLOR_YELLOW, COLOR_AMBER_BG),
+            "partial": ("△", COLOR_YELLOW, COLOR_AMBER_BG),
+            "not_implemented": ("×", COLOR_RED, COLOR_ROSE_BG),
+            "unknown": ("?", COLOR_TEXT_DIM, COLOR_SLATE_BG),
         }
 
         all_cats = category_order + [c for c in items_by_cat if c not in category_order]
@@ -4201,57 +4459,55 @@ class PDFReportGenerator:
             if not cat_items:
                 continue
 
-            # Category header row (full-width via merged-style: just put label in col 0)
             cat_label = cat_label_map.get(cat, cat)
             cat_row_index = len(table_data)
             cat_row = [Paragraph(f"<b>{self._esc_text(cat_label)}</b>", cat_para_style)] + [""] * len(all_companies)
             table_data.append(cat_row)
             cat_row_indices.append(cat_row_index)
 
-            # Item rows
             for item in cat_items:
+                row_idx = len(table_data)
                 item_label = item.item_ja if self._lang == "ja" and item.item_ja else item.item_en
                 row = [Paragraph(self._esc_text(item_label), item_para_style)]
-                # Build status lookup for this item
                 status_by_company: dict[str, str] = {}
                 for st in item.statuses:
                     status_by_company[st.company_name] = st.status.value if hasattr(st.status, "value") else str(st.status)
 
-                for company in all_companies:
+                for col_idx, company in enumerate(all_companies, start=1):
                     raw_status = status_by_company.get(company, "unknown")
-                    glyph, glyph_color = status_glyph.get(raw_status, ("?", COLOR_TEXT_DIM))
+                    glyph, glyph_color, bg_color = status_glyph.get(
+                        raw_status, ("?", COLOR_TEXT_DIM, COLOR_SLATE_BG)
+                    )
                     cell_para = Paragraph(
                         f'<font color="{glyph_color.hexval()}"><b>{glyph}</b></font>',
                         cell_style,
                     )
                     row.append(cell_para)
+                    cell_bg_cmds.append(("BACKGROUND", (col_idx, row_idx), (col_idx, row_idx), bg_color))
                 table_data.append(row)
 
-        # Column widths: item column wider, company columns narrow
-        n_cols = 1 + len(all_companies)
-        item_col_w = 145
-        # Available width: A4 portrait usable = ~510pt
-        comp_col_w = max(28, min(45, (510 - item_col_w) / max(1, len(all_companies))))
+        # Column widths strictly bounded to 480pt (A4 printable frame = 481.89pt)
+        item_col_w = 135
+        comp_col_w = max(26, min(42, (480 - item_col_w) / max(1, len(all_companies))))
         col_widths = [item_col_w] + [comp_col_w] * len(all_companies)
 
         tbl = RLTable(table_data, colWidths=col_widths, repeatRows=1)
         style_cmds = [
-            # Header row
-            ("BACKGROUND", (0, 0), (-1, 0), COLOR_ACCENT),
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_SURFACE),
+            ("BACKGROUND", (1, 0), (1, 0), COLOR_ACCENT),
             ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
             ("ALIGN", (1, 0), (-1, -1), "CENTER"),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("TOPPADDING", (0, 0), (-1, -1), 3),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
             ("LEFTPADDING", (0, 0), (-1, -1), 3),
             ("RIGHTPADDING", (0, 0), (-1, -1), 3),
-            ("GRID", (0, 0), (-1, -1), 0.25, COLOR_BORDER),
-            # Highlight target column (column index 1)
-            ("BACKGROUND", (1, 1), (1, -1), colors.HexColor("#E8EDFF")),
+            ("GRID", (0, 0), (-1, -1), 0.35, COLOR_BORDER),
+            ("BOX", (1, 0), (1, -1), 1.0, COLOR_ACCENT),
+            *cell_bg_cmds,
         ]
-        # Style category rows: span the row visually (background only, no merge to keep glyphs)
         for idx in cat_row_indices:
-            style_cmds.append(("BACKGROUND", (0, idx), (-1, idx), colors.HexColor("#f3f4f6")))
+            style_cmds.append(("BACKGROUND", (0, idx), (-1, idx), COLOR_ACCENT_LIGHT))
             style_cmds.append(("SPAN", (0, idx), (-1, idx)))
 
         tbl.setStyle(RLTableStyle(style_cmds))

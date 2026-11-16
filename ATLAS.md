@@ -1,16 +1,17 @@
-# Due Diligence Engine — Architecture, Governance & SSOT (`ATLAS.md`)
+# Atlas DDE (Due Diligence Engine) — Architecture, Governance & SSOT (`ATLAS.md`)
 
-> **Single Source of Truth (SSOT)** for Due Diligence Engine (`Atlas-Associates-Inc/Due-diligence-engine`).  
+> **Single Source of Truth (SSOT)** for **Atlas DDE** (`Atlas-Associates-Inc/Due-diligence-engine`).  
 > All human contributors, orchestrator agents, and executor agents MUST adhere strictly to this document.
 
 ---
 
 ## §1 Overview & Architecture
 
-Due Diligence Engine (DDE) is a bank-grade, enterprise-ready software due diligence and M&A code audit platform. It combines static source-tree inspection, live site/infrastructure verification, AI-driven evaluation across 9 institutional dimensions, and cryptographic zero-retention data wiping.
+**Atlas DDE** (Due Diligence Engine) is a bank-grade, enterprise-ready software due diligence and M&A code audit platform. It combines static source-tree inspection, live site/infrastructure verification, AI-driven evaluation across 9 institutional dimensions, and cryptographic zero-retention data wiping.
 
 | Metadata | Value |
 |---|---|
+| **Official Brand Name** | **Atlas DDE** (`Atlas DDE (Due Diligence Engine)`) |
 | **Portfolio Category** | **OSS** (`Apache-2.0` Open Source Software — Header/Footer `OSS` category on `https://www.atlasassociates.io/`) |
 | **Canonical Repository** | `https://github.com/Atlas-Associates-Inc/Due-diligence-engine` |
 | **Website Showcase URL** | `https://www.atlasassociates.io/{locale}/due-diligence-engine/` (`src/lib/dde.ts`) |

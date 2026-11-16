@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "due-diligence-engine"
-version = "0.6.4"
-description = "AI-powered technical due diligence CLI — PDF-first, zero API keys required"
+version = "0.6.5"
+description = "Atlas DDE — AI-powered technical due diligence CLI & MCP server (PDF-first, zero API keys required)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"

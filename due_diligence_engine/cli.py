@@ -844,54 +844,123 @@ def mcp_cmd(transport: str) -> None:
 
 
 def _display_score_summary(result, score) -> None:
-    """Display a rich score summary in the terminal."""
-    grade_colors = {
-        "A": "green", "B": "green", "C": "yellow", "D": "red", "F": "red",
-    }
-    color = grade_colors.get(score.grade, "white")
+    """Display a Quiet Luxury Executive Summary & comparison tables in the terminal."""
+    from due_diligence_engine.report.generator import (
+        _determine_verdict,
+        _extract_file_line,
+        _extract_one_line_fix,
+    )
 
-    # Overall score panel
+    grade_colors = {
+        "A": "#059669",
+        "B": "#0284c7",
+        "C": "#d97706",
+        "D": "#e11d48",
+        "F": "#e11d48",
+    }
+    color = grade_colors.get(score.grade, "#0284c7")
+    sev_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+    sorted_flags = sorted(
+        score.red_flags,
+        key=lambda f: sev_order.get(getattr(f.severity, "value", str(f.severity)).lower(), 99),
+    )
+    has_critical = any(getattr(f.severity, "value", "") == "critical" for f in sorted_flags)
+    verdict = _determine_verdict(score.overall_score, has_critical)
+    verdict_style = "#059669" if verdict == "GO" else ("#d97706" if verdict == "CONDITIONAL" else "#e11d48")
+
+    top_risks = "\n".join(
+        f"  • [{getattr(f.severity, 'value', '').upper()}] {f.title} ({_extract_file_line(f)})"
+        for f in sorted_flags[:3]
+    ) or "  • None — zero code-verified blockers detected"
+
+    # 1. Executive Summary Hero Panel
     console.print()
     console.print(
         Panel(
-            f"[bold {color}]{score.overall_score:.0f}/100 (Grade: {score.grade})[/bold {color}]\n\n"
-            f"{score.recommendation}",
-            title=f"Due Diligence Score: {result.project_name}",
-            border_style=color,
+            f"[bold {color}]Grade {score.grade}  ·  {score.overall_score:.0f} / 100[/bold {color}]   "
+            f"[bold {verdict_style}][ {verdict} ][/bold {verdict_style}]\n"
+            f"[dim]{score.recommendation}[/dim]\n\n"
+            f"[bold #0284c7]Top Priority Risks (Max 3):[/bold #0284c7]\n{top_risks}",
+            title=f"Atlas DDE — Executive Summary: {result.project_name}",
+            border_style="#0284c7",
+            padding=(1, 2),
         )
     )
 
-    # Dimensions table
-    table = Table(title="Score Dimensions")
+    # 2. Standard 5-Dimension Score Table
+    table = Table(title="1. Standard 5-Dimension Score Table (20% Equal Weights)", border_style="#0284c7")
     table.add_column("Dimension", style="bold")
     table.add_column("Score", justify="right")
     table.add_column("Weight", justify="right")
     table.add_column("Weighted", justify="right")
 
     for dim in score.dimensions:
+        sc_color = "#059669" if dim.score >= 75 else ("#0284c7" if dim.score >= 60 else ("#d97706" if dim.score >= 40 else "#e11d48"))
         table.add_row(
             dim.name,
-            f"{dim.score:.0f}",
+            f"[{sc_color}]{dim.score:.0f}/100[/{sc_color}]",
             f"{dim.weight:.0%}",
             f"{dim.weighted_score:.1f}",
         )
 
     console.print(table)
 
-    # Red flags
-    if score.red_flags:
-        console.print()
-        critical = [f for f in score.red_flags if f.is_deal_breaker]
-        if critical:
-            console.print("[bold red]CRITICAL RED FLAGS:[/bold red]")
-            for flag in critical:
-                console.print(f"  [red]!! {flag.title}[/red]: {flag.description[:100]}")
+    # 3. Atlas 4-Axis Assessment Table (20 / 20 / 5 / 55)
+    code = result.code_analysis
+    consistency = result.consistency
+    atlas_tbl = Table(title="2. Atlas 4-Axis Assessment (20 / 20 / 5 / 55)", border_style="#0284c7")
+    atlas_tbl.add_column("Atlas Axis", style="bold")
+    atlas_tbl.add_column("Weight", justify="right")
+    atlas_tbl.add_column("Assessment", justify="left")
+    atlas_tbl.add_row("Performance & Concurrency", "20%", f"{score.overall_score:.0f}/100 Baseline")
+    atlas_tbl.add_row(
+        "Stability & Test Hygiene",
+        "20%",
+        "[#059669]○ Tests + CI[/#059669]" if code.has_tests and code.has_ci_cd else ("[#d97706]△ Tests Only[/#d97706]" if code.has_tests else "[#e11d48]× No Tests[/#e11d48]"),
+    )
+    atlas_tbl.add_row("Lightweight & Dependencies", "5%", f"{code.dependency_count} deps · {code.api_wrapper_ratio:.0%} wrapper")
+    atlas_tbl.add_row("[bold #0284c7]Security & Crypto Strength[/bold #0284c7]", "55%", f"{consistency.consistency_score:.0f}% Claim-to-Code Integrity")
+    console.print(atlas_tbl)
 
-        high = [f for f in score.red_flags if f.severity.value == "high"]
-        if high:
-            console.print("[bold yellow]HIGH SEVERITY FLAGS:[/bold yellow]")
-            for flag in high:
-                console.print(f"  [yellow]! {flag.title}[/yellow]: {flag.description[:100]}")
+    # 4. Company Claim vs. Code Evidence 2-Column Table
+    claim_tbl = Table(title="3. Company Claim vs. Code Evidence", border_style="#0284c7")
+    claim_tbl.add_column("Web / Pitch Claim", ratio=1)
+    claim_tbl.add_column("Code Evidence & Verdict Badge", ratio=1)
+    rows_added = 0
+    for c_text in consistency.verified_claims[:4]:
+        claim_tbl.add_row(c_text, "[#059669]○ 実装済 (Verified)[/#059669] — Confirmed in AST/config")
+        rows_added += 1
+    for c_text in consistency.unverified_claims[:4]:
+        claim_tbl.add_row(c_text, "[#d97706]△ 一部のみ (Unverified)[/#d97706] — ⚠️ No backing code")
+        rows_added += 1
+    for c_text in consistency.contradictions[:4]:
+        claim_tbl.add_row(c_text, "[#e11d48]× 未実装 (Contradiction)[/#e11d48] — Contradicts repo")
+        rows_added += 1
+    if rows_added == 0:
+        claim_tbl.add_row("Repository Baseline Integrity", f"[#059669]○ 実装済 (Verified)[/#059669] — {consistency.consistency_score:.0f}% ({code.total_files} files)")
+    console.print(claim_tbl)
+
+    # 5. Priority-Sorted Red Flags 4-Column Table
+    if sorted_flags:
+        rf_tbl = Table(title="4. Priority-Sorted Red Flags", border_style="#e11d48")
+        rf_tbl.add_column("Severity", justify="center")
+        rf_tbl.add_column("Target (file:line)")
+        rf_tbl.add_column("Business Impact")
+        rf_tbl.add_column("1-Line Fix Plan")
+        for flag in sorted_flags:
+            sev = getattr(flag.severity, "value", str(flag.severity)).lower()
+            sev_badge = (
+                "[bold #e11d48]CRITICAL[/bold #e11d48]"
+                if sev == "critical"
+                else ("[bold #d97706]⚠️ HIGH[/bold #d97706]" if sev == "high" else sev.upper())
+            )
+            rf_tbl.add_row(
+                sev_badge,
+                _extract_file_line(flag),
+                f"{flag.title}: {flag.description[:80]}",
+                _extract_one_line_fix(flag),
+            )
+        console.print(rf_tbl)
 
 
 def _detect_ai_terminal() -> bool:

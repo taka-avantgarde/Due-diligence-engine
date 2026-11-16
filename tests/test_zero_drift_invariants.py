@@ -1423,3 +1423,98 @@ def test_handoff_model_policy_date_boundary(day, tool, allowed):
             )
         )
         assert "Claude development agents are not used" in text
+
+
+def test_atlas_dde_quiet_luxury_report_five_requirements():
+    """Verify Atlas DDE brand unification and all 5 Quiet Luxury report requirements across PDF, MD, and HTML."""
+    from reportlab.platypus import Table
+
+    from due_diligence_engine.models import RedFlag, Score, ScoreDimension, Severity
+    from due_diligence_engine.report.generator import ReportGenerator
+    from due_diligence_engine.report.pdf_generator import (
+        COLOR_ACCENT,
+        COLOR_GREEN,
+        COLOR_RED,
+        COLOR_YELLOW,
+        PDFReportGenerator,
+    )
+
+    # 1. Quiet Luxury color palette invariant (#0284c7, #059669, #d97706, #e11d48)
+    assert COLOR_ACCENT.hexval().lower() == "0x0284c7"
+    assert COLOR_GREEN.hexval().lower() == "0x059669"
+    assert COLOR_YELLOW.hexval().lower() == "0xd97706"
+    assert COLOR_RED.hexval().lower() == "0xe11d48"
+    assert "Atlas DDE" in PDFReportGenerator._CREDIT
+
+    # 2. PDF Page 1 Executive Summary Sheet, 2-Column Claim vs Code, 4-Column Red Flags, and Bounded Matrix
+    cr = _make_consulting_report()
+    ar = _make_analysis_result(cr)
+    gen = _make_generator("en")
+
+    cover_flowables = gen._build_cover_page(ar, cr=cr)
+    cover_tables = [el for el in cover_flowables if isinstance(el, Table)]
+    assert len(cover_tables) >= 2, "Page 1 must include 5-Dim + Atlas 4-Axis grid and Executive Verdict table"
+
+    sv_flowables = gen._build_site_verification_page(cr)
+    sv_tables = [el for el in sv_flowables if isinstance(el, Table)]
+    assert any(getattr(t, "_ncols", 0) == 2 for t in sv_tables), (
+        "Site verification must include 2-column Claim vs. Code Evidence table"
+    )
+
+    rf_flowables = gen._build_consulting_red_flags(cr)
+    rf_tables = [el for el in rf_flowables if isinstance(el, Table)]
+    assert any(getattr(t, "_ncols", 0) == 4 for t in rf_tables), (
+        "Red flags must render as a priority-sorted 4-column table"
+    )
+
+    if cr.implementation_matrix:
+        mat_flowables = gen._build_implementation_matrix_page(cr)
+        mat_tables = [el for el in mat_flowables if isinstance(el, Table)]
+        assert mat_tables, "Implementation matrix must render a Table"
+        assert sum(mat_tables[0]._colWidths) <= 481.0, "Matrix width must fit within A4 printable frame"
+
+    # 3. Markdown & HTML Scorecard verification
+    ar.score = Score(
+        overall_score=82.0,
+        grade="B",
+        recommendation="Viable with conditions",
+        dimensions=[
+            ScoreDimension(name="Technical Originality", score=85.0, weight=0.2, weighted_score=17.0, rationale="Solid IP"),
+            ScoreDimension(name="Architecture Quality", score=80.0, weight=0.2, weighted_score=16.0, rationale="Modular"),
+        ],
+        red_flags=[
+            RedFlag(
+                id="rf-1",
+                category="security",
+                severity=Severity.HIGH,
+                title="Missing rate limit in auth/login.py:44",
+                description="Endpoint lacks throttling",
+                evidence=["auth/login.py:44"],
+            ),
+            RedFlag(
+                id="rf-2",
+                category="crypto",
+                severity=Severity.CRITICAL,
+                title="Hardcoded key in config/keys.py:12",
+                description="Static secret committed",
+                evidence=["config/keys.py:12"],
+                is_deal_breaker=True,
+            ),
+        ],
+    )
+    ar.consistency.verified_claims = ["End-to-end encryption"]
+    ar.consistency.unverified_claims = ["SOC2 Type II certified"]
+
+    rep_gen = ReportGenerator()
+    md = rep_gen.generate_markdown(ar)
+    assert "# Atlas DDE — Technical Due Diligence Report:" in md
+    assert "## 1. Executive Summary Comparison Sheet" in md
+    assert "## 2. Company Claim vs. Code Evidence" in md
+    assert "## 3. Priority-Sorted Red Flags" in md
+    assert md.index("config/keys.py:12") < md.index("auth/login.py:44"), "CRITICAL must precede HIGH in Red Flags table"
+
+    html_out = rep_gen.generate_html(ar)
+    assert "Atlas DDE" in html_out
+    assert "#0284c7" in html_out and "#059669" in html_out and "#e11d48" in html_out
+    assert "Company Claim vs. Code Evidence" in html_out
+    assert "Priority-Sorted Red Flags" in html_out
