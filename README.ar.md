@@ -1,7 +1,10 @@
 <div align="center">
 
-| 🇬🇧 [![English](https://img.shields.io/badge/English-30363D?style=for-the-badge)](README.md) | 🇯🇵 [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-30363D?style=for-the-badge)](README.ja.md) | 🇪🇸 [![Español](https://img.shields.io/badge/Espa%C3%B1ol-30363D?style=for-the-badge)](README.es.md) | 🇸🇦 [![العربية](https://img.shields.io/badge/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-5271FF?style=for-the-badge)](README.ar.md) | 🇫🇷 [![Français](https://img.shields.io/badge/Fran%C3%A7ais-30363D?style=for-the-badge)](README.fr.md) | 🇩🇪 [![Deutsch](https://img.shields.io/badge/Deutsch-30363D?style=for-the-badge)](README.de.md) |
-|:--:|:--:|:--:|:--:|:--:|:--:|
+| 🇬🇧 [![English](https://img.shields.io/badge/English-30363D?style=for-the-badge)](README.md) | 🇯🇵 [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-30363D?style=for-the-badge)](README.ja.md) | 🇪🇸 [![Español](https://img.shields.io/badge/Espa%C3%B1ol-30363D?style=for-the-badge)](README.es.md) | 🇸🇦 [![العربية](https://img.shields.io/badge/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-5271FF?style=for-the-badge)](README.ar.md) | 🇫🇷 [![Français](https://img.shields.io/badge/Fran%C3%A7ais-30363D?style=for-the-badge)](README.fr.md) |
+|:--:|:--:|:--:|:--:|:--:|
+| 🇩🇪 [![Deutsch](https://img.shields.io/badge/Deutsch-30363D?style=for-the-badge)](README.de.md) | 🇨🇳 [![简体中文](https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-30363D?style=for-the-badge)](README.zh.md) | 🇹🇼 [![繁體中文](https://img.shields.io/badge/%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87-30363D?style=for-the-badge)](README.zh-tw.md) | 🇰🇷 [![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-30363D?style=for-the-badge)](README.ko.md) | 🇧🇷 [![Português](https://img.shields.io/badge/Portugu%C3%AAs-30363D?style=for-the-badge)](README.pt.md) |
+| 🇮🇹 [![Italiano](https://img.shields.io/badge/Italiano-30363D?style=for-the-badge)](README.it.md) | 🇳🇱 [![Nederlands](https://img.shields.io/badge/Nederlands-30363D?style=for-the-badge)](README.nl.md) | 🇮🇩 [![Indonesia](https://img.shields.io/badge/Indonesia-30363D?style=for-the-badge)](README.id.md) | 🇻🇳 [![Tiếng Việt](https://img.shields.io/badge/Ti%E1%BA%BFng%20Vi%E1%BB%87t-30363D?style=for-the-badge)](README.vi.md) | 🇹🇭 [![ไทย](https://img.shields.io/badge/%E0%B9%84%E0%B8%97%E0%B8%A2-30363D?style=for-the-badge)](README.th.md) |
+| 🇮🇳 [![हिन्दी](https://img.shields.io/badge/%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80-30363D?style=for-the-badge)](README.hi.md) | 🇹🇷 [![Türkçe](https://img.shields.io/badge/T%C3%BCrk%C3%A7e-30363D?style=for-the-badge)](README.tr.md) | 🇵🇱 [![Polski](https://img.shields.io/badge/Polski-30363D?style=for-the-badge)](README.pl.md) | 🇷🇺 [![Русский](https://img.shields.io/badge/%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9-30363D?style=for-the-badge)](README.ru.md) | 🇸🇪 [![Svenska](https://img.shields.io/badge/Svenska-30363D?style=for-the-badge)](README.sv.md) |
 
 <sub>👆 Click your language to switch ・ クリックで言語を切り替え</sub>
 
@@ -467,7 +470,7 @@ dde analyze owner/repo
 - ✅ **مخطط رادار + مصدر البيانات + تعزيز Windows** (2026-07، v0.5.0): مخطط رادار خماسي الأبعاد في لوحة الدرجات؛ صندوق مصدر بحث الويب (STEP 0) داخل PDF (تاريخ البحث وعدد الاستعلامات/المصادر، أو تحذير واضح عند الاعتماد على بيانات التدريب فقط)؛ قفل NTFS ACL على مجلد العمل المؤقت في Windows (icacls، للمالك فقط)؛ إضافة Windows إلى مصفوفة اختبارات CI
 - ✅ **تقارير PDF بـ 14 لغة** (2026-06، v0.4.0): يُنشأ تقرير الاستشارة بصيغة PDF بأي من 14 لغة عبر `--lang` — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية (العربية مع تشكيل سياقي واتجاه RTL). خطوط Noto مضمّنة، دون إعداد.
 - ✅ **إصلاحات توافق Windows** (2026-06، v0.3.8): مسار مؤقت متعدّد المنصّات لمسار `--pdf` الاستشاري (كان `/tmp` ثابتًا) ودعم حافظة Windows (`clip`) لأمر `--copy`
-- ✅ **ملفات README بست لغات** (2026-06، v0.3.7): مُبدّل لغة أعلى الصفحة مع إبراز اللغة النشطة — English / 日本語 / Español / العربية / Français / Deutsch، كلٌّ منها ملف `README.<lang>.md` منفصل
+- ✅ **ملفات README بـ 20 لغة** (2026-06، v0.3.7): مُبدّل لغة أعلى الصفحة مع إبراز اللغة النشطة — English / 日本語 / Español / العربية / Français / Deutsch، كلٌّ منها ملف `README.<lang>.md` منفصل
 - ✅ **الترقية إلى Claude Fable 5** (2026-06، v0.3.6): انتقلت طبقة الحَكَم من Opus 4.8 → **Fable 5** (`claude-fable-5`، أقوى نموذج من Anthropic مُطلق على نطاق واسع، متاح عمومًا 2026-06-09). أُعيدت تسمية مفتاح الطبقة `opus` → `fable`. التسعير $10/$50 لكل مليون توكن (ضعف Opus 4.8، إعطاءً للأولوية لجودة الحكم النهائي)
 - ✅ **تحسين المخططات في PDF + إصلاح تداخل التسميات** (2026-05، v0.3.5): أُعيد تصميم كل الأعمدة عبر مخططات لوحة النقاط / المستوى التقني / التنافسية / المصفوفة على شكل أقراص حديثة بزوايا دائرية. التسميات اليابانية الطويلة (مثل 「アーキテクチャ品質（セキュリティ含む）」) التي كانت تتداخل مع الأعمدة جرى إصلاحها بتوسيع منطقة التسمية (تم التحقق منها بالعرض + الفحص البصري لكل صفحة PDF)
 - ✅ **الترقية إلى Claude Opus 4.8** (2026-05، v0.3.3–4): انتقلت طبقة الحَكَم من Opus 4.7→4.8 (وجرى تحديث Sonnet 4.6 / Haiku 4.5 أيضًا). يتجنّب سحب الخدمة في 2026-06-15 لـ Opus 4 / Sonnet 4 القديم (20250514) ويعكس انخفاض سعر Opus (من $15→$5 للإدخال)
@@ -541,6 +544,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.5` — 🌍 ملفات README بست لغات · 🔌 MCP مدمج (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
+`v0.6.5` — 🌍 ملفات README بـ 20 لغة · 🔌 MCP مدمج (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
 
 </div>

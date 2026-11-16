@@ -30,14 +30,9 @@
 
 ---
 
-## 3. 6-Language README Parity Invariant
-- All 6 language editions of the README MUST be kept in perfect parity:
-  - `README.md` (English)
-  - `README.ja.md` (Japanese)
-  - `README.es.md` (Spanish)
-  - `README.ar.md` (Arabic)
-  - `README.fr.md` (French)
-  - `README.de.md` (German)
+## 3. 20-Language README Parity Invariant
+- All 20 language editions of the README MUST be kept in perfect parity:
+  - `README.md` (English), `README.ja.md` (Japanese), `README.es.md` (Spanish), `README.ar.md` (Arabic), `README.fr.md` (French), `README.de.md` (German), `README.zh.md` (Simplified Chinese), `README.zh-tw.md` (Traditional Chinese), `README.ko.md` (Korean), `README.pt.md` (Portuguese), `README.it.md` (Italian), `README.nl.md` (Dutch), `README.id.md` (Indonesian), `README.vi.md` (Vietnamese), `README.th.md` (Thai), `README.hi.md` (Hindi), `README.tr.md` (Turkish), `README.pl.md` (Polish), `README.ru.md` (Russian), `README.sv.md` (Swedish)
 - CLI examples must include localized flags (e.g. `dde prompt --pdf --lang ja`).
 - Stale strings (e.g. obsolete page counts, deprecated roadmap versions) are rejected by CI.
 

@@ -69,8 +69,29 @@ def test_version_ssot_invariant():
     assert m is not None, "pyproject.toml missing version"
     assert m.group(1) == version, f"pyproject.toml version {m.group(1)} != {version}"
 
-    # All 6 READMEs: check version badge and footer
-    readmes = ["README.md", "README.ja.md", "README.es.md", "README.ar.md", "README.fr.md", "README.de.md"]
+    # All 20 READMEs: check version badge and footer
+    readmes = [
+        "README.md",
+        "README.ja.md",
+        "README.es.md",
+        "README.ar.md",
+        "README.fr.md",
+        "README.de.md",
+        "README.zh.md",
+        "README.zh-tw.md",
+        "README.ko.md",
+        "README.pt.md",
+        "README.it.md",
+        "README.nl.md",
+        "README.id.md",
+        "README.vi.md",
+        "README.th.md",
+        "README.hi.md",
+        "README.tr.md",
+        "README.pl.md",
+        "README.ru.md",
+        "README.sv.md",
+    ]
     badge_pattern = f"version-v{version}-"
     for r_name in readmes:
         content = (_ROOT / r_name).read_text(encoding="utf-8")
@@ -151,10 +172,10 @@ def test_prompt_and_schema_invariant():
 
 
 # ==============================================================================
-# 4. 6-Language README Parity Invariant
+# 4. 20-Language README Parity Invariant
 # ==============================================================================
 def test_six_language_readme_parity_invariant():
-    """Verify all 6 README files have localized flags, modern models, and zero stale text."""
+    """Verify all 20 README files have localized flags, modern models, 20-lang switcher, and zero stale text."""
     configs = {
         "README.md": ("", "en"),
         "README.ja.md": ("--lang ja", "ja"),
@@ -162,10 +183,31 @@ def test_six_language_readme_parity_invariant():
         "README.ar.md": ("--lang ar", "ar"),
         "README.fr.md": ("--lang fr", "fr"),
         "README.de.md": ("--lang de", "de"),
+        "README.zh.md": ("--lang zh", "zh"),
+        "README.zh-tw.md": ("--lang zh", "zh-tw"),
+        "README.ko.md": ("--lang ko", "ko"),
+        "README.pt.md": ("--lang pt", "pt"),
+        "README.it.md": ("--lang it", "it"),
+        "README.nl.md": ("--lang nl", "nl"),
+        "README.id.md": ("--lang id", "id"),
+        "README.vi.md": ("--lang vi", "vi"),
+        "README.th.md": ("--lang th", "th"),
+        "README.hi.md": ("", "hi"),
+        "README.tr.md": ("", "tr"),
+        "README.pl.md": ("", "pl"),
+        "README.ru.md": ("", "ru"),
+        "README.sv.md": ("", "sv"),
     }
 
     for fname, (lang_flag, lang_code) in configs.items():
         content = (_ROOT / fname).read_text(encoding="utf-8")
+
+        # Verify all 20 README links are present in the top switcher
+        top_switcher = "\n".join(content.splitlines()[:12])
+        for target_readme in configs:
+            assert f"]({target_readme})" in top_switcher, (
+                f"{fname} top switcher missing link to {target_readme}"
+            )
 
         # Localized command in Quick Start and ASCII diagram
         if lang_flag:
@@ -1191,8 +1233,12 @@ def test_maintenance_detects_language_provider_and_hook_drift(monkeypatch):
 
 def test_six_readmes_document_all_native_mcp_tools_and_gemini_context():
     from due_diligence_engine.mcp_server import TOOL_DISPATCH_MAP
-    for lang in ("", ".ja", ".es", ".ar", ".fr", ".de"):
-        content = (_ROOT / f"README{lang}.md").read_text()
+    for lang in (
+        "", ".ja", ".es", ".ar", ".fr", ".de",
+        ".zh", ".zh-tw", ".ko", ".pt", ".it", ".nl", ".id", ".vi", ".th",
+        ".hi", ".tr", ".pl", ".ru", ".sv",
+    ):
+        content = (_ROOT / f"README{lang}.md").read_text(encoding="utf-8")
         assert "dde mcp" in content
         assert all(tool in content for tool in TOOL_DISPATCH_MAP)
     settings = json.loads((_ROOT / ".gemini/settings.json").read_text())

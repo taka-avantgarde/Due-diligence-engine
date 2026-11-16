@@ -15,13 +15,8 @@ When bumping the repository version (e.g. from `0.6.3` to `0.6.4`):
 1. **SSOT Update**: Change `__version__ = "0.6.4"` in `due_diligence_engine/__init__.py`.
 2. **Synchronize pyproject.toml**: Update `version = "0.6.4"`.
 3. **Synchronize CLI**: Ensure `due_diligence_engine/cli.py` uses `__version__`.
-4. **Synchronize 6 READMEs**:
-   - `README.md`
-   - `README.ja.md`
-   - `README.es.md`
-   - `README.ar.md`
-   - `README.fr.md`
-   - `README.de.md`
+4. **Synchronize 20 READMEs**:
+   - `README.md`, `README.ja.md`, `README.es.md`, `README.ar.md`, `README.fr.md`, `README.de.md`, `README.zh.md`, `README.zh-tw.md`, `README.ko.md`, `README.pt.md`, `README.it.md`, `README.nl.md`, `README.id.md`, `README.vi.md`, `README.th.md`, `README.hi.md`, `README.tr.md`, `README.pl.md`, `README.ru.md`, `README.sv.md`
    - Update badge (`img.shields.io/badge/version-v0.6.4-5271FF`) and footer line (`` `v0.6.4` ``).
 5. **Synchronize Scorecard Template**: Update `due_diligence_engine/report/templates/scorecard.html`.
 

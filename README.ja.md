@@ -1,7 +1,10 @@
 <div align="center">
 
-| 🇬🇧 [![English](https://img.shields.io/badge/English-30363D?style=for-the-badge)](README.md) | 🇯🇵 [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-5271FF?style=for-the-badge)](README.ja.md) | 🇪🇸 [![Español](https://img.shields.io/badge/Espa%C3%B1ol-30363D?style=for-the-badge)](README.es.md) | 🇸🇦 [![العربية](https://img.shields.io/badge/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-30363D?style=for-the-badge)](README.ar.md) | 🇫🇷 [![Français](https://img.shields.io/badge/Fran%C3%A7ais-30363D?style=for-the-badge)](README.fr.md) | 🇩🇪 [![Deutsch](https://img.shields.io/badge/Deutsch-30363D?style=for-the-badge)](README.de.md) |
-|:--:|:--:|:--:|:--:|:--:|:--:|
+| 🇬🇧 [![English](https://img.shields.io/badge/English-30363D?style=for-the-badge)](README.md) | 🇯🇵 [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-5271FF?style=for-the-badge)](README.ja.md) | 🇪🇸 [![Español](https://img.shields.io/badge/Espa%C3%B1ol-30363D?style=for-the-badge)](README.es.md) | 🇸🇦 [![العربية](https://img.shields.io/badge/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-30363D?style=for-the-badge)](README.ar.md) | 🇫🇷 [![Français](https://img.shields.io/badge/Fran%C3%A7ais-30363D?style=for-the-badge)](README.fr.md) |
+|:--:|:--:|:--:|:--:|:--:|
+| 🇩🇪 [![Deutsch](https://img.shields.io/badge/Deutsch-30363D?style=for-the-badge)](README.de.md) | 🇨🇳 [![简体中文](https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-30363D?style=for-the-badge)](README.zh.md) | 🇹🇼 [![繁體中文](https://img.shields.io/badge/%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87-30363D?style=for-the-badge)](README.zh-tw.md) | 🇰🇷 [![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-30363D?style=for-the-badge)](README.ko.md) | 🇧🇷 [![Português](https://img.shields.io/badge/Portugu%C3%AAs-30363D?style=for-the-badge)](README.pt.md) |
+| 🇮🇹 [![Italiano](https://img.shields.io/badge/Italiano-30363D?style=for-the-badge)](README.it.md) | 🇳🇱 [![Nederlands](https://img.shields.io/badge/Nederlands-30363D?style=for-the-badge)](README.nl.md) | 🇮🇩 [![Indonesia](https://img.shields.io/badge/Indonesia-30363D?style=for-the-badge)](README.id.md) | 🇻🇳 [![Tiếng Việt](https://img.shields.io/badge/Ti%E1%BA%BFng%20Vi%E1%BB%87t-30363D?style=for-the-badge)](README.vi.md) | 🇹🇭 [![ไทย](https://img.shields.io/badge/%E0%B9%84%E0%B8%97%E0%B8%A2-30363D?style=for-the-badge)](README.th.md) |
+| 🇮🇳 [![हिन्दी](https://img.shields.io/badge/%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80-30363D?style=for-the-badge)](README.hi.md) | 🇹🇷 [![Türkçe](https://img.shields.io/badge/T%C3%BCrk%C3%A7e-30363D?style=for-the-badge)](README.tr.md) | 🇵🇱 [![Polski](https://img.shields.io/badge/Polski-30363D?style=for-the-badge)](README.pl.md) | 🇷🇺 [![Русский](https://img.shields.io/badge/%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9-30363D?style=for-the-badge)](README.ru.md) | 🇸🇪 [![Svenska](https://img.shields.io/badge/Svenska-30363D?style=for-the-badge)](README.sv.md) |
 
 <sub>👆 Click your language to switch ・ クリックで言語を切り替え</sub>
 
@@ -458,7 +461,7 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 - ✅ **レーダーチャート + データ出所 + Windows 強化**（2026-07、v0.5.0）: スコアダッシュボードに5次元レーダー（スパイダー）チャート追加。STEP 0 の Web 調査証跡を PDF に表示（検索日・クエリ/ソース数、未実施時は学習データのみ警告）。セキュア一時領域の Windows NTFS ACL ロック（icacls・所有者のみ）。CI テストマトリクスに Windows 追加
 - ✅ **PDF レポート 14 言語対応**（2026-06、v0.4.0）: `--lang` でコンサル PDF を14言語生成 — English / 日本語 / Español / Français / Deutsch / Português / Nederlands / Italiano / Bahasa Indonesia / 简体中文 / 한국어 / Tiếng Việt / ไทย / العربية（アラビア語は RTL 字形整形）。Noto フォント同梱・設定不要。
 - ✅ **Windows 互換性修正**（2026-06、v0.3.8）: `--pdf` コンサルフローの一時ファイルパスをクロスプラットフォーム化（旧 `/tmp` ハードコード）+ `--copy` の Windows クリップボード対応（`clip`）
-- ✅ **6 言語 README**（2026-06、v0.3.7）: 最上部に言語スイッチャーを設置し、現在の言語をハイライト表示 — English / 日本語 / Español / العربية / Français / Deutsch、各言語を `README.<lang>.md` に分離
+- ✅ **20 言語 README**（2026-06、v0.3.7）: 最上部に言語スイッチャーを設置し、現在の言語をハイライト表示 — English / 日本語 / Español / العربية / Français / Deutsch、各言語を `README.<lang>.md` に分離
 - ✅ **Claude Fable 5 へ更新**（2026-06、v0.3.6）: judge ティアを Opus 4.8 → **Fable 5**（`claude-fable-5`、Anthropic の最高性能モデル、2026-06-09 GA）に更新。ティア名も `opus` → `fable` にリネーム。価格は $10/$50 per MTok（Opus 4.8 比 2 倍だが最終判定の品質を最優先）
 - ✅ **PDF チャート視覚強化 + 文字重なり修正**（2026-05、v0.3.5）: スコアダッシュボード/技術レベル/競合/マトリックスの全バーをモダンな丸角ピル型に刷新。日本語の長いラベル（「アーキテクチャ品質（セキュリティ含む）」等）がバーに被る問題をラベル領域拡大で解消（実際に PDF を生成・目視確認しながら反復）
 - ✅ **Claude Opus 4.8 へ更新**（2026-05、v0.3.3〜4）: judge ティアを Opus 4.7→4.8 に（Sonnet 4.6 / Haiku 4.5 も最新化）。旧 Opus 4 / Sonnet 4 (20250514) の 2026-06-15 retire を回避し、Opus 値下げ（$15→$5 input）も反映
@@ -530,6 +533,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.6.5` — 🌍 6 言語 README · 🔌 ネイティブMCP (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 ライブ Web 調査 · 5 次元スコアリング
+`v0.6.5` — 🌍 20 言語 README · 🔌 ネイティブMCP (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 ライブ Web 調査 · 5 次元スコアリング
 
 </div>

@@ -91,6 +91,20 @@ def run_quick_check(repo_root: Path | None = None) -> tuple[bool, list[str]]:
         "README.ar.md",
         "README.fr.md",
         "README.de.md",
+        "README.zh.md",
+        "README.zh-tw.md",
+        "README.ko.md",
+        "README.pt.md",
+        "README.it.md",
+        "README.nl.md",
+        "README.id.md",
+        "README.vi.md",
+        "README.th.md",
+        "README.hi.md",
+        "README.tr.md",
+        "README.pl.md",
+        "README.ru.md",
+        "README.sv.md",
     ]
     badge_sub = f"version-v{version}"
     for r_name in readme_files:
