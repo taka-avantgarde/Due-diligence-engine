@@ -2174,7 +2174,7 @@ Do not add markdown formatting around it — output raw JSON only.
     "suggested_valuation_factors": "what affects valuation"
   },
   "red_flags": [
-    { "title": "Code-verified defect title (file_path:line — NEVER include false positives or dismissed items)", "description": "Exact file path, line numbers/function name, concrete failure mechanism, and specific code-level fix", "severity": "critical|high|medium|low", "business_impact": "Concrete security/reliability/business impact and actionable remediation steps" }
+    { "title": "Code-verified defect title (file_path:line — NEVER include false positives or dismissed items)", "file_line": "exact/path/to/file.py:42", "description": "Exact file path, line numbers/function name, concrete failure mechanism, and specific code-level fix", "severity": "critical|high|medium|low", "business_impact": "Concrete security/reliability/business impact", "remediation": "Concrete 1-line fix plan" }
   ],
   "tech_level_summary": {
     "overall_level": 1-10,

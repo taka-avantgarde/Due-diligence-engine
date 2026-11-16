@@ -655,3 +655,98 @@ def close_all_sessions() -> dict[str, Any]:
                 logger.exception("Session cleanup failed: %s", audit_id)
                 failed.append(audit_id)
         return {"closed": closed, "failed": failed}
+
+
+def batch_audit(
+    targets: list[str | Path],
+    *,
+    lang: str = "en",
+    skip_git: bool = False,
+    output_dir: str | Path | None = None,
+    render_pdf: bool = True,
+) -> dict[str, Any]:
+    """Audit multiple repositories in one batch and generate an Executive Portfolio Comparison Matrix.
+
+    Every ephemeral audit workspace is cryptographically purged via close_audit() before returning.
+    """
+    from datetime import datetime, timezone
+    from due_diligence_engine.report.generator import (
+        ReportGenerator,
+        _SEV_ORDER,
+        _determine_verdict,
+        _extract_file_line,
+    )
+
+    if not targets:
+        raise ValueError("batch_audit requires at least one target repository")
+    if lang not in SUPPORTED_PDF_LANGS:
+        raise ValueError(f"Unsupported PDF language: {lang}")
+
+    results: list[AnalysisResult] = []
+    purged_sessions: list[str] = []
+
+    for tgt in targets:
+        prep = prepare_audit(tgt, lang=lang, skip_git=skip_git)
+        aid = prep["audit_id"]
+        try:
+            with _SESSION_LOCK:
+                session = _get_session(aid)
+                results.append(copy.deepcopy(session.analysis_result))
+        finally:
+            close_audit(aid)
+            purged_sessions.append(aid)
+
+    sorted_results = sorted(
+        results,
+        key=lambda r: float(r.score.overall_score if r.score else 0.0),
+        reverse=True,
+    )
+
+    dest_dir = (Path(output_dir) if output_dir else Path.cwd() / "dde_output").resolve()
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+
+    rep_gen = ReportGenerator()
+    md_path = dest_dir / f"atlas_dde_batch_comparison_{stamp}_{lang}.md"
+    html_path = dest_dir / f"atlas_dde_batch_comparison_{stamp}_{lang}.html"
+    md_path.write_text(rep_gen.generate_batch_markdown(sorted_results, lang=lang), encoding="utf-8")
+    html_path.write_text(rep_gen.generate_batch_html(sorted_results, lang=lang), encoding="utf-8")
+
+    pdf_path: Path | None = None
+    if render_pdf:
+        pdf_path = dest_dir / f"atlas_dde_batch_comparison_{stamp}_{lang}.pdf"
+        PDFReportGenerator().generate_batch_pdf(sorted_results, pdf_path, lang=lang)
+
+    ranking = []
+    for rank_idx, res in enumerate(sorted_results, start=1):
+        sc = res.score
+        overall = float(sc.overall_score if sc else 0.0)
+        grade = sc.grade if sc else "F"
+        flags = sc.red_flags if sc else []
+        has_crit = any(getattr(f.severity, "value", str(f.severity)).lower() == "critical" for f in flags)
+        verdict = _determine_verdict(overall, has_crit)
+        top_risk = "Zero blockers"
+        if flags:
+            top_f = sorted(flags, key=lambda f: _SEV_ORDER.get(getattr(f.severity, "value", str(f.severity)).lower(), 99))[0]
+            top_risk = f"[{getattr(top_f.severity, 'value', str(top_f.severity)).upper()}] {top_f.title} ({_extract_file_line(top_f)})"
+        ranking.append({
+            "rank": rank_idx,
+            "project_name": res.project_name,
+            "overall_score": overall,
+            "grade": grade,
+            "verdict": verdict,
+            "files_analyzed": res.code_analysis.total_files,
+            "lines_of_code": res.code_analysis.total_lines,
+            "has_tests": res.code_analysis.has_tests,
+            "has_ci_cd": res.code_analysis.has_ci_cd,
+            "top_risk": top_risk,
+        })
+
+    return {
+        "targets_audited": len(sorted_results),
+        "purged_sessions": purged_sessions,
+        "ranking": ranking,
+        "markdown_path": str(md_path),
+        "html_path": str(html_path),
+        "pdf_path": str(pdf_path) if pdf_path else None,
+    }

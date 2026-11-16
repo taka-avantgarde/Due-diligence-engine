@@ -838,9 +838,81 @@ def doctor() -> None:
 @cli.command("mcp")
 @click.option("--transport", default="stdio", type=click.Choice(["stdio"]), help="MCP transport protocol (default: stdio)")
 def mcp_cmd(transport: str) -> None:
-    """Start the Due Diligence Engine MCP server over stdio."""
+    """Start the Atlas DDE MCP server over stdio."""
     from due_diligence_engine.mcp_server import run_stdio_mcp_server
     run_stdio_mcp_server()
+
+
+@cli.command("batch")
+@click.argument("targets", nargs=-1, required=True)
+@click.option("--output-dir", "-o", type=click.Path(), default=None, help="Output directory for batch comparison reports")
+@click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"]), help="Report language (14 supported)")
+@click.option("--pdf/--no-pdf", "-p", default=True, help="Generate 1-Page Executive Portfolio Batch Comparison PDF (default: enabled)")
+@click.option("--skip-git", is_flag=True, help="Skip git forensics analysis")
+def batch_cmd(
+    targets: tuple[str, ...],
+    output_dir: str | None,
+    lang: str,
+    pdf: bool,
+    skip_git: bool,
+) -> None:
+    """Audit multiple repositories in one command and output a 1-Page Portfolio Comparison Matrix.
+
+    \b
+    Examples:
+      dde batch ./repo-a ./repo-b --lang ja
+      dde batch owner/repo1 owner/repo2 -o ~/Downloads --lang en
+    """
+    from due_diligence_engine.api import batch_audit
+
+    summary = batch_audit(
+        list(targets),
+        lang=lang,
+        skip_git=skip_git,
+        output_dir=output_dir,
+        render_pdf=pdf,
+    )
+
+    tbl = Table(
+        title=f"Atlas DDE — Executive Portfolio Comparison ({summary['targets_audited']} Targets)",
+        border_style="#0284c7",
+    )
+    tbl.add_column("#", justify="right", style="bold #0284c7")
+    tbl.add_column("Project", style="bold")
+    tbl.add_column("Grade", justify="center")
+    tbl.add_column("Score", justify="right")
+    tbl.add_column("Verdict", justify="center")
+    tbl.add_column("Files / LOC", justify="right")
+    tbl.add_column("Tests & CI", justify="center")
+    tbl.add_column("Top Priority Risk")
+
+    for row in summary["ranking"]:
+        v = row["verdict"]
+        v_col = "#059669" if v == "GO" else ("#d97706" if v == "CONDITIONAL" else "#e11d48")
+        t_badge = (
+            "[#059669]○ Tests+CI[/#059669]"
+            if row["has_tests"] and row["has_ci_cd"]
+            else ("[#d97706]△ Tests[/#d97706]" if row["has_tests"] else "[#e11d48]× None[/#e11d48]")
+        )
+        tbl.add_row(
+            str(row["rank"]),
+            row["project_name"],
+            f"[{v_col}]{row['grade']}[/{v_col}]",
+            f"[{v_col}]{row['overall_score']:.1f}/100[/{v_col}]",
+            f"[bold {v_col}]{v}[/bold {v_col}]",
+            f"{row['files_analyzed']} / {row['lines_of_code']:,}",
+            t_badge,
+            row["top_risk"],
+        )
+
+    console.print()
+    console.print(tbl)
+    console.print()
+    console.print("[bold #0284c7]Generated Portfolio Comparison Reports:[/bold #0284c7]")
+    if summary.get("pdf_path"):
+        console.print(f"  [cyan]PDF : {summary['pdf_path']}[/cyan]")
+    console.print(f"  [cyan]MD  : {summary['markdown_path']}[/cyan]")
+    console.print(f"  [cyan]HTML: {summary['html_path']}[/cyan]")
 
 
 def _display_score_summary(result, score) -> None:

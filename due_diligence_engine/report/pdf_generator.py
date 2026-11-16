@@ -1405,6 +1405,168 @@ class PDFReportGenerator:
         logger.info(f"PDF report saved to {output_path}")
         return output_path
 
+    def generate_batch_pdf(
+        self,
+        results: list[AnalysisResult],
+        output_path: Path,
+        lang: str = "en",
+    ) -> Path:
+        """Render a 1-Page Executive Portfolio Batch Comparison PDF (LVMH Quiet Luxury)."""
+        from due_diligence_engine.report.generator import (
+            _SEV_ORDER,
+            _determine_verdict,
+            _extract_file_line,
+        )
+
+        self._lang = lang if lang in _PDF_I18N else "en"
+        self._styles = _build_styles(self._lang)
+        self._t = _PDF_I18N.get(self._lang, _PDF_I18N["en"])
+
+        sorted_results = sorted(
+            results,
+            key=lambda r: float(r.score.overall_score if r.score else 0.0),
+            reverse=True,
+        )
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=1.8 * cm,
+            leftMargin=1.8 * cm,
+            topMargin=2.2 * cm,
+            bottomMargin=2.2 * cm,
+            title="Atlas DDE — Executive Portfolio Batch Comparison",
+            author="Atlas DDE",
+        )
+
+        hdr_style = ParagraphStyle(
+            "BatchHdr",
+            fontName=self._font_bold(),
+            fontSize=7.5,
+            leading=10,
+            textColor=colors.HexColor("#38bdf8"),
+        )
+        cell_style = ParagraphStyle(
+            "BatchCell",
+            fontName=self._font_normal(),
+            fontSize=8,
+            leading=11.5,
+            textColor=colors.HexColor("#f1f5f9"),
+        )
+        title_style = ParagraphStyle(
+            "BatchTitle",
+            fontName=self._font_bold(),
+            fontSize=18,
+            leading=24,
+            textColor=colors.white,
+            alignment=1,
+            spaceAfter=2 * mm,
+        )
+        sub_style = ParagraphStyle(
+            "BatchSub",
+            fontName=self._font_normal(),
+            fontSize=9.5,
+            leading=13,
+            textColor=colors.HexColor("#94a3b8"),
+            alignment=1,
+            spaceAfter=4 * mm,
+        )
+
+        story: list = [
+            Spacer(1, 0.3 * cm),
+            Paragraph(
+                '<font color="#0284c7" size="9"><b>ATLAS DDE · PORTFOLIO DUE DILIGENCE</b></font>',
+                sub_style,
+            ),
+            Paragraph(
+                self._esc_text(
+                    "ポートフォリオ横断エグゼクティブ比較マトリックス"
+                    if self._lang == "ja"
+                    else "Executive Portfolio Batch Comparison Matrix"
+                ),
+                title_style,
+            ),
+            Paragraph(
+                self._esc_text(f"Targets Audited: {len(sorted_results)}"),
+                sub_style,
+            ),
+        ]
+
+        rows = [[
+            Paragraph("<b>#</b>", hdr_style),
+            Paragraph("<b>Project</b>", hdr_style),
+            Paragraph("<b>Grade / Score</b>", hdr_style),
+            Paragraph("<b>Verdict</b>", hdr_style),
+            Paragraph("<b>5-Dim (O/A/D/Q/C)</b>", hdr_style),
+            Paragraph("<b>Files / Tests</b>", hdr_style),
+            Paragraph("<b>Top Priority Risk</b>", hdr_style),
+        ]]
+
+        for idx, res in enumerate(sorted_results, start=1):
+            sc = res.score
+            overall = float(sc.overall_score if sc else 0.0)
+            grade = sc.grade if sc else "F"
+            flags = sc.red_flags if sc else []
+            has_crit = any(getattr(f.severity, "value", str(f.severity)).lower() == "critical" for f in flags)
+            verdict = _determine_verdict(overall, has_crit)
+            v_hex = "#059669" if verdict == "GO" else ("#d97706" if verdict == "CONDITIONAL" else "#e11d48")
+            g_hex = GRADE_COLORS.get(grade, COLOR_ACCENT).hexval()
+
+            dim_map = {d.name: d.score for d in (sc.dimensions if sc else [])}
+            dim_str = "/".join([
+                f"{dim_map.get('Technical Originality', 0):.0f}",
+                f"{dim_map.get('Technology Advancement', 0):.0f}",
+                f"{dim_map.get('Implementation Depth', 0):.0f}",
+                f"{dim_map.get('Architecture Quality (incl. Security Posture)', dim_map.get('Architecture Quality', 0)):.0f}",
+                f"{dim_map.get('Claim Consistency', 0):.0f}",
+            ])
+            code = res.code_analysis
+            test_badge = (
+                '<font color="#059669"><b>Tests+CI</b></font>'
+                if code.has_tests and code.has_ci_cd
+                else ('<font color="#d97706"><b>Tests</b></font>' if code.has_tests else '<font color="#e11d48"><b>No Tests</b></font>')
+            )
+            if flags:
+                top_f = sorted(flags, key=lambda f: _SEV_ORDER.get(getattr(f.severity, "value", str(f.severity)).lower(), 99))[0]
+                sev_lbl = getattr(top_f.severity, "value", str(top_f.severity)).upper()
+                top_risk_txt = f'<font color="#e11d48"><b>[{self._esc_text(sev_lbl)}]</b></font> {self._esc_text(top_f.title[:48])} ({self._esc_text(_extract_file_line(top_f))})'
+            else:
+                top_risk_txt = '<font color="#059669"><b>Zero blockers</b></font>'
+
+            rows.append([
+                Paragraph(str(idx), cell_style),
+                Paragraph(f"<b>{self._esc_text(res.project_name)}</b>", cell_style),
+                Paragraph(f'<font color="{g_hex}"><b>{self._esc_text(grade)}</b></font> · <b>{overall:.1f}</b>', cell_style),
+                Paragraph(f'<font color="{v_hex}"><b>{verdict}</b></font>', cell_style),
+                Paragraph(f'<font name="Helvetica">{self._esc_text(dim_str)}</font>', cell_style),
+                Paragraph(f"{code.total_files}f · {test_badge}", cell_style),
+                Paragraph(top_risk_txt, cell_style),
+            ])
+
+        tbl = Table(
+            rows,
+            colWidths=[8 * mm, 30 * mm, 24 * mm, 24 * mm, 28 * mm, 22 * mm, 38 * mm],
+            repeatRows=1,
+        )
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111827")),
+            ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#0D131F")),
+            ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#1e293b")),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("LEFTPADDING", (0, 0), (-1, -1), 5),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ]))
+        story.append(tbl)
+
+        doc.build(story, onFirstPage=self._add_cover_bg, onLaterPages=self._add_cover_bg)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_bytes(buffer.getvalue())
+        buffer.close()
+        return output_path
+
     def _maybe_reshape(self, text: str) -> str:
         """Shape Arabic chrome/content strings for RTL; no-op for other languages."""
         return _reshape_ar(text) if self._lang == "ar" else text

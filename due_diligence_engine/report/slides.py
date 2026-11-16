@@ -40,26 +40,26 @@ class SlideGenerator:
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>DDE Analysis: {esc_proj}</title>
+<title>Atlas DDE Analysis: {esc_proj}</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <style>
-  body {{ font-family: system-ui, sans-serif; margin: 0; padding: 0; background: #0f172a; color: #e2e8f0; }}
-  .slide {{ min-height: 100vh; padding: 3rem; display: flex; flex-direction: column; justify-content: center; border-bottom: 2px solid #334155; }}
-  h1 {{ font-size: 2.5rem; color: #38bdf8; }}
-  h2 {{ font-size: 1.8rem; color: #7dd3fc; }}
-  .score-badge {{ display: inline-block; padding: 0.5rem 1.5rem; border-radius: 999px; font-size: 2rem; font-weight: bold; }}
-  .grade-A {{ background: #22c55e; color: #000; }}
-  .grade-B {{ background: #84cc16; color: #000; }}
-  .grade-C {{ background: #eab308; color: #000; }}
-  .grade-D {{ background: #f97316; color: #fff; }}
-  .grade-F {{ background: #ef4444; color: #fff; }}
-  .mermaid {{ background: #1e293b; padding: 1.5rem; border-radius: 0.5rem; margin: 1rem 0; }}
-  .metric {{ display: inline-block; margin: 0.5rem; padding: 1rem 1.5rem; background: #1e293b; border-radius: 0.5rem; text-align: center; }}
-  .metric .value {{ font-size: 2rem; font-weight: bold; color: #38bdf8; }}
-  .metric .label {{ font-size: 0.8rem; color: #94a3b8; }}
+  body {{ font-family: 'Inter', system-ui, sans-serif; font-weight: 300; margin: 0; padding: 0; background: #070a10; color: #f8fafc; line-height: 1.7; }}
+  .slide {{ min-height: 100vh; padding: 3.5rem; display: flex; flex-direction: column; justify-content: center; border-bottom: 1px solid #1e293b; }}
+  h1 {{ font-size: 2.4rem; font-weight: 300; color: #0284c7; letter-spacing: -0.02em; }}
+  h2 {{ font-size: 1.6rem; font-weight: 300; color: #0284c7; }}
+  .score-badge {{ display: inline-block; padding: 0.5rem 1.5rem; border-radius: 999px; font-size: 1.8rem; font-weight: 400; }}
+  .grade-A {{ background: #059669; color: #fff; }}
+  .grade-B {{ background: #0284c7; color: #fff; }}
+  .grade-C {{ background: #d97706; color: #fff; }}
+  .grade-D {{ background: #e11d48; color: #fff; }}
+  .grade-F {{ background: #e11d48; color: #fff; }}
+  .mermaid {{ background: #0d131f; border: 1px solid #1e293b; padding: 1.5rem; border-radius: 0.75rem; margin: 1rem 0; }}
+  .metric {{ display: inline-block; margin: 0.5rem; padding: 1rem 1.5rem; background: #0d131f; border: 1px solid #1e293b; border-radius: 0.5rem; text-align: center; }}
+  .metric .value {{ font-size: 1.9rem; font-weight: 300; color: #0284c7; }}
+  .metric .label {{ font-size: 0.78rem; color: #94a3b8; }}
   table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
-  th, td {{ padding: 0.75rem; text-align: left; border-bottom: 1px solid #334155; }}
-  th {{ color: #38bdf8; }}
+  th, td {{ padding: 0.85rem; text-align: left; border-bottom: 1px solid #1e293b; font-weight: 300; }}
+  th {{ color: #0284c7; font-weight: 500; }}
 </style>
 </head>
 <body>
@@ -67,7 +67,7 @@ class SlideGenerator:
 
 <!-- Slide 1: Title -->
 <div class="slide">
-  <h1>Technical Due Diligence Report</h1>
+  <h1>Atlas DDE — Technical Due Diligence Report</h1>
   <h2>{esc_proj}</h2>
   <p>Analysis ID: <code>{esc_id}</code></p>
   <p>{result.timestamp.strftime('%Y-%m-%d %H:%M UTC')}</p>

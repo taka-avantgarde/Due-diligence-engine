@@ -1518,3 +1518,40 @@ def test_atlas_dde_quiet_luxury_report_five_requirements():
     assert "#0284c7" in html_out and "#059669" in html_out and "#e11d48" in html_out
     assert "Company Claim vs. Code Evidence" in html_out
     assert "Priority-Sorted Red Flags" in html_out
+
+
+def test_batch_audit_and_cli_portfolio_comparison(tmp_path, monkeypatch):
+    """Verify api.batch_audit and `dde batch` CLI generate ranked PDF, MD, and HTML portfolio comparison matrices and purge all sessions."""
+    from click.testing import CliRunner
+
+    from due_diligence_engine import api
+    from due_diligence_engine.cli import cli
+
+    monkeypatch.setattr(api, "_ACTIVE_SESSIONS", {})
+    monkeypatch.setattr(config.Config, "from_env", lambda: config.Config(temp_dir=tmp_path / "ingest"))
+
+    repo_alpha = tmp_path / "alpha"
+    repo_alpha.mkdir()
+    (repo_alpha / "app.py").write_text("def compute(x: int) -> int:\n    return x * 2\n", encoding="utf-8")
+    (repo_alpha / "test_app.py").write_text("def test_compute():\n    assert True\n", encoding="utf-8")
+    (repo_alpha / "README.md").write_text("# Alpha Service\n", encoding="utf-8")
+
+    repo_beta = tmp_path / "beta"
+    repo_beta.mkdir()
+    (repo_beta / "main.py").write_text("x = 1\n", encoding="utf-8")
+
+    out_dir = tmp_path / "batch_out"
+    res = CliRunner().invoke(
+        cli,
+        ["batch", str(repo_alpha), str(repo_beta), "--skip-git", "--lang", "ja", "-o", str(out_dir)],
+    )
+    assert res.exit_code == 0, res.output
+    assert "Atlas DDE — Executive Portfolio Comparison" in res.output
+    assert not api._ACTIVE_SESSIONS, "All ephemeral sessions must be closed and purged after batch_audit"
+
+    pdfs = list(out_dir.glob("atlas_dde_batch_comparison_*.pdf"))
+    mds = list(out_dir.glob("atlas_dde_batch_comparison_*.md"))
+    htmls = list(out_dir.glob("atlas_dde_batch_comparison_*.html"))
+    assert len(pdfs) == 1 and pdfs[0].read_bytes()[:5] == b"%PDF-"
+    assert len(mds) == 1 and "alpha" in mds[0].read_text(encoding="utf-8")
+    assert len(htmls) == 1 and "Atlas DDE" in htmls[0].read_text(encoding="utf-8")
