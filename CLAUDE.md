@@ -1,3 +1,11 @@
+## ⚡ AIエージェントに、以下の URL だけを貼れば完了 / Just Paste the URL Below into Your AI Agent — Done
+
+```text
+https://github.com/Atlas-Associates-Inc/Due-diligence-engine
+```
+
+---
+
 # Atlas DDE (Due Diligence Engine) — プロジェクト規約 / Project Conventions
 
 > **Canonical SSOT**: 本リポジトリの正本規約およびアーキテクチャ定義は [`ATLAS.md`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/ATLAS.md) です。  

@@ -202,8 +202,15 @@ def test_six_language_readme_parity_invariant():
     for fname, (lang_flag, lang_code) in configs.items():
         content = (_ROOT / fname).read_text(encoding="utf-8")
 
+        # Verify Line 1-6 is the URL-only hero block in every README
+        first_six_lines = "\n".join(content.splitlines()[:6])
+        assert content.startswith("## ⚡ "), f"{fname} must start at Line 1 with '## ⚡ ...' URL-only hero heading"
+        assert "https://github.com/Atlas-Associates-Inc/Due-diligence-engine" in first_six_lines, (
+            f"{fname} must have the bare repository URL in lines 1-6"
+        )
+
         # Verify all 20 README links are present in the top switcher
-        top_switcher = "\n".join(content.splitlines()[:12])
+        top_switcher = "\n".join(content.splitlines()[:30])
         for target_readme in configs:
             assert f"]({target_readme})" in top_switcher, (
                 f"{fname} top switcher missing link to {target_readme}"

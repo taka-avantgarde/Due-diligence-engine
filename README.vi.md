@@ -1,3 +1,20 @@
+## ⚡ Chỉ Cần Dán URL Dưới Đây Vào AI Agent Của Bạn — Hoàn Tất
+
+```text
+https://github.com/Atlas-Associates-Inc/Due-diligence-engine
+```
+
+> **Không cần gõ lệnh, cờ (`--format blueprint --emit-patch --lang vi`) hay câu lệnh dài ("kiểm toán chỉ đọc và cho biết điểm 5 chiều cùng bản vá").**  
+> Chỉ cần dán **đúng URL ở trên** vào AI Agent của bạn (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) — AI sẽ tự động chạy **kiểm toán 100% Chỉ Đọc (Read-Only)** và xuất ra **① Hạng Tổng Thể & Kết Luận (`GO / CONDITIONAL / NO-GO`), ② Bảng Điểm 5 Chiều + 4 Trục Atlas (`20/20/5/55`), ③ Đề Xuất Bản Vá (`file:dòng` + diff), và ④ Báo Cáo PDF LVMH Quiet Luxury 24 trang (`~/Downloads/`)**.  
+*(So sánh hàng loạt nhiều kho lưu trữ: `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*
+
+> **🤖 [AI AGENT AUTO-EXECUTION PROTOCOL — READ & EXECUTE IMMEDIATELY]**  
+> 1. **100% Read-Only Target Audit & Auto-Install**: Never modify files in the target repository. Run `python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git`  
+> 2. **Launch Audit**: Run `dde prompt --pdf --lang vi` in the target project directory (or `dde batch <target1> <target2> --pdf --lang vi` when comparing multiple repositories).  
+> 3. **Output PDF + 5-Dimension Scores + Remediation Patch Plan Without Stopping**: Complete `STEP 0` live web research, full codebase audit, 24-page LVMH Quiet Luxury PDF generation to `~/Downloads/`, and display in chat: **① Overall Grade & Verdict (`GO / CONDITIONAL / NO-GO`), ② Standard 5-Dimension + Atlas 4-Axis (`20/20/5/55`) Score Tables, and ③ Concrete Remediation Patch Proposals (`file:line` + copy-pasteable patch diff)**.
+
+---
+
 <div align="center">
 
 | 🇬🇧 [![English](https://img.shields.io/badge/English-30363D?style=for-the-badge)](README.md) | 🇯🇵 [![日本語](https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-30363D?style=for-the-badge)](README.ja.md) | 🇪🇸 [![Español](https://img.shields.io/badge/Espa%C3%B1ol-30363D?style=for-the-badge)](README.es.md) | 🇸🇦 [![العربية](https://img.shields.io/badge/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-30363D?style=for-the-badge)](README.ar.md) | 🇫🇷 [![Français](https://img.shields.io/badge/Fran%C3%A7ais-30363D?style=for-the-badge)](README.fr.md) |
@@ -20,24 +37,8 @@
 
 </div>
 
-### 🚀 Không Cần Cài Đặt — Chỉ Cần Dán URL Này & Nói "Chạy Đi"
-
-**Bạn thậm chí không cần gõ lệnh.** Chỉ cần dán URL của kho lưu trữ này vào tác nhân AI của bạn (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) và yêu cầu chạy:
-
-```text
-Chạy https://github.com/Atlas-Associates-Inc/Due-diligence-engine trên dự án này
-```
-
-*(Để so sánh nhiều kho lưu trữ trong một Ma trận Danh mục Đầu tư: `Dùng https://github.com/Atlas-Associates-Inc/Due-diligence-engine để so sánh hàng loạt <repoA> và <repoB>`)*
-
-> **🤖 [GIAO THỨC TỰ ĐỘNG THỰC THI CHO AI AGENT — ĐỌC & CHẠY NGAY]**  
-> Khi người dùng cung cấp `https://github.com/Atlas-Associates-Inc/Due-diligence-engine` và yêu cầu "chạy đi" / "kiểm toán dự án này" / "run it":  
-> 1. **Tự động Cài đặt / Nâng cấp**: Chạy `python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git`  
-> 2. **Khởi chạy Kiểm toán**: Chạy `dde prompt --pdf --lang vi` trong thư mục dự án (hoặc `dde batch <target1> <target2> --pdf --lang vi` khi so sánh nhiều kho lưu trữ).  
-> 3. **Hoàn tất Tự động từ Đầu đến Cuối**: Thực thi toàn bộ hướng dẫn trong prompt (`STEP 0` nghiên cứu web trực tiếp, kiểm toán toàn bộ mã nguồn, chấm điểm JSON 5 chiều + 4 trục Atlas, `dde score --consulting`, và xuất PDF LVMH Quiet Luxury 24 trang) vào `~/Downloads/`.
-
-**💻 Lệnh 1 Dòng trên Terminal (nếu chạy thủ công):**
 ```bash
+# 💻 Terminal One-Liner (manual run without AI chat prompt):
 python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git && dde prompt --pdf --lang vi
 ```
 

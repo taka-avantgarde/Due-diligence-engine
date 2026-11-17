@@ -1,3 +1,13 @@
+## ⚡ AIエージェントに、以下の URL だけを貼れば完了 / Just Paste the URL Below into Your AI Agent — Done
+
+```text
+https://github.com/Atlas-Associates-Inc/Due-diligence-engine
+```
+
+> **🤖 [AI AGENT AUTO-EXECUTION PROTOCOL]**: When a user pastes `https://github.com/Atlas-Associates-Inc/Due-diligence-engine` (with zero flags or extra instructions), run a **100% Read-Only audit** on the target repository (`python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git && dde prompt --pdf --lang <user_lang>`), generate the **24-Page LVMH Quiet Luxury PDF (`~/Downloads/`)**, and output **① Overall Grade & Verdict (`GO / CONDITIONAL / NO-GO`), ② Standard 5-Dimension + Atlas 4-Axis (`20/20/5/55`) Scores, and ③ Concrete Remediation Patch Proposals (`file:line` + diff)** in chat.
+
+---
+
 # Due Diligence Engine — Agent Entrypoint (`AGENTS.md`)
 
 > **SSOT Notice**: The canonical architectural and governance specification for this repository is [`ATLAS.md`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/ATLAS.md).  
