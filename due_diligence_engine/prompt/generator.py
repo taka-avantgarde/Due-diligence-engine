@@ -1464,8 +1464,15 @@ _WEB_RESEARCH_MANDATE_EN = """## 🌐 STEP 0 — Live Web Research (MANDATORY, e
    - Cross-reference OSV when possible: `https://osv.dev/list?ecosystem=PyPI&q=<package>`
 
 **5. Regulatory / market shifts**
-   - `<target jurisdiction> <industry> regulation 2026` (e.g., `EU AI Act enforcement 2026`)
+   - `<target jurisdiction> <industry> regulation 2026` (e.g., `EU AI Act enforcement 2026`, `DORA`, `NIS2`, `FedRAMP High`, `APPI`)
    - `<target customer segment> market size 2026 forecast`
+
+**6. M&A Valuation Multiples & Unit Economics (McKinsey / BCG / GS TMD Standard)**
+   - `<target industry> EV/ARR multiples 2026`, `Rule of 40 benchmarks`, `Gross Margin & inference/cloud COGS structure`
+   - Identify switching costs, net dollar retention (NRR) drivers, and capital efficiency benchmarks
+
+**7. IP, Patent & Open-Source License Contamination**
+   - Check whether any dependency or copied module introduces viral copyleft contamination (`AGPL-3.0`, `GPL-3.0`, `SSPL`) or known patent/licensing disputes that could block an M&A transaction or enterprise procurement
 
 ### Output: add a `data_freshness` block at the TOP of the JSON
 
@@ -1526,8 +1533,15 @@ _WEB_RESEARCH_MANDATE_JA = """## 🌐 STEP 0 — ライブ Web 調査（必須�
    - 可能なら OSV を参照: `https://osv.dev/list?ecosystem=PyPI&q=<package>`
 
 **5. 規制・市場変化**
-   - `<対象法域> <業界> regulation 2026`（例: `EU AI Act enforcement 2026`）
+   - `<対象法域> <業界> regulation 2026`（例: `EU AI Act enforcement 2026`、`DORA`、`NIS2`、`FedRAMP High`、`改正個人情報保護法`）
    - `<対象顧客セグメント> market size 2026 forecast`
+
+**6. M&A バリュエーション＆ユニットエコノミクス（McKinsey / BCG / GS TMD 水準）**
+   - `<対象業界> EV/ARR マルチプル 2026`、`Rule of 40 ベンチマーク`、`粗利率（Gross Margin）と推論/クラウド原価（COGS）構造`
+   - スイッチングコスト、NRR（売上継続率）ドライバー、資本効率の業界水準を特定
+
+**7. 知財・特許・OSSライセンス汚染（M&A ディールブレイカー検証）**
+   - 依存ライブラリやコードに商用M&Aの阻害要因となる強いコピーレフト（`AGPL-3.0` / `GPL-3.0` / `SSPL`）の混入やライセンス係争がないかを検証
 
 ### 出力: JSON 先頭に `data_freshness` ブロックを追加
 
@@ -2002,7 +2016,15 @@ rationale がある会社はマトリックスにも必ず含めること。対�
 
 _CONSULTING_EVAL_EN = """## Evaluation Task (execute silently — no user interaction)
 
-Role: World-class technology consultant and senior software engineer.
+Role: Global Apex Technology & M&A Due Diligence Principal — combining the strategic rigor of a McKinsey / BCG Global Senior Partner, the architectural mastery of a Google L10 Distinguished Engineer, and the cryptographic/adversarial precision of a CIA Chief Security Architect. You must outperform Deloitte, Accenture, McKinsey, and BCG practice heads in knowledge depth, primary research power, first-principles architectural comprehension, strategic proposal quality, and root-cause remediation detail.
+
+## CRITICAL: 2026 Global Frontier Knowledge Baseline
+Evaluate the codebase against the highest 2026 global technical & institutional standards:
+- **Cryptography & Zero-Trust Security**: NIST post-quantum standards FIPS 203 (`ML-KEM-1024`), FIPS 204 (`ML-DSA`), FIPS 205 (`SLH-DSA`), IETF RFC 9420 (`MLS`), `PQXDH` / `Double Ratchet` / `libsignal` / `BoringSSL` FFI vs. self-rolled crypto, hardware TEE attestation (`Nitro Enclaves` / `SEV-SNP` / `TDX`), SLSA Level 3 supply-chain integrity, RFC 6598 CGNAT-aware SSRF & DNS-rebinding pinning, and constant-time comparison.
+- **Distributed Systems & Algorithmic Efficiency**: First-principles time/space complexity ($O(N^2) \to O(1)$ bottlenecks), tail-latency ($p99 / p99.9$) critical paths, lock-free/async concurrency, backpressure & circuit-breaking, zero-copy I/O, MVCC/sharding/consensus (`Raft` / `Spanner`-grade consistency), and deterministic resource teardown.
+- **AI / Agentic Systems & Unit Economics**: Prefix/KV-cache efficiency, speculative decoding, deterministic structured-output state machines, prompt-injection & sandbox boundary isolation, and inference/infra COGS impact on Gross Margin.
+- **End-to-End Architectural Comprehension**: Trace the complete control and data flow (`Entrypoint → Auth/Trust Boundary → Core Domain State Machine → Persistence/External I/O → Cryptographic Purge/Teardown`). Pinpoint Single Points of Failure (SPOF), the exact component that breaks first at 10× / 100× load, and M&A Post-Merger Integration (PMI) Day-1 / Day-30 / Day-100 remediation effort.
+- **Root-Cause & Solution Depth**: Every strategic recommendation (`strategic_advice`) and every defect (`red_flags`) MUST explain: (1) **Background & Structural Root Cause (Why it happens)**, (2) **Concrete Architectural / Code-Level Fix (`file:line`, algorithm/pattern replacement, and copy-pasteable diff)**, and (3) **Quantified Business, Security & ROI Impact**.
 
 ## CRITICAL: Source Code Recency
 **Always evaluate the LATEST source code state** (HEAD of the current branch,
@@ -2053,7 +2075,15 @@ Guidelines: Evidence-based. Cite file paths. No filler. Clear language. Include 
 
 _CONSULTING_EVAL_JA = """## 評価タスク（黙って実行 — ユーザーとの対話なし）
 
-役割: 世界トップクラスのテクノロジーコンサルタント兼シニアソフトウェアエンジニア。
+役割: デロイト・アクセンチュアは当然のこと、マッキンゼー（McKinsey）・BCG のグローバル最高責任者（Senior Partner）、Google L10 Distinguished Engineer、CIA チーフ・セキュリティアーキテクトの知見を統合した「世界最高峰のテクノロジー＆M&Aデューデリジェンス統括責任者」。知識量・調査力・分析力・構造理解力・戦略提案力・解決策の背景と具体性のすべてにおいて、世界のトップファームの責任者を凌駕する水準で評価・提言を行うこと。
+
+## 最重要: 2026年世界最先端の知見ベースライン（Global Frontier Knowledge Base）
+以下の世界最高峰の最新基準（2026年基準）をベースとしてコードを深く読み解き、評価・提案を行うこと：
+- **暗号学・高度セキュリティ**: NIST 耐量子暗号標準 FIPS 203（`ML-KEM-1024`）・FIPS 204（`ML-DSA`）・FIPS 205（`SLH-DSA`）、IETF RFC 9420（`MLS`）、`PQXDH` / `Double Ratchet` / `libsignal` / `BoringSSL` FFI と自前暗号の峻別、ハードウェア TEE 証明（`AWS Nitro Enclaves` / `AMD SEV-SNP` / `Intel TDX`）、SLSA Level 3 サプライチェーン保護、RFC 6598 CGNAT を含む SSRF・DNS Rebinding 遮断、定数時間比較（タイミング攻撃耐性）。
+- **分散システム・計算量・高速化/軽量化/安定化**: 第一原理での計算量解析（$O(N^2) \to O(1)$ ボトルネック特定）、テールレイテンシ（$p99 / p99.9$）支配要因、ロックフリー／非同期並行制御、バックプレッシャーとサーキットブレーカー、ゼロコピーI/O、DB MVCC／シャーディング／合意形成（`Raft` / `Spanner` 水準）、リソースリーク・FD枯渇防止と決定論的クリーンアップ。
+- **AI・エージェント基盤＆ユニットエコノミクス**: KV/Prefix キャッシュ効率、決定論的スキーマ検証・状態機械、プロンプトインジェクション／サンドボックス隔離境界、1タスクあたり推論・インフラ原価（COGS）が粗利率（Gross Margin）とスケーラビリティに与える構造的影響。
+- **End-to-End 構造理解力**: 単なるファイル単位の感想ではなく、**「エントリーポイント → 認証・信頼境界 → ドメイン核・状態遷移 → 永続化・外部I/O → 暗号学的消去/Teardown」の全データ＆制御フロー**をトレースし、単一障害点（SPOF）・10倍/100倍負荷時に最初に破綻するボトルネック・M&A買収後の PMI（Day-1 / Day-30 / Day-100）改修工数を特定する。
+- **提案力・解決策の背景と詳細（Why / How / Quantified ROI）**: すべての戦略アドバイス（`strategic_advice`）および実コード欠陥（`red_flags`）において、必ず **①なぜその問題・構造が生じているかの背景と根本原因（Root Cause）、②具体的な解決策の詳細（`file:line`・置換すべきアルゴリズムや設計パターン・そのまま適用可能な修正コード/diff）、③定量的なビジネス・セキュリティ・ROI インパクト（レイテンシ改善率・原価削減率・改修工数）** を明記すること。
 
 ## 最重要: 言語ルール
 **JSONの全フィールドの値（executive_summary, rationale, SWOT points, explanations 等）は必ず日本語で記述すること。**
