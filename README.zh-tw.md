@@ -38,7 +38,7 @@
 
 **💻 終端機單行指令（不使用 AI 對話框、手動執行時）：**
 ```bash
-python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git && dde prompt --pdf --lang zh
+python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates-Inc/Due-diligence-engine.git && dde prompt --pdf --lang zh-tw
 ```
 
 <div align="center">
@@ -47,7 +47,7 @@ python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  $ dde prompt --pdf --lang zh                              │
+│  $ dde prompt --pdf --lang zh-tw                           │
 │                                                             │
 │  🌐 Live web research (2026 competitors, funding, CVEs)...  │
 │  Reading codebase...                                        │
@@ -92,7 +92,7 @@ python3 -m pip install --no-cache-dir git+https://github.com/Atlas-Associates-In
 **Run from your project directory:**
 
 ```bash
-dde prompt --pdf --lang zh
+dde prompt --pdf --lang zh-tw
 ```
 
 Use any AI-powered IDE terminal (Claude Code / Codex / Gemini CLI / Antigravity / Cursor / Copilot). Your AI reads the codebase, evaluates it as a world-class technology consultant, and writes a 24-page PDF to `~/Downloads/`. **No API keys. No cloud. No extra cost.**
@@ -128,6 +128,7 @@ dde mcp
 | `dde_validate_report` | Validate the snapshot-bound report |
 | `dde_render_report` | Render a validated PDF |
 | `dde_close_audit` | Purge temporary data and return a signed certificate |
+| `dde_batch_audit` | Batch-audit multiple repositories into a 1-Page Executive Portfolio Matrix PDF |
 
 Agent workflows are in `.agents/skills/dde-audit/` and `.agents/skills/dde-consulting-report/`. Keep `audit_id`, `snapshot_sha256` and `validation_id` from tool responses. Site AI scoring requires explicit `use_ai=true`; always close the audit.
 
@@ -377,7 +378,7 @@ dde prompt --pdf --lang ja
 dde prompt owner/repo --pdf --lang ja --stage seed
 
 # Multi-repository portfolio comparison (1-page Executive Batch PDF + Markdown + HTML + DoD 5220.22-M purge)
-dde batch repoA repoB repoC --pdf --lang zh
+dde batch repoA repoB repoC --pdf --lang zh-tw
 
 # Check your environment is ready (git, fonts, reportlab, ~/Downloads, AI SDKs)
 dde doctor

@@ -166,15 +166,18 @@ def run_quick_check(repo_root: Path | None = None) -> tuple[bool, list[str]]:
     if config.BYOK_DEFAULT_MODELS != providers._DEFAULT_MODELS:
         errors.append("BYOK_DEFAULT_MODELS differs from provider defaults")
 
-    # All dictionaries must cover the 14 supported languages and keys.
-    expected_langs = {"en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"}
+    # All dictionaries must cover the 20 supported languages and keys.
+    expected_langs = {
+        "en", "ja", "es", "fr", "de", "pt", "nl", "it", "id",
+        "zh", "zh-tw", "ko", "vi", "th", "ar", "hi", "tr", "pl", "ru", "sv",
+    }
     for name, translations in (
         ("_PDF_I18N", _PDF_I18N),
         ("_DIM_NAME_MAPS", _DIM_NAME_MAPS),
         ("_PDF_GRADE_REC", _PDF_GRADE_REC),
     ):
         if set(translations) != expected_langs:
-            errors.append(f"{name} must contain exactly the 14 supported language keys")
+            errors.append(f"{name} must contain exactly the 20 supported language keys")
         base_keys = set(translations.get("en", {}))
         for lang, values in translations.items():
             if set(values) != base_keys:

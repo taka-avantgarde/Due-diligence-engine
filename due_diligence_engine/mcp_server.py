@@ -33,6 +33,7 @@ TOOL_DISPATCH_MAP: dict[str, str] = {
     "dde_validate_report": "validate_report",
     "dde_render_report": "render_report",
     "dde_close_audit": "close_audit",
+    "dde_batch_audit": "batch_audit",
 }
 
 # 7 Native DDE MCP Tools
@@ -246,6 +247,46 @@ MCP_TOOLS: list[dict[str, Any]] = [
         "annotations": {
             "readOnlyHint": False,
             "destructiveHint": True,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+    },
+    {
+        "name": "dde_batch_audit",
+        "description": "Audit multiple repositories in one batch, rank by score, generate a 1-Page Executive Portfolio Comparison PDF/Markdown/HTML, and cryptographically purge each session.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "targets": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of target repository URLs, owner/repo shorthands, local paths, or zip archives.",
+                },
+                "output_dir": {
+                    "type": ["string", "null"],
+                    "description": "Optional directory to save batch deliverables (default: cwd/dde_output).",
+                },
+                "lang": {
+                    "type": "string",
+                    "description": "Report delivery language code (20 supported: en, ja, es, fr, de, pt, nl, it, id, zh, zh-tw, ko, vi, th, ar, hi, tr, pl, ru, sv). Default: 'en'.",
+                    "default": "en",
+                },
+                "pdf": {
+                    "type": "boolean",
+                    "description": "Generate 1-Page Executive Portfolio Batch Comparison PDF. Default: True.",
+                    "default": True,
+                },
+                "skip_git": {
+                    "type": "boolean",
+                    "description": "Skip git forensics history analysis. Default: False.",
+                    "default": False,
+                },
+            },
+            "required": ["targets"],
+        },
+        "annotations": {
+            "readOnlyHint": False,
+            "destructiveHint": False,
             "idempotentHint": False,
             "openWorldHint": False,
         },

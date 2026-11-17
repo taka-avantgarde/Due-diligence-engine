@@ -128,6 +128,7 @@ dde mcp
 | `dde_validate_report` | Validar el informe vinculado a la instantánea |
 | `dde_render_report` | Generar el PDF validado |
 | `dde_close_audit` | Borrar datos temporales y emitir un certificado firmado |
+| `dde_batch_audit` | Auditar múltiples repositorios en lote y generar el PDF Ejecutivo de Portafolio de 1 página |
 
 Los flujos están en `.agents/skills/dde-audit/` y `.agents/skills/dde-consulting-report/`. Conserva `audit_id`, `snapshot_sha256` y `validation_id`. La evaluación con IA externa requiere `use_ai=true` explícito; cierra siempre la auditoría.
 

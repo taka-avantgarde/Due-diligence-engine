@@ -134,6 +134,7 @@ dde mcp
 | `dde_validate_report` | التحقق من التقرير المرتبط باللقطة |
 | `dde_render_report` | إنشاء ملف PDF بعد التحقق |
 | `dde_close_audit` | محو البيانات المؤقتة وإرجاع شهادة موقّعة |
+| `dde_batch_audit` | تدقيق عدة مستودعات دفعة واحدة وإخراج مصفوفة المقارنة التنفيذية في صفحة PDF واحدة |
 
 توجد الإجراءات في `.agents/skills/dde-audit/` و`.agents/skills/dde-consulting-report/`. احتفظ بقيم `audit_id` و`snapshot_sha256` و`validation_id`. يتطلب التقييم بالذكاء الاصطناعي الخارجي تفعيل `use_ai=true` صراحةً؛ أغلق التدقيق دائمًا.
 

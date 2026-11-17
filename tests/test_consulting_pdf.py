@@ -801,7 +801,7 @@ class TestConsultingPdfGeneration:
 
 ALL_REPORT_LANGS = [
     "en", "ja", "es", "fr", "de", "pt", "nl", "it", "id",
-    "zh", "ko", "vi", "th", "ar",
+    "zh", "zh-tw", "ko", "vi", "th", "ar", "hi", "tr", "pl", "ru", "sv",
 ]
 
 

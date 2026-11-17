@@ -53,7 +53,10 @@ logger = logging.getLogger(__name__)
 
 SESSION_TTL_SECONDS = 3600
 MAX_ACTIVE_SESSIONS = 16
-SUPPORTED_PDF_LANGS = {"en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"}
+SUPPORTED_PDF_LANGS = {
+    "en", "ja", "es", "fr", "de", "pt", "nl", "it", "id",
+    "zh", "zh-tw", "ko", "vi", "th", "ar", "hi", "tr", "pl", "ru", "sv",
+}
 
 
 @dataclass

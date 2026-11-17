@@ -128,6 +128,7 @@ dde mcp
 | `dde_validate_report` | Validate the snapshot-bound report |
 | `dde_render_report` | Render a validated PDF |
 | `dde_close_audit` | Purge temporary data and return a signed certificate |
+| `dde_batch_audit` | Batch-audit multiple repositories into a 1-Page Executive Portfolio Matrix PDF |
 
 Agent workflows are in `.agents/skills/dde-audit/` and `.agents/skills/dde-consulting-report/`. Keep `audit_id`, `snapshot_sha256` and `validation_id` from tool responses. Site AI scoring requires explicit `use_ai=true`; always close the audit.
 

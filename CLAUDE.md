@@ -1,4 +1,4 @@
-# Due Diligence Engine — プロジェクト規約 / Project Conventions
+# Atlas DDE (Due Diligence Engine) — プロジェクト規約 / Project Conventions
 
 > **Canonical SSOT**: 本リポジトリの正本規約およびアーキテクチャ定義は [`ATLAS.md`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/ATLAS.md) です。  
 > すべてのエージェントおよび開発者は `ATLAS.md` を最優先の規範として従ってください。
@@ -9,10 +9,10 @@
 
 - **Native MCP Server (`dde mcp`)**:
   - `python3 -m due_diligence_engine.cli mcp` または `dde mcp` で起動する標準 Model Context Protocol サーバー。
-  - 監査ライフサイクルツール (`dde_prepare_audit`, `dde_list_evidence`, `dde_read_evidence`, `dde_verify_sites`, `dde_validate_report`, `dde_render_report`, `dde_close_audit`) およびスキーマリソース (`dde://schemas/consulting/v1`) を提供。
+  - 監査ライフサイクルツール (`dde_prepare_audit`, `dde_list_evidence`, `dde_read_evidence`, `dde_verify_sites`, `dde_validate_report`, `dde_render_report`, `dde_close_audit`, `dde_batch_audit`) およびスキーマリソース (`dde://schemas/consulting/v1`) を提供。
 - **エージェントスキル (`.agents/skills/`)**:
   - `dde-audit`: MCP ツール経由でのコードベース監査フロー。
-  - `dde-consulting-report`: 24ページ企業買収・M&Aデューデリジェンス PDF レポート生成（14言語対応）。
+  - `dde-consulting-report`: 24ページ企業買収・M&Aデューデリジェンス PDF レポート生成（20言語対応）。
   - `dde-dev-change`: バージョン・モデル・価格・README等の変更と検証フロー。
   - `dde-dev-pdf-qa`: ReportLab PDF レンダリング・RTL・多言語フォント QA フロー。
   - `dde-dev-release`: リリース前ゲート検査・パッケージング検証・セキュリティ監査フロー。
@@ -21,12 +21,11 @@
 
 ## ⚠️ ドキュメント同期（必須） / Doc Sync (MANDATORY)
 
-- README は **6 言語すべてを同期更新**すること:
-  - `README.md` (English) / `README.ja.md` (日本語) / `README.es.md` (Español) /
-    `README.ar.md` (العربية) / `README.fr.md` (Français) / `README.de.md` (Deutsch)
-- 一部の言語だけの更新は禁止。バージョン番号・機能説明・比較表・FAQ・ロードマップ・フッターなど、**あらゆる変更を全 6 言語に反映**する。
+- README は **20 言語すべてを同期更新**すること:
+  - `README.md`, `README.ja.md`, `README.es.md`, `README.ar.md`, `README.fr.md`, `README.de.md`, `README.zh.md`, `README.zh-tw.md`, `README.ko.md`, `README.pt.md`, `README.it.md`, `README.nl.md`, `README.id.md`, `README.vi.md`, `README.th.md`, `README.hi.md`, `README.tr.md`, `README.pl.md`, `README.ru.md`, `README.sv.md`
+- 一部の言語だけの更新は禁止。バージョン番号・機能説明・比較表・FAQ・ロードマップ・フッターなど、**あらゆる変更を全 20 言語に反映**する。
 - 各ファイル最上部の言語スイッチャーは全ファイルで同一（自言語のみ青ハイライト `5271FF`、他はダークグレー `30363D`）。
-- README is multilingual (6 languages): **always update ALL of `README.md`, `README.ja.md`, `README.es.md`, `README.ar.md`, `README.fr.md`, `README.de.md` together.** Never update only some.
+- README is multilingual (20 languages): **always update ALL 20 `README*.md` files together.** Never update only some.
 - 翻訳元は英語版 `README.md`。新機能はまず英語版を確定 → 各言語へ反映。
 
 ## バージョン同期 / Version Sync
@@ -36,7 +35,7 @@
 2. `due_diligence_engine/__init__.py` の `__version__`
 3. `due_diligence_engine/cli.py` の `@click.version_option(version=__version__)`
 4. `due_diligence_engine/report/generator.py` のフッター文字列
-5. 全 6 言語 README のバッジ `version-vX.Y.Z` とフッターの `` `vX.Y.Z` `` 行
+5. 全 20 言語 README のバッジ `version-vX.Y.Z` とフッターの `` `vX.Y.Z` `` 行
 6. `scorecard.html` テンプレート
 
 ## モデル ID と価格の SSOT / Model IDs & Pricing SSOT

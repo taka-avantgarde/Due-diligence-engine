@@ -184,7 +184,7 @@ def test_six_language_readme_parity_invariant():
         "README.fr.md": ("--lang fr", "fr"),
         "README.de.md": ("--lang de", "de"),
         "README.zh.md": ("--lang zh", "zh"),
-        "README.zh-tw.md": ("--lang zh", "zh-tw"),
+        "README.zh-tw.md": ("--lang zh-tw", "zh-tw"),
         "README.ko.md": ("--lang ko", "ko"),
         "README.pt.md": ("--lang pt", "pt"),
         "README.it.md": ("--lang it", "it"),
@@ -192,11 +192,11 @@ def test_six_language_readme_parity_invariant():
         "README.id.md": ("--lang id", "id"),
         "README.vi.md": ("--lang vi", "vi"),
         "README.th.md": ("--lang th", "th"),
-        "README.hi.md": ("", "hi"),
-        "README.tr.md": ("", "tr"),
-        "README.pl.md": ("", "pl"),
-        "README.ru.md": ("", "ru"),
-        "README.sv.md": ("", "sv"),
+        "README.hi.md": ("--lang hi", "hi"),
+        "README.tr.md": ("--lang tr", "tr"),
+        "README.pl.md": ("--lang pl", "pl"),
+        "README.ru.md": ("--lang ru", "ru"),
+        "README.sv.md": ("--lang sv", "sv"),
     }
 
     for fname, (lang_flag, lang_code) in configs.items():

@@ -1,5 +1,5 @@
-name: 'Due Diligence Engine'
-description: 'AI-powered technical due diligence for startup codebases. Paste a GitHub URL → get a score.'
+name: 'Atlas DDE (Due Diligence Engine)'
+description: 'Bank-grade AI technical due diligence & M&A code audit platform. Paste a GitHub URL → get a Quiet Luxury scorecard.'
 author: 'Atlas Associates Inc'
 
 branding:

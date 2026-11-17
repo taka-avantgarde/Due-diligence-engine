@@ -128,6 +128,7 @@ dde mcp
 | `dde_validate_report` | Valider le rapport lié à l’instantané |
 | `dde_render_report` | Générer le PDF validé |
 | `dde_close_audit` | Effacer les données temporaires et fournir un certificat signé |
+| `dde_batch_audit` | Auditer plusieurs dépôts en lot et générer le PDF Exécutif de Portefeuille d'une page |
 
 Les procédures se trouvent dans `.agents/skills/dde-audit/` et `.agents/skills/dde-consulting-report/`. Conservez `audit_id`, `snapshot_sha256` et `validation_id`. L’évaluation par IA externe exige `use_ai=true` explicite ; clôturez toujours l’audit.
 

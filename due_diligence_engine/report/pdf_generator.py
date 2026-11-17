@@ -54,16 +54,17 @@ from due_diligence_engine.models import AIProviderResult, AnalysisResult, Consul
 
 logger = logging.getLogger(__name__)
 
-# Register CID fonts for Japanese support
+# Register CID fonts for Japanese / CJK support
 pdfmetrics.registerFont(UnicodeCIDFont("HeiseiMin-W3"))
 pdfmetrics.registerFont(UnicodeCIDFont("HeiseiKakuGo-W5"))
 pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))        # Simplified Chinese (zh)
+pdfmetrics.registerFont(UnicodeCIDFont("MSung-Light"))         # Traditional Chinese (zh-tw)
 pdfmetrics.registerFont(UnicodeCIDFont("HYSMyeongJo-Medium"))  # Korean (ko)
 
 # Bundled Noto TTF fonts (OFL) for scripts not covered by the built-in CID
-# fonts or Helvetica/WinAnsi: Vietnamese (Latin diacritics beyond WinAnsi)
-# and Thai. Registration is best-effort — if a font file is missing the
-# language simply falls back to Helvetica rather than crashing.
+# fonts or Helvetica/WinAnsi: Vietnamese, Turkish, Polish, Russian, Swedish,
+# Thai, Arabic, and Hindi (Devanagari). Registration is best-effort — if a font
+# file is missing the language simply falls back to Helvetica rather than crashing.
 _FONT_DIR = Path(__file__).resolve().parent / "fonts"
 _TTF_LANG_FONTS: dict[str, tuple[str, str]] = {}
 
@@ -78,11 +79,14 @@ def _register_ttf(name: str, filename: str) -> bool:
 
 
 if _register_ttf("NotoSansVI", "NotoSans-Regular.ttf"):
-    _TTF_LANG_FONTS["vi"] = ("NotoSansVI", "NotoSansVI")
+    for _lc in ("vi", "tr", "pl", "ru", "sv"):
+        _TTF_LANG_FONTS[_lc] = ("NotoSansVI", "NotoSansVI")
 if _register_ttf("NotoSansThai", "NotoSansThai-Regular.ttf"):
     _TTF_LANG_FONTS["th"] = ("NotoSansThai", "NotoSansThai")
 if _register_ttf("NotoNaskhArabic", "NotoNaskhArabic-Regular.ttf"):
     _TTF_LANG_FONTS["ar"] = ("NotoNaskhArabic", "NotoNaskhArabic")
+if _register_ttf("NotoSansDevanagari", "NotoSansDevanagari-Regular.ttf"):
+    _TTF_LANG_FONTS["hi"] = ("NotoSansDevanagari", "NotoSansDevanagari")
 
 # Arabic shaping/bidi: reportlab renders strings left-to-right with no contextual
 # shaping, so Arabic text must be pre-shaped (joined presentation forms) and
@@ -157,6 +161,7 @@ def _wrap_latin_in_ar(text: str) -> str:
 _FONTS_FOR_LANG: dict[str, tuple[str, str]] = {
     "ja": ("HeiseiMin-W3", "HeiseiKakuGo-W5"),
     "zh": ("STSong-Light", "STSong-Light"),
+    "zh-tw": ("MSung-Light", "MSung-Light"),
     "ko": ("HYSMyeongJo-Medium", "HYSMyeongJo-Medium"),
     **_TTF_LANG_FONTS,
 }
@@ -1572,9 +1577,9 @@ class PDFReportGenerator:
         return _reshape_ar(text) if self._lang == "ar" else text
 
     def _esc_text(self, text: Any) -> str:
-        """Escape text for ReportLab Paragraph, and wrap Latin runs if in Arabic or Thai mode."""
+        """Escape text for ReportLab Paragraph, and wrap Latin runs if in Arabic, Thai, or Hindi mode."""
         raw = str(text if text is not None else "")
-        if self._lang not in ("ar", "th"):
+        if self._lang not in ("ar", "th", "hi"):
             return _esc(raw)
 
         # Arabic & Thai mode: split raw string by Latin/ASCII runs BEFORE XML escaping

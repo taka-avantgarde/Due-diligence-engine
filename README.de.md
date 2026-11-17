@@ -128,6 +128,7 @@ dde mcp
 | `dde_validate_report` | Bericht gegen den Snapshot validieren |
 | `dde_render_report` | Validierten Bericht als PDF erstellen |
 | `dde_close_audit` | Temporäre Daten löschen und signiertes Zertifikat ausgeben |
+| `dde_batch_audit` | Mehrere Repositorys im Batch auditieren und ein 1-seitiges Executive-Portfolio-PDF erstellen |
 
 Die Abläufe stehen in `.agents/skills/dde-audit/` und `.agents/skills/dde-consulting-report/`. Bewahre `audit_id`, `snapshot_sha256` und `validation_id` auf. Externe KI-Bewertung erfordert ausdrücklich `use_ai=true`; schließe das Audit immer ab.
 

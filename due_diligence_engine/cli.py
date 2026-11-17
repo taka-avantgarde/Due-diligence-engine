@@ -183,11 +183,17 @@ def analyze(
             console.print(f"\n[dim]API cost: ${result.total_cost_usd:.4f}[/dim]")
 
 
+_ALL_20_LANGS = [
+    "en", "ja", "es", "fr", "de", "pt", "nl", "it", "id",
+    "zh", "zh-tw", "ko", "vi", "th", "ar", "hi", "tr", "pl", "ru", "sv",
+]
+
+
 @cli.command()
 @click.argument("target", default=".", required=False)
 @click.option("--name", "-n", default=None, help="Project name (auto-detected if omitted)")
-@click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"]),
-              help="Report language — 14 supported: en/ja/es/fr/de/pt/nl/it/id/zh/ko/vi/th/ar")
+@click.option("--lang", "-l", default="en", type=click.Choice(_ALL_20_LANGS),
+              help="Report language — 20 supported: en/ja/es/fr/de/pt/nl/it/id/zh/zh-tw/ko/vi/th/ar/hi/tr/pl/ru/sv")
 @click.option("--stage", "-s", default="unknown",
               type=click.Choice(["seed", "series_a", "series_b", "growth", "unknown"]),
               help="Startup development stage (adjusts evaluation criteria)")
@@ -199,6 +205,11 @@ def analyze(
               help="Generate consulting-grade PDF (requires AI terminal like Claude Code)")
 @click.option("--url", "-u", "urls", multiple=True,
               help="Product/service URL for site verification (up to 3, repeatable)")
+@click.option("--format", "-f", "prompt_format", default="default",
+              type=click.Choice(["default", "blueprint", "md", "html"], case_sensitive=False),
+              help="Prompt output style (default/blueprint include 5-dim scores & remediation patches automatically)")
+@click.option("--emit-patch/--no-emit-patch", default=True,
+              help="Include concrete remediation patch proposals (enabled by default)")
 def prompt(
     target: str,
     name: str | None,
@@ -209,6 +220,8 @@ def prompt(
     skip_git: bool,
     pdf: bool,
     urls: tuple[str, ...],
+    prompt_format: str = "default",
+    emit_patch: bool = True,
 ) -> None:
     """Generate an AI evaluation prompt for IDE terminals.
 
@@ -241,7 +254,7 @@ def prompt(
         lang_source = ctx.get_parameter_source("lang")
         if lang_source != click.core.ParameterSource.COMMANDLINE:
             if os.isatty(sys.stdin.fileno()):
-                _supported_langs = ["en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"]
+                _supported_langs = _ALL_20_LANGS
                 console.print()
                 console.print(
                     Panel(
@@ -249,8 +262,8 @@ def prompt(
                         "PDFレポートの出力言語を選択してください。\n\n"
                         "  [cyan]1[/cyan]  English (en)\n"
                         "  [cyan]2[/cyan]  日本語 (ja)\n"
-                        "  [dim]Or enter code: es, fr, de, pt, nl, it, id, zh, ko, vi, th, ar[/dim]",
-                        title="DDE — Language / 言語 (14 supported)",
+                        "  [dim]Or enter code: es, fr, de, pt, nl, it, id, zh, zh-tw, ko, vi, th, ar, hi, tr, pl, ru, sv[/dim]",
+                        title="Atlas DDE — Language / 言語 (20 supported)",
                         border_style="cyan",
                     )
                 )
@@ -411,8 +424,8 @@ def prompt(
 @click.option("--consulting", type=click.Path(exists=True), default=None,
               help="Consulting report JSON from AI evaluation (generates consulting-grade PDF)")
 @click.option("--pdf", "-p", is_flag=True, help="Generate PDF output")
-@click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"]),
-              help="PDF language — 14 supported: en/ja/es/fr/de/pt/nl/it/id/zh/ko/vi/th/ar")
+@click.option("--lang", "-l", default="en", type=click.Choice(_ALL_20_LANGS),
+              help="PDF language — 20 supported: en/ja/es/fr/de/pt/nl/it/id/zh/zh-tw/ko/vi/th/ar/hi/tr/pl/ru/sv")
 def report(
     result_file: str | None,
     fmt: str,
@@ -846,7 +859,7 @@ def mcp_cmd(transport: str) -> None:
 @cli.command("batch")
 @click.argument("targets", nargs=-1, required=True)
 @click.option("--output-dir", "-o", type=click.Path(), default=None, help="Output directory for batch comparison reports")
-@click.option("--lang", "-l", default="en", type=click.Choice(["en", "ja", "es", "fr", "de", "pt", "nl", "it", "id", "zh", "ko", "vi", "th", "ar"]), help="Report language (14 supported)")
+@click.option("--lang", "-l", default="en", type=click.Choice(_ALL_20_LANGS), help="Report language (20 supported)")
 @click.option("--pdf/--no-pdf", "-p", default=True, help="Generate 1-Page Executive Portfolio Batch Comparison PDF (default: enabled)")
 @click.option("--skip-git", is_flag=True, help="Skip git forensics analysis")
 def batch_cmd(

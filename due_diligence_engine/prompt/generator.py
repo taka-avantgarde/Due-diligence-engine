@@ -237,10 +237,16 @@ _LANG_OUTPUT_NAMES = {
     "it": "Italian (Italiano)",
     "id": "Indonesian (Bahasa Indonesia)",
     "zh": "Simplified Chinese (简体中文)",
+    "zh-tw": "Traditional Chinese (繁體中文)",
     "ko": "Korean (한국어)",
     "vi": "Vietnamese (Tiếng Việt)",
     "th": "Thai (ภาษาไทย)",
     "ar": "Arabic (العربية)",
+    "hi": "Hindi (हिन्दी)",
+    "tr": "Turkish (Türkçe)",
+    "pl": "Polish (Polski)",
+    "ru": "Russian (Русский)",
+    "sv": "Swedish (Svenska)",
 }
 
 
@@ -2318,18 +2324,21 @@ def _consulting_pdf_command(result: AnalysisResult, lang: str) -> str:
 dde report --consulting "{temp_path}" --pdf --lang ja
 ```
 
-**Step 4**: PDFは `~/Downloads/` に保存される。ファイルパスをユーザーに伝える
+**Step 4**: PDFは `~/Downloads/` に保存される。監査対象リポジトリは **100% 読み取り専用（Read-Only：対象コードの変更禁止）** を厳守した上で、チャット画面に以下を簡潔な比較表とパッチ案として提示する：
+1. 保存された PDF ファイルパスと **総合グレード（`A〜F`・`XX / 100`・`GO / CONDITIONAL / NO-GO`）**
+2. **標準 5 次元スコア（各 20%）＋ Atlas 4 軸（20/20/5/55）スコア一覧表**
+3. **改善パッチ案（Concrete Remediation Patch Plan）**：検出された実コード欠陥（Red Flags）ごとに `file:line` とそのまま適用できる具体的な修正パッチ案（diff / コード修正案）
 
 **禁止事項:**
-- JSONの内容をユーザーに表示しない
-- 「どのリポジトリを分析しますか」等の質問をしない
-- 作業の途中経過を説明しない
+- 監査対象リポジトリのソースコードを直接書き換えない（完全 Read-Only 監査）
+- 生の JSON 全文をユーザーに表示しない
+- 「どのリポジトリを分析しますか」「どのオプションで実行しますか」等の質問をしない
 - 実行前に許可を求めない（ツール実行の同意のみ必要）
 """
     else:
         return f"""## Execution Steps (do NOT ask questions — just execute)
 
-**Step 1**: Read the repository code and generate JSON following the schema above (MUST use exact "{clean_project_name}" for "project_name")
+**Step 1**: Read the repository code in **strict Read-Only mode** (never modify target repository files) and generate JSON following the schema above (MUST use exact "{clean_project_name}" for "project_name")
 **Step 2**: Save JSON to `{temp_path}` (via Write tool or cat command)
 **Step 3**: Run this command:
 
@@ -2337,12 +2346,15 @@ dde report --consulting "{temp_path}" --pdf --lang ja
 dde report --consulting "{temp_path}" --pdf --lang {lang}
 ```
 
-**Step 4**: PDF is saved to `~/Downloads/`. Tell the user the file path.
+**Step 4**: PDF is saved to `~/Downloads/`. Present a concise Executive Summary in chat containing:
+1. The saved PDF file path and **Overall Grade (`A–F`, `XX / 100`, `GO / CONDITIONAL / NO-GO`)**
+2. **Standard 5-Dimension Scores (20% each) + Atlas 4-Axis (`20/20/5/55`) Scores comparison table**
+3. **Concrete Remediation Patch Plan**: For each verified Red Flag, show `file:line` and a concrete, copy-pasteable remediation patch/fix proposal (while keeping the target repository 100% read-only).
 
 **Do NOT:**
-- Print the JSON to the user
+- Modify any files in the audited target repository (strictly Read-Only audit)
+- Print the raw JSON payload to the user
 - Ask "which repository?" or any clarification questions
-- Explain what you are doing step by step
 - Ask for permission before executing (only tool approval is needed)
 """
 
