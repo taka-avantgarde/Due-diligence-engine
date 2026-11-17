@@ -183,7 +183,94 @@ class Scorer:
         )
         score.compute()
         score.tech_ratings = self._compute_tech_ratings(result, score.dimensions)
+        result.code_analysis.complexity_metrics["pmi_estimate"] = self.compute_pmi_estimate(
+            result, score
+        )
         return score
+
+    @staticmethod
+    def compute_pmi_estimate(
+        result: AnalysisResult, score: Score | None = None
+    ) -> dict[str, Any]:
+        """Task 4: Compute deterministic M&A Post-Merger Integration (Day-1 / Day-30 / Day-100) effort and technical debt."""
+        code = result.code_analysis
+        git = result.git_forensics
+        all_flags = list(score.red_flags) if score is not None else list(code.red_flags)
+
+        crit_count = sum(1 for f in all_flags if f.severity == Severity.CRITICAL)
+        high_count = sum(1 for f in all_flags if f.severity == Severity.HIGH)
+        med_count = sum(1 for f in all_flags if f.severity == Severity.MEDIUM)
+
+        async_blocking = len(code.complexity_metrics.get("async_blocking", []))
+        n_plus_one = len(code.complexity_metrics.get("n_plus_one_hotspots", []))
+        nested_loops = len(code.complexity_metrics.get("nested_loop_hotspots", []))
+        copyleft = code.complexity_metrics.get("copyleft_licenses", [])
+        has_lockfile = bool(code.complexity_metrics.get("has_lockfile", False))
+
+        # Quantify engineering remediation effort in person-days
+        person_days = (
+            crit_count * 5.0
+            + high_count * 3.0
+            + med_count * 1.5
+            + async_blocking * 0.5
+            + n_plus_one * 1.0
+            + (0.0 if code.has_tests else 5.0)
+            + (0.0 if code.has_ci_cd else 3.0)
+            + (0.0 if has_lockfile else 1.0)
+        )
+        person_days = round(max(1.0, person_days), 1)
+
+        if git.unique_authors == 1 and code.total_lines > 2000:
+            bus_factor_risk = "high"
+        elif git.unique_authors <= 2 and code.total_lines > 5000:
+            bus_factor_risk = "moderate"
+        else:
+            bus_factor_risk = "low"
+
+        day_1_actions: list[str] = []
+        if crit_count > 0 or high_count > 0:
+            day_1_actions.append(
+                f"Remediate {crit_count} CRITICAL and {high_count} HIGH code-verified security/injection defects"
+            )
+        if copyleft:
+            day_1_actions.append(
+                f"Isolate or replace viral copyleft dependencies ({', '.join(copyleft)}) before M&A closing"
+            )
+        if not has_lockfile and code.dependency_count > 0:
+            day_1_actions.append("Freeze deterministic dependency lockfile & generate SBOM")
+        if not day_1_actions:
+            day_1_actions.append("Verify production secret rotation & zero-trust access boundaries")
+
+        day_30_actions: list[str] = []
+        if not code.has_ci_cd:
+            day_30_actions.append("Establish automated CI/CD + SAST/secret-scanning release gates")
+        if not code.has_tests:
+            day_30_actions.append("Add regression test suite covering core domain & security boundaries")
+        if async_blocking > 0 or n_plus_one > 0:
+            day_30_actions.append(
+                f"Eliminate {async_blocking} async-blocking I/O call(s) and {n_plus_one} N+1 query hotspot(s)"
+            )
+        if not day_30_actions:
+            day_30_actions.append("Enforce p99 latency SLO telemetry & automated dependency auditing")
+
+        day_100_actions: list[str] = []
+        if nested_loops > 0:
+            day_100_actions.append(
+                f"Refactor {nested_loops} nested-loop hotspot(s) to O(1) indexed lookups"
+            )
+        if bus_factor_risk in {"high", "moderate"}:
+            day_100_actions.append(
+                f"Mitigate {bus_factor_risk} bus-factor concentration via architecture runbooks & pair ownership"
+            )
+        day_100_actions.append("Complete multi-region scale hardening & unit-economics COGS optimization")
+
+        return {
+            "estimated_person_days": person_days,
+            "bus_factor_risk": bus_factor_risk,
+            "day_1_actions": day_1_actions,
+            "day_30_actions": day_30_actions,
+            "day_100_actions": day_100_actions,
+        }
 
     def _integrate_ai_scores(
         self,
@@ -507,6 +594,8 @@ class Scorer:
         if code.has_tests:
             base += 1
         if code.dependency_count < 50:
+            base += 1
+        if code.complexity_metrics.get("crypto_signals") and not security_flags:
             base += 1
 
         return max(1, min(base, 10))

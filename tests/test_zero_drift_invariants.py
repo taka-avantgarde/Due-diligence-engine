@@ -1621,3 +1621,93 @@ def test_batch_audit_and_cli_portfolio_comparison(tmp_path, monkeypatch):
     assert len(pdfs) == 1 and pdfs[0].read_bytes()[:5] == b"%PDF-"
     assert len(mds) == 1 and "alpha" in mds[0].read_text(encoding="utf-8")
     assert len(htmls) == 1 and "Atlas DDE" in htmls[0].read_text(encoding="utf-8")
+
+
+def test_v070_global_apex_deterministic_engine_all_five_tasks(tmp_path):
+    """Verify v0.7.0 Tasks 1-5: crypto signals, AST security sinks, async-blocking/N+1/O(N^3) hotspots, AGPL copyleft + lockfile check, multi-lang metrics, and PMI estimator."""
+    from due_diligence_engine.analyze.code import CodeAnalyzer
+    from due_diligence_engine.ingest.secure_loader import SecureLoader
+    from due_diligence_engine.models import AnalysisResult, GitForensicsResult
+    from due_diligence_engine.prompt.generator import generate_prompt
+
+    repo = tmp_path / "apex_target"
+    repo.mkdir()
+    (repo / "uv.lock").write_text("version = 1\n", encoding="utf-8")
+    (repo / "LICENSE").write_text("GNU Affero General Public License v3.0 (AGPL-3.0)\n", encoding="utf-8")
+    (repo / "service.py").write_text(
+        textwrap.dedent(
+            """
+            import hashlib
+            import subprocess
+            import time
+            import requests
+            from cryptography.fernet import Fernet
+
+            async def handle_request(cursor, items, user_id):
+                time.sleep(0.1)
+                requests.get("https://api.example.com/status")
+                digest = hashlib.md5(b"payload").hexdigest()
+                subprocess.run("echo " + user_id, shell=True)
+                for item in items:
+                    cursor.execute(f"SELECT * FROM orders WHERE id = {item}")
+                    for sub in items:
+                        for leaf in items:
+                            _ = (item, sub, leaf)
+                return Fernet, digest
+            """
+        ),
+        encoding="utf-8",
+    )
+    (repo / "engine.rs").write_text(
+        "pub fn process() {\n" + "    let _ = some_opt().unwrap();\n" * 6 + "}\n",
+        encoding="utf-8",
+    )
+    (repo / "client.ts").write_text(
+        "export const run = (a: any, b: any, c: any, d: any, e: any, f: any) => a;\n",
+        encoding="utf-8",
+    )
+
+    cfg = config.Config(temp_dir=tmp_path / "work")
+    loader = SecureLoader(cfg)
+    try:
+        loader.load_directory(repo)
+        code_res = CodeAnalyzer(loader).analyze()
+    finally:
+        loader.destroy()
+
+    metrics = code_res.complexity_metrics
+    # Task 1: Crypto signal + AST security sinks
+    assert any("Fernet" in s for s in metrics["crypto_signals"])
+    sink_types = {s["type"] for s in metrics["security_sinks"]}
+    assert {"weak_crypto", "command_injection", "sql_injection"}.issubset(sink_types)
+    assert any(rf.category == "security_sqli" and rf.line_number is not None for rf in code_res.red_flags)
+
+    # Task 2: Async-blocking, N+1, and O(N^3) nested loop detection
+    assert len(metrics["async_blocking"]) >= 2
+    assert len(metrics["n_plus_one_hotspots"]) >= 1
+    assert any(h["depth"] >= 3 for h in metrics["nested_loop_hotspots"])
+
+    # Task 3: Copyleft AGPL-3.0 contamination + lockfile detection
+    assert metrics["has_lockfile"] is True
+    assert any("AGPL-3.0" in lic for lic in metrics["copyleft_licenses"])
+    assert any(rf.category == "legal_ip_license" for rf in code_res.red_flags)
+
+    # Task 5: Multi-language reliability metrics (.rs unwrap surface & .ts ': any' surface)
+    assert metrics["multilang_metrics"][".rs"]["reliability_warnings"] >= 6
+    assert metrics["multilang_metrics"][".ts"]["reliability_warnings"] >= 6
+
+    # Task 4: Quantitative M&A PMI Day-1 / Day-30 / Day-100 estimator & prompt integration
+    ar = AnalysisResult(
+        project_name="apex_target",
+        code_analysis=code_res,
+        git_forensics=GitForensicsResult(total_commits=25, unique_authors=1),
+    )
+    score = Scorer().score(ar)
+    pmi = ar.code_analysis.complexity_metrics["pmi_estimate"]
+    assert pmi["estimated_person_days"] > 5.0
+    assert pmi["day_1_actions"] and pmi["day_30_actions"] and pmi["day_100_actions"]
+    assert score.overall_score <= 40.0  # Capped due to CRITICAL SQLi deal-breaker
+
+    prompt_ja = generate_prompt(ar, lang="ja")
+    assert "推定PMI改修工数" in prompt_ja
+    assert "AGPL-3.0" in prompt_ja

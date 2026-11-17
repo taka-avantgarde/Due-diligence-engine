@@ -517,16 +517,22 @@ class SecureLoader:
 
 
 _SPECIAL_CODE_FILENAMES = {
-    "go.mod", "go.sum", "gemfile", "gemfile.lock", "cargo.toml",
-    "package.json", "pyproject.toml", "requirements.txt",
+    "go.mod", "go.sum", "gemfile", "gemfile.lock", "cargo.toml", "cargo.lock",
+    "package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock",
+    "pyproject.toml", "uv.lock", "poetry.lock", "pipfile.lock", "requirements.txt",
     "jenkinsfile", "dockerfile", "makefile", ".gitlab-ci.yml", ".travis.yml",
 }
+
+_SPECIAL_DOC_FILENAMES = {"license", "license.md", "license.txt", "copying", "notice"}
 
 
 def _classify_file(path: Path) -> str:
     """Classify a file as code, doc, or other."""
-    if path.name.lower() in _SPECIAL_CODE_FILENAMES:
+    name_lower = path.name.lower()
+    if name_lower in _SPECIAL_CODE_FILENAMES:
         return "code"
+    if name_lower in _SPECIAL_DOC_FILENAMES:
+        return "doc"
     if path.name in {"Jenkinsfile", "Dockerfile", "Makefile", ".gitlab-ci.yml", ".travis.yml"}:
         return "code"
     if path.suffix in CODE_EXTENSIONS:

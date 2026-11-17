@@ -1,3 +1,3 @@
 """Atlas DDE (Due Diligence Engine) - AI startup technical due diligence."""
 
-__version__ = "0.6.5"
+__version__ = "0.7.0"
