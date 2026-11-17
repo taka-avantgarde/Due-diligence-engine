@@ -426,6 +426,8 @@ def prompt(
 @click.option("--pdf", "-p", is_flag=True, help="Generate PDF output")
 @click.option("--lang", "-l", default="en", type=click.Choice(_ALL_20_LANGS),
               help="PDF language — 20 supported: en/ja/es/fr/de/pt/nl/it/id/zh/zh-tw/ko/vi/th/ar/hi/tr/pl/ru/sv")
+@click.option("--baseline", "-b", type=click.Path(exists=True), default=None,
+              help="Previous AnalysisResult JSON file to compute historical score & Red Flag deltas")
 def report(
     result_file: str | None,
     fmt: str,
@@ -433,6 +435,7 @@ def report(
     consulting: str | None,
     pdf: bool,
     lang: str,
+    baseline: str | None = None,
 ) -> None:
     """Generate a report from a saved analysis result JSON.
 
@@ -513,6 +516,11 @@ def report(
     result_path = Path(result_file)
     data = json.loads(result_path.read_text(encoding="utf-8"))
     result = AnalysisResult(**data)
+
+    if baseline:
+        from due_diligence_engine.api import compute_historical_delta
+        base_data = json.loads(Path(baseline).read_text(encoding="utf-8"))
+        compute_historical_delta(result, base_data)
 
     report_gen = ReportGenerator()
     saved = report_gen.save_report(result, output_dir, formats=[fmt])

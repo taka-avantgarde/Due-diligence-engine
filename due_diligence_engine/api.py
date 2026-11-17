@@ -753,3 +753,47 @@ def batch_audit(
         "html_path": str(html_path),
         "pdf_path": str(pdf_path) if pdf_path else None,
     }
+
+
+def compute_historical_delta(
+    current: AnalysisResult, baseline: AnalysisResult | dict[str, Any]
+) -> dict[str, Any]:
+    """Task 3 (v0.8.0): Compute historical score and Red Flag delta between a baseline audit and current audit."""
+    if isinstance(baseline, dict):
+        base_res = AnalysisResult.model_validate(baseline)
+    else:
+        base_res = baseline
+
+    prev_sc = base_res.score
+    curr_sc = current.score
+    prev_overall = float(prev_sc.overall_score if prev_sc else 0.0)
+    curr_overall = float(curr_sc.overall_score if curr_sc else 0.0)
+    prev_grade = prev_sc.grade if prev_sc and prev_sc.grade else "F"
+    curr_grade = curr_sc.grade if curr_sc and curr_sc.grade else "F"
+    overall_delta = round(curr_overall - prev_overall, 1)
+
+    prev_dims = {d.name: float(d.score) for d in (prev_sc.dimensions if prev_sc else [])}
+    curr_dims = {d.name: float(d.score) for d in (curr_sc.dimensions if curr_sc else [])}
+    dim_deltas: dict[str, float] = {}
+    for name, c_val in curr_dims.items():
+        if name in prev_dims:
+            dim_deltas[name] = round(c_val - prev_dims[name], 1)
+
+    prev_titles = {f.title for f in (prev_sc.red_flags if prev_sc else [])}
+    curr_titles = {f.title for f in (curr_sc.red_flags if curr_sc else [])}
+    resolved_flags = sorted(prev_titles - curr_titles)
+    new_flags = sorted(curr_titles - prev_titles)
+
+    delta_summary = {
+        "previous_score": prev_overall,
+        "previous_grade": prev_grade,
+        "current_score": curr_overall,
+        "current_grade": curr_grade,
+        "overall_delta": overall_delta,
+        "grade_transition": f"{prev_grade} -> {curr_grade}",
+        "dimension_deltas": dim_deltas,
+        "resolved_red_flags": resolved_flags,
+        "new_red_flags": new_flags,
+    }
+    current.code_analysis.complexity_metrics["historical_delta"] = delta_summary
+    return delta_summary

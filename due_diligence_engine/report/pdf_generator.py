@@ -2204,6 +2204,20 @@ class PDFReportGenerator:
             [t["has_docs"], t["yes"] if code.has_documentation else t["no"]],
         ]
 
+        cm_extra = code.complexity_metrics or {}
+        if "has_lockfile" in cm_extra:
+            metrics_data.append(["Deterministic Lockfile", t["yes"] if cm_extra.get("has_lockfile") else t["no"]])
+        if cm_extra.get("crypto_signals"):
+            metrics_data.append(["Cryptographic Signals", ", ".join(cm_extra["crypto_signals"][:4])])
+        if cm_extra.get("copyleft_licenses"):
+            metrics_data.append(["Copyleft License Alert", ", ".join(cm_extra["copyleft_licenses"][:3])])
+        pmi = cm_extra.get("pmi_estimate")
+        if isinstance(pmi, dict) and "estimated_person_days" in pmi:
+            metrics_data.append([
+                "Estimated M&A PMI Effort",
+                f"{pmi['estimated_person_days']} person-days (Bus Factor: {pmi.get('bus_factor_risk', 'low')})",
+            ])
+
         font_header = self._font_bold()
         font_body = self._font_normal()
 

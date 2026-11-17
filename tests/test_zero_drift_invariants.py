@@ -1711,3 +1711,92 @@ def test_v070_global_apex_deterministic_engine_all_five_tasks(tmp_path):
     prompt_ja = generate_prompt(ar, lang="ja")
     assert "推定PMI改修工数" in prompt_ja
     assert "AGPL-3.0" in prompt_ja
+
+
+def test_v080_pmi_rendering_patch_blueprint_and_historical_delta(tmp_path):
+    """Verify v0.8.0 Tasks 1-3: PMI roadmap rendering in MD/HTML/PDF, diff patch blueprint, and compute_historical_delta."""
+    from due_diligence_engine.api import compute_historical_delta
+    from due_diligence_engine.models import (
+        AnalysisResult,
+        CodeAnalysisResult,
+        RedFlag,
+        Score,
+        ScoreDimension,
+        Severity,
+    )
+    from due_diligence_engine.report.generator import ReportGenerator
+
+    baseline_res = AnalysisResult(
+        project_name="DeltaApp",
+        code_analysis=CodeAnalysisResult(total_files=10, total_lines=1000),
+        score=Score(
+            overall_score=62.0,
+            grade="C",
+            recommendation="Concerns",
+            dimensions=[ScoreDimension(name="Technical Originality", score=60.0, weight=0.2, rationale="Base")],
+            red_flags=[
+                RedFlag(
+                    category="security_sqli",
+                    title="SQL string interpolation in db.py:12",
+                    description="Dynamic SQL. Remediation: Use parameterized queries.",
+                    severity=Severity.CRITICAL,
+                    file_path="db.py",
+                    line_number=12,
+                )
+            ],
+        ),
+    )
+
+    current_res = AnalysisResult(
+        project_name="DeltaApp",
+        code_analysis=CodeAnalysisResult(
+            total_files=15,
+            total_lines=1800,
+            complexity_metrics={
+                "has_lockfile": True,
+                "crypto_signals": ["Fernet", "ECDSA P-256"],
+                "copyleft_licenses": [],
+            },
+        ),
+        score=Score(
+            overall_score=84.0,
+            grade="B",
+            recommendation="Viable",
+            dimensions=[ScoreDimension(name="Technical Originality", score=84.0, weight=0.2, rationale="Upgraded")],
+            red_flags=[
+                RedFlag(
+                    category="security_injection",
+                    title="Shell command execution sink in worker.py:30",
+                    description="Shell execution. Remediation: Pass argument list with shell=False.",
+                    severity=Severity.HIGH,
+                    file_path="worker.py",
+                    line_number=30,
+                )
+            ],
+        ),
+    )
+    current_res.code_analysis.complexity_metrics["pmi_estimate"] = Scorer.compute_pmi_estimate(
+        current_res, current_res.score
+    )
+
+    delta = compute_historical_delta(current_res, baseline_res)
+    assert delta["overall_delta"] == pytest.approx(22.0)
+    assert delta["grade_transition"] == "C -> B"
+    assert "SQL string interpolation in db.py:12" in delta["resolved_red_flags"]
+    assert "Shell command execution sink in worker.py:30" in delta["new_red_flags"]
+
+    rep_gen = ReportGenerator()
+    md = rep_gen.generate_markdown(current_res)
+    assert "## 6. M&A Post-Merger Integration (PMI) & Technical Debt Roadmap" in md
+    assert "### Concrete Remediation Patch Proposals (Read-Only Blueprint)" in md
+    assert "```diff" in md and "shlex.split" in md
+    assert "## 7. Historical Score Delta Comparison" in md
+    assert "+22.0 pt" in md and "C -> B" in md
+
+    html_out = rep_gen.generate_html(current_res)
+    assert "M&amp;A Post-Merger Integration (PMI: Day-1 / Day-30 / Day-100) Roadmap" in html_out
+    assert "person-days" in html_out
+
+    pdf_gen = _make_generator("en")
+    metrics_flowables = pdf_gen._build_codebase_metrics(current_res)
+    assert len(metrics_flowables) >= 2

@@ -49,6 +49,12 @@ def _extract_file_line(flag: Any) -> str:
 
 def _extract_one_line_fix(flag: Any) -> str:
     """Extract or synthesize a concrete 1-line remediation plan."""
+    desc = str(flag.get("description") or "") if isinstance(flag, dict) else str(getattr(flag, "description", "") or "")
+    for marker in ("Remediation:", "Fix:", "修正方針:", "対策:"):
+        if marker in desc:
+            after = desc.split(marker, 1)[1].strip()
+            if after:
+                return after.splitlines()[0].strip()
     if isinstance(flag, dict):
         for key in ("remediation", "fix", "fix_plan", "action"):
             val = flag.get(key)
@@ -62,6 +68,35 @@ def _extract_one_line_fix(flag: Any) -> str:
                 return str(val).splitlines()[0].strip()
         cat = str(getattr(flag, "category", "") or "module")
     return f"Harden `{cat}` boundary and add a deterministic regression test."
+
+
+def _build_patch_snippet(flag: Any) -> str:
+    """Build a concrete copy-pasteable Unified Diff remediation patch proposal for a RedFlag."""
+    loc = _extract_file_line(flag)
+    file_only = loc.split(":", 1)[0] if ":" in loc else "target_module.py"
+    cat = (str(flag.get("category") or "") if isinstance(flag, dict) else str(getattr(flag, "category", "") or "")).lower()
+    if "sqli" in cat:
+        return (
+            f"--- a/{file_only}\n+++ b/{file_only}\n"
+            f'- cursor.execute(f"SELECT * FROM records WHERE id = {{user_input}}")\n'
+            f'+ cursor.execute("SELECT * FROM records WHERE id = ?", (user_input,))'
+        )
+    if "injection" in cat:
+        return (
+            f"--- a/{file_only}\n+++ b/{file_only}\n"
+            f"- subprocess.run(cmd_str, shell=True, check=True)\n"
+            f"+ subprocess.run(shlex.split(cmd_str), shell=False, check=True)"
+        )
+    if "crypto" in cat:
+        return (
+            f"--- a/{file_only}\n+++ b/{file_only}\n"
+            f"- digest = hashlib.md5(payload).hexdigest()\n"
+            f"+ digest = hashlib.sha256(payload).hexdigest()"
+        )
+    return (
+        f"--- a/{file_only}\n+++ b/{file_only}\n"
+        f"# Remediation at {loc}: {_extract_one_line_fix(flag)}"
+    )
 
 
 def _determine_verdict(overall_score: float, has_critical_blocker: bool) -> str:
@@ -247,6 +282,16 @@ class ReportGenerator:
                 sev_label = _sev_str(flag).upper()
                 lines.append(f"- **[{sev_label}]** **{flag.title}** ({flag.category})")
 
+            lines.extend([
+                "",
+                "### Concrete Remediation Patch Proposals (Read-Only Blueprint)",
+                "",
+                "```diff",
+            ])
+            for flag in sorted_flags[:5]:
+                lines.append(_build_patch_snippet(flag))
+            lines.extend(["```", ""])
+
         # Detailed Dimension Breakdown (retained for backwards compatibility)
         lines.extend(["", "---", "", "## 4. Detailed Dimension Analysis", ""])
         for dim in score.dimensions:
@@ -263,6 +308,7 @@ class ReportGenerator:
                 lines.append("")
 
         # Code & Git Summary
+        cm = code.complexity_metrics or {}
         lines.extend([
             "---",
             "",
@@ -278,6 +324,9 @@ class ReportGenerator:
             f"| **CI/CD Pipeline** | {'Yes' if code.has_ci_cd else 'No'} |",
             f"| **Documentation** | {'Yes' if code.has_documentation else 'No'} |",
             f"| **Dependencies** | {code.dependency_count} |",
+            f"| **Deterministic Lockfile** | {'Yes' if cm.get('has_lockfile') else 'No'} |",
+            f"| **Cryptographic Signals** | {', '.join(cm.get('crypto_signals', [])) or 'None detected'} |",
+            f"| **Copyleft License Check** | {', '.join(cm.get('copyleft_licenses', [])) or 'Clean (No viral copyleft)'} |",
         ])
 
         git = result.git_forensics
@@ -289,6 +338,40 @@ class ReportGenerator:
                 f"| **Rush Commit Ratio** | {git.rush_commit_ratio:.0%} |",
             ])
         lines.append("")
+
+        # Section 6: M&A Post-Merger Integration (PMI: Day-1 / Day-30 / Day-100) Roadmap
+        pmi = cm.get("pmi_estimate")
+        if isinstance(pmi, dict) and "estimated_person_days" in pmi:
+            lines.extend([
+                "---",
+                "",
+                "## 6. M&A Post-Merger Integration (PMI) & Technical Debt Roadmap",
+                "",
+                "| Phase / Metric | Quantitative Estimate / Action Plan |",
+                "|---|---|",
+                f"| **Estimated Remediation Effort** | **{pmi['estimated_person_days']} person-days** (Bus Factor Risk: `{pmi.get('bus_factor_risk', 'low')}`) |",
+                f"| **Day-1 (Immediate Containment)** | {'; '.join(pmi.get('day_1_actions', []))} |",
+                f"| **Day-30 (Structural Hardening)** | {'; '.join(pmi.get('day_30_actions', []))} |",
+                f"| **Day-100 (Scale & Unit Economics)** | {'; '.join(pmi.get('day_100_actions', []))} |",
+                "",
+            ])
+
+        # Section 7: Historical Score Delta Tracking (if baseline provided)
+        delta = cm.get("historical_delta")
+        if isinstance(delta, dict) and "overall_delta" in delta:
+            sign = "+" if delta["overall_delta"] >= 0 else ""
+            lines.extend([
+                "---",
+                "",
+                "## 7. Historical Score Delta Comparison",
+                "",
+                "| Metric | Baseline | Current | Delta |",
+                "|---|---:|---:|---:|",
+                f"| **Overall Score & Grade** | {delta['previous_score']:.1f} ({delta['previous_grade']}) | **{delta['current_score']:.1f} ({delta['current_grade']})** | **{sign}{delta['overall_delta']:.1f} pt** (`{delta['grade_transition']}`) |",
+                f"| **Resolved Red Flags** | — | {len(delta.get('resolved_red_flags', []))} | {', '.join(delta.get('resolved_red_flags', [])) or 'None'} |",
+                f"| **New Red Flags** | — | {len(delta.get('new_red_flags', []))} | {', '.join(delta.get('new_red_flags', [])) or 'None'} |",
+                "",
+            ])
 
         # Cost information
         lines.extend([
