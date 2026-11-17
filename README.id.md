@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **Jaminan Zero-Retention Standar Militer**: **Atlas DDE** memperlakukan repositori target sebagai **100% Read-Only**, mengunci direktori sementara dengan **ACL `0o700` + enkripsi Fernet**, melakukan **penghapusan 3-pass sesuai standar Departemen Pertahanan AS DoD 5220.22-M** saat audit selesai, serta secara otomatis menerbitkan **Sertifikat Pemusnahan Data bertanda tangan kriptografi ECDSA P-256** di bagian akhir PDF.
+
 > **Tidak perlu mengetik perintah, flag (`--format blueprint --emit-patch --lang id`), atau instruksi panjang ("audit read-only dan tampilkan skor 5 dimensi serta patch perbaikan").**  
 > Cukup tempel **URL di atas saja** ke agen AI Anda (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) — AI secara otomatis menjalankan **audit 100% Read-Only** dan menghasilkan **① Nilai Akhir & Keputusan (`GO / CONDITIONAL / NO-GO`), ② Tabel Skor 5 Dimensi + 4 Poros Atlas (`20/20/5/55`), ③ Rencana Patch Perbaikan (`file:baris` + diff), serta ④ PDF LVMH Quiet Luxury 24 halaman (`~/Downloads/`)**.  
 *(Perbandingan batch multi-repositori: `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*

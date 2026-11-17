@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **最高機密保護・完全消去保証（Zero-Retention）**: **Atlas DDE** は対象リポジトリを **100% 読み取り専用（Read-Only）** で扱い、一時領域は **`0o700` ACL＋Fernet 暗号化**、監査終了時には **米国国防総省規格 DoD 5220.22-M 3パス上書き消去** を行い、**ECDSA P-256 暗号署名入りのデータ破棄証明書** を PDF 巻末に自動発行します。
+
 > **「このプロジェクトを読み取り専用で監査（`--format blueprint --emit-patch --lang ja`）して、5領域スコアと改善パッチ案を教えて」といった指示文やオプション指定は一切不要です。**  
 > お使いの AI エージェント（Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot）に **上記 URL だけを貼れば**、AI が直下の自動実行プロトコルを読み取り、**①100% 読み取り専用（Read-Only）監査、②標準5次元＋Atlas 4軸（20/20/5/55）スコア一覧表、③具体的な改善パッチ案（`file:line`＋diff）、④LVMH Quiet Luxury 仕様 24ページPDF（`~/Downloads/`）** まで全自動で出力します。  
 *（複数リポジトリ一括比較なら：`https://github.com/Atlas-Associates-Inc/Due-diligence-engine <リポA> <リポB>`）*

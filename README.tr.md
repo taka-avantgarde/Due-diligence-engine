@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **Askeri Düzeyde Sıfır Veri Saklama (Zero-Retention) Garantisi**: **Atlas DDE**, hedef depoyu **%100 Salt Okunur (Read-Only)** olarak işler, geçici çalışma alanını **`0o700` ACL + Fernet şifrelemesi** ile kilitler, denetim sonunda **ABD Savunma Bakanlığı DoD 5220.22-M standardında 3 geçişli üzerine yazarak silme** uygular ve PDF'in sonunda **ECDSA P-256 kriptografik imzalı Veri İmha Sertifikasını** otomatik olarak düzenler.
+
 > **Hiçbir komut, bayrak (`--format blueprint --emit-patch --lang tr`) veya uzun talimat ("salt okunur denetle, 5 boyut puanını ve yama önerilerini göster") yazmanıza gerek yoktur.**  
 > Yapay zeka ajanınıza (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) **yalnızca yukarıdaki URL'yi yapıştırın** — ajan otomatik olarak **%100 Salt Okunur (Read-Only) denetim** yapar ve **① Genel Derece ve Karar (`GO / CONDITIONAL / NO-GO`), ② 5 Boyut + Atlas 4 Eksen (`20/20/5/55`) Puan Tabloları, ③ Somut Yama Planı (`dosya:satır` + diff) ve ④ 24 Sayfalık LVMH Quiet Luxury PDF (`~/Downloads/`)** çıktısını üretir.  
 *(Çoklu depo toplu karşılaştırma: `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*

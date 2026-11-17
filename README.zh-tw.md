@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **軍規級零留存與徹底抹除保障（Zero-Retention）**：**Atlas DDE** 對目標儲存庫保持 **100% 唯讀（Read-Only）**，暫存工作區採用 **`0o700` ACL + Fernet 加密**，審計結束時執行 **美國國防部標準 DoD 5220.22-M 3 次覆寫抹除**，並在 PDF 卷末自動簽發 **ECDSA P-256 密碼學簽章的資料清除證書**。
+
 > **無需輸入任何指令、參數（`--format blueprint --emit-patch --lang zh-tw`）或長串說明（「唯讀審計並給出5維度評分與修補方案」）。**  
 > 只需將 **上方 URL** 貼到您的 AI 代理（Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot），AI 即會自動執行 **100% 唯讀（Read-Only）原始碼審計**，並自動輸出 **① 綜合評級與結論（`GO / CONDITIONAL / NO-GO`）、② 標準 5 維度 + Atlas 4 軸（`20/20/5/55`）評分表、③ 具體修補方案（`file:line` + diff）及 ④ 24 頁 LVMH Quiet Luxury PDF 報告（`~/Downloads/`）**。  
 *（多儲存庫批次比較：`https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`）*

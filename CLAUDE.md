@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **最高機密保護・完全消去保証（Zero-Retention）**: **Atlas DDE** は対象リポジトリを **100% 読み取り専用（Read-Only）** で扱い、一時領域は **`0o700` ACL＋Fernet 暗号化**、監査終了時には **米国国防総省規格 DoD 5220.22-M 3パス上書き消去** を行い、**ECDSA P-256 暗号署名入りのデータ破棄証明書** を PDF 巻末に自動発行します。
+
 ---
 
 # Atlas DDE (Due Diligence Engine) — プロジェクト規約 / Project Conventions

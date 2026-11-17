@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **Zero-Retention-Garanti av Militär Klass**: **Atlas DDE** hanterar målrepot som **100 % skrivskyddat (Read-Only)**, låser den temporära arbetsytan med **`0o700` ACL + Fernet-kryptering**, utför vid slutförd granskning en **3-pass överskrivningsradering enligt amerikanska försvarsdepartementets standard DoD 5220.22-M** och utfärdar automatiskt ett **ECDSA P-256 kryptografiskt signerat dataraderingscertifikat** i slutet av PDF-rapporten.
+
 > **Inga kommandon, inga flaggor (`--format blueprint --emit-patch --lang sv`) och inga långa instruktioner ("granska skrivskyddat och visa 5-dimensionspoäng och patchar") behövs.**  
 > Klistra **bara in URL:en ovan** i din AI-agent (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) — AI:n kör automatiskt en **100 % skrivskyddad (Read-Only) granskning** och levererar **① Totalbetyg & Beslut (`GO / CONDITIONAL / NO-GO`), ② 5-Dimensions + Atlas 4-Axlars (`20/20/5/55`) Poängtabeller, ③ Konkret Patchplan (`fil:rad` + diff) och ④ den 24-sidiga LVMH Quiet Luxury PDF-rapporten (`~/Downloads/`)**.  
 *(Batch-jämförelse av flera repon: `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*

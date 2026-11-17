@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **Cam Kết Không Lưu Trữ Chuẩn Quân Đội (Zero-Retention)**: **Atlas DDE** xử lý kho mã nguồn đích ở chế độ **100% Chỉ Đọc (Read-Only)**, khóa vùng tạm bằng **`0o700` ACL + mã hóa Fernet**, thực hiện **xóa ghi đè 3 lớp theo tiêu chuẩn Bộ Quốc phòng Hoa Kỳ DoD 5220.22-M** khi kết thúc kiểm toán và tự động cấp **Chứng chỉ Hủy Dữ liệu ký số ECDSA P-256** ở cuối bản PDF.
+
 > **Không cần gõ lệnh, cờ (`--format blueprint --emit-patch --lang vi`) hay câu lệnh dài ("kiểm toán chỉ đọc và cho biết điểm 5 chiều cùng bản vá").**  
 > Chỉ cần dán **đúng URL ở trên** vào AI Agent của bạn (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) — AI sẽ tự động chạy **kiểm toán 100% Chỉ Đọc (Read-Only)** và xuất ra **① Hạng Tổng Thể & Kết Luận (`GO / CONDITIONAL / NO-GO`), ② Bảng Điểm 5 Chiều + 4 Trục Atlas (`20/20/5/55`), ③ Đề Xuất Bản Vá (`file:dòng` + diff), và ④ Báo Cáo PDF LVMH Quiet Luxury 24 trang (`~/Downloads/`)**.  
 *(So sánh hàng loạt nhiều kho lưu trữ: `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*

@@ -202,15 +202,19 @@ def test_six_language_readme_parity_invariant():
     for fname, (lang_flag, lang_code) in configs.items():
         content = (_ROOT / fname).read_text(encoding="utf-8")
 
-        # Verify Line 1-6 is the URL-only hero block in every README
-        first_six_lines = "\n".join(content.splitlines()[:6])
+        # Verify Line 1-12 is the URL-only hero block + DoD 5220.22-M / Fernet / ECDSA P-256 guarantee in every README
+        first_twelve_lines = "\n".join(content.splitlines()[:12])
         assert content.startswith("## ⚡ "), f"{fname} must start at Line 1 with '## ⚡ ...' URL-only hero heading"
-        assert "https://github.com/Atlas-Associates-Inc/Due-diligence-engine" in first_six_lines, (
+        assert "https://github.com/Atlas-Associates-Inc/Due-diligence-engine" in first_twelve_lines, (
             f"{fname} must have the bare repository URL in lines 1-6"
         )
+        for sec_token in ("0o700", "Fernet", "DoD 5220.22-M", "ECDSA P-256"):
+            assert sec_token in first_twelve_lines, (
+                f"{fname} top hero missing security guarantee token {sec_token}"
+            )
 
         # Verify all 20 README links are present in the top switcher
-        top_switcher = "\n".join(content.splitlines()[:30])
+        top_switcher = "\n".join(content.splitlines()[:35])
         for target_readme in configs:
             assert f"]({target_readme})" in top_switcher, (
                 f"{fname} top switcher missing link to {target_readme}"

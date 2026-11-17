@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **Military-Grade Zero-Retention Guarantee**: **Atlas DDE** treats the target repository as **100% Read-Only**, locks temporary workspaces with **`0o700` ACL + Fernet (AES-128-CBC + HMAC-SHA256) encryption**, performs a **U.S. Department of Defense DoD 5220.22-M 3-pass overwrite wipe** upon completion, and automatically issues an **ECDSA P-256 cryptographically signed Data Purge Certificate** at the end of the PDF.
+
 > **No commands, no flags (`--format blueprint --emit-patch --lang ...`), and no instructions ("audit read-only and show 5-dimension scores & remediation patches") needed.**  
 > Paste **only the URL above** into your AI agent (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) — the AI automatically runs a **100% Read-Only audit** and outputs **① Overall Grade & Verdict (`GO / CONDITIONAL / NO-GO`), ② Standard 5-Dimension + Atlas 4-Axis (`20/20/5/55`) Scores, ③ Concrete Remediation Patch Plan (`file:line` + diff), and ④ the 24-Page LVMH Quiet Luxury PDF (`~/Downloads/`)**.  
 *(Multi-repo batch comparison: `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*

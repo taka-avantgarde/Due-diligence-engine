@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **सैन्य-स्तरीय ज़ीरो-रिटेंशन और पूर्ण डेटा विलोपन गारंटी**: **Atlas DDE** लक्ष्य रिपॉजिटरी को **100% रीड-ओनली (Read-Only)** रखता है, अस्थायी क्षेत्र को **`0o700` ACL + Fernet एन्क्रिप्शन** से सुरक्षित करता है, ऑडिट समाप्त होने पर **अमेरिकी रक्षा मंत्रालय मानक DoD 5220.22-M 3-पास ओवरराइट विलोपन** करता है, और PDF के अंत में **ECDSA P-256 क्रिप्टोग्राफ़िक हस्ताक्षरित डेटा विलोपन प्रमाणपत्र** स्वतः जारी करता है।
+
 > **किसी कमांड, फ़्लैग (`--format blueprint --emit-patch --lang hi`) या लंबे निर्देश ("रीड-ओनली ऑडिट करें और 5-आयाम स्कोर व पैच बताएं") की आवश्यकता नहीं है।**  
 > अपने AI एजेंट (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) में **केवल ऊपर दिया गया URL पेस्ट करें** — AI स्वतः **100% रीड-ओनली (Read-Only) ऑडिट** चलाएगा और **① कुल ग्रेड व निर्णय (`GO / CONDITIONAL / NO-GO`), ② मानक 5-आयाम + Atlas 4-अक्ष (`20/20/5/55`) स्कोर तालिका, ③ ठोस सुधार पैच योजना (`file:line` + diff), तथा ④ 24-पृष्ठ LVMH Quiet Luxury PDF (`~/Downloads/`)** प्रस्तुत करेगा।  
 *(एकाधिक रिपॉजिटरी बैच तुलना: `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*

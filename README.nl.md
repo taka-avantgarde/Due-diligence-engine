@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **Zero-Retention Garantie op Militair Niveau**: **Atlas DDE** behandelt de doelrepository **100% als alleen-lezen (Read-Only)**, vergrendelt de tijdelijke map met **`0o700` ACL + Fernet-encryptie**, voert na afloop een **3-pass overschrijving volgens de Amerikaanse defensiestandaard DoD 5220.22-M** uit en geeft achterin de PDF automatisch een **met ECDSA P-256 cryptografisch ondertekend datavernietigingscertificaat** uit.
+
 > **Geen opdrachten, geen flags (`--format blueprint --emit-patch --lang nl`) en geen lange instructies ("voer alleen-lezen audit uit en toon 5-dimensie scores en patches") nodig.**  
 > Plak **alleen de bovenstaande URL** in je AI-agent (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) — de AI voert automatisch een **100% alleen-lezen (Read-Only) audit** uit en levert **① Eindcijfer & Oordeel (`GO / CONDITIONAL / NO-GO`), ② 5-Dimensies + Atlas 4-Assen (`20/20/5/55`) Tabellen, ③ Concreet Patchplan (`bestand:regel` + diff) en ④ de 24-pagina LVMH Quiet Luxury PDF (`~/Downloads/`)**.  
 *(Multi-repo batchvergelijking: `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*

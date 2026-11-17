@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **군사 등급 제로 리텐션 및 완전 파기 보증**: **Atlas DDE**는 대상 저장소를 **100% 읽기 전용(Read-Only)** 으로 취급하며, 임시 영역은 **`0o700` ACL + Fernet 암호화**로 보호하고, 감사 종료 시 **미국 국방부 규격 DoD 5220.22-M 3회 덮어쓰기 완전 삭제**를 수행한 뒤 **ECDSA P-256 암호화 서명이 포함된 데이터 파기 증명서**를 PDF 마지막 페이지에 자동 발행합니다.
+
 > **명령어나 플래그(`--format blueprint --emit-patch --lang ko`), 긴 지시문("읽기 전용으로 감사하고 5대 영역 점수와 패치안을 알려줘")을 입력할 필요가 전혀 없습니다.**  
 > 사용 중인 AI 에이전트(Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot)에 **위 URL만 붙여넣으면**, AI가 **① 100% 읽기 전용(Read-Only) 코드 감사, ② 표준 5차원 + Atlas 4축(`20/20/5/55`) 점수표, ③ 구체적인 개선 패치안(`file:line` + diff), ④ 24페이지 LVMH Quiet Luxury PDF(`~/Downloads/`)** 까지 전 과정을 자동으로 출력합니다.  
 *(다중 저장소 일괄 비교: `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*

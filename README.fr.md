@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **Garantie Zéro Rétention de Niveau Militaire** : **Atlas DDE** traite le dépôt cible **100 % en lecture seule (Read-Only)**, verrouille l'espace temporaire par **ACL `0o700` + chiffrement Fernet**, exécute en fin d'audit un **effacement à 3 passes selon la norme DoD 5220.22-M du Département de la Défense américain**, et délivre automatiquement un **Certificat de Purge des Données signé cryptographiquement (ECDSA P-256)** en fin de PDF.
+
 > **Aucune commande, aucun flag (`--format blueprint --emit-patch --lang fr`) et aucune phrase d'instruction (« audite en lecture seule et donne les 5 scores et correctifs ») ne sont nécessaires.**  
 > Collez **uniquement l'URL ci-dessus** dans votre agent IA (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) : l'IA exécute automatiquement un **audit 100 % en lecture seule (Read-Only)** et produit **① la Note Globale & le Verdict (`GO / CONDITIONAL / NO-GO`), ② les Tableaux 5 Dimensions + 4 Axes Atlas (`20/20/5/55`), ③ le Plan de Correctifs (`fichier:ligne` + diff) et ④ le PDF LVMH Quiet Luxury de 24 pages (`~/Downloads/`)**.  
 *(Comparaison multi-dépôts en lot : `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*

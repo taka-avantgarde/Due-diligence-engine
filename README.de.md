@@ -4,6 +4,8 @@
 https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 ```
 
+> 🔐 **Zero-Retention-Garantie auf Militärniveau**: **Atlas DDE** behandelt das Ziel-Repository **100 % schreibgeschützt (Read-Only)**, sichert den temporären Arbeitsbereich mit **`0o700` ACL + Fernet-Verschlüsselung**, führt nach Abschluss eine **3-Pass-Überschreibung nach US-Verteidigungsministeriumsstandard DoD 5220.22-M** durch und stellt am Ende des PDFs automatisch ein **kryptografisch mit ECDSA P-256 signiertes Datenlöschzertifikat** aus.
+
 > **Keine Befehle, keine Flags (`--format blueprint --emit-patch --lang de`) und keine langen Anweisungen („nur lesend prüfen und 5-Dimensionen-Scores + Patches zeigen“) erforderlich.**  
 > Füge **nur die obige URL** in deinen KI-Agenten (Antigravity / Gemini CLI / Claude Code / Codex / Cursor / Copilot) ein — die KI führt automatisch ein **100 % schreibgeschütztes (Read-Only) Audit** durch und liefert **① Gesamtnote & Urteil (`GO / CONDITIONAL / NO-GO`), ② 5-Dimensionen- + Atlas-4-Achsen-Tabellen (`20/20/5/55`), ③ konkrete Patch-Vorschläge (`Datei:Zeile` + Diff) sowie ④ das 24-seitige LVMH-Quiet-Luxury-PDF (`~/Downloads/`)**.  
 *(Multi-Repo-Batch-Vergleich: `https://github.com/Atlas-Associates-Inc/Due-diligence-engine <repoA> <repoB>`)*
