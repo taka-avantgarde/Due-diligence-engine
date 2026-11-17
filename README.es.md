@@ -29,7 +29,7 @@ https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 
 ---
 
-# 🔍 Atlas DDE (Due Diligence Engine)
+# <img src="dde-icon.svg" width="36" height="36" valign="middle" alt="Atlas DDE" /> Atlas DDE (Due Diligence Engine)
 
 ### **La IA de tu IDE → Analista de Due Diligence Técnica de Clase Mundial**
 

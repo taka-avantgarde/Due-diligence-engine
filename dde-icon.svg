@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="dde-bg" x1="64" y1="24" x2="448" y2="488" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#141929"/>
+      <stop offset="100%" stop-color="#070910"/>
+    </linearGradient>
+    <radialGradient id="dde-glow" cx="50%" cy="38%" r="46%">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="dde-tree" x1="256" y1="96" x2="256" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="58%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="dde-bough" x1="120" y1="120" x2="392" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#93C5FD"/>
+      <stop offset="50%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Obsidian Squircle Base -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#dde-bg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#dde-glow)"/>
+  <rect x="18" y="18" width="476" height="476" rx="106" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="4"/>
+
+  <!-- Subtle Yggdrasil Horizon Ring -->
+  <circle cx="256" cy="256" r="168" stroke="#60A5FA" stroke-opacity="0.18" stroke-width="4"/>
+
+  <!-- Foundational Roots (Curving smoothly into the base) -->
+  <path d="M256 316 C250 358 212 388 156 404" stroke="#3B82F6" stroke-width="18" stroke-linecap="round"/>
+  <path d="M256 316 C262 358 300 388 356 404" stroke="#3B82F6" stroke-width="18" stroke-linecap="round"/>
+  <path d="M256 336 C244 374 222 398 196 414" stroke="#60A5FA" stroke-width="13" stroke-linecap="round" opacity="0.8"/>
+  <path d="M256 336 C268 374 290 398 316 414" stroke="#60A5FA" stroke-width="13" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- Outer Canopy Boughs -->
+  <path d="M256 268 C242 222 194 192 128 182" stroke="url(#dde-bough)" stroke-width="18" stroke-linecap="round"/>
+  <path d="M256 268 C270 222 318 192 384 182" stroke="url(#dde-bough)" stroke-width="18" stroke-linecap="round"/>
+
+  <!-- Upper Canopy Boughs -->
+  <path d="M256 236 C248 184 214 148 168 126" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
+  <path d="M256 236 C264 184 298 148 344 126" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
+
+  <!-- Central Trunk & Crown Apex -->
+  <path d="M256 104 V408" stroke="url(#dde-tree)" stroke-width="24" stroke-linecap="round"/>
+
+  <!-- Luminous Technology Nodes at Canopy Tips -->
+  <circle cx="256" cy="104" r="14" fill="#FFFFFF"/>
+  <circle cx="168" cy="126" r="13" fill="#FFFFFF"/>
+  <circle cx="344" cy="126" r="13" fill="#FFFFFF"/>
+  <circle cx="128" cy="182" r="12" fill="#60A5FA"/>
+  <circle cx="384" cy="182" r="12" fill="#60A5FA"/>
+</svg>

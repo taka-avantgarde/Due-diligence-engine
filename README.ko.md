@@ -29,7 +29,7 @@ https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 
 ---
 
-# 🔍 Atlas DDE (Due Diligence Engine)
+# <img src="dde-icon.svg" width="36" height="36" valign="middle" alt="Atlas DDE" /> Atlas DDE (Due Diligence Engine)
 
 ### **IDE의 AI → 세계 최고 수준의 기술 실사(Tech DD) 애널리스트**
 
