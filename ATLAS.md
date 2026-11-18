@@ -33,12 +33,12 @@ due_diligence_engine/
 ├── ingest/              # Secure data ingest, memory-backed tmpfs, and DOD 5220.22-M shredding
 ├── prompt/              # 9-dimension structured prompt generation & robust JSON response parsing
 ├── purge/               # DoD 5220.22-M 3-pass data wipe, Fernet encryption, ECDSA P-256 purge certificates
-├── report/              # 24-page enterprise PDF generator (pdf_generator.py), HTML scorecard, 14-lang i18n
+├── report/              # 24-page enterprise PDF generator (pdf_generator.py), HTML scorecard, 20-lang i18n
 └── score/               # Monotonic 9-dimension scoring engine, grade boundaries, zero-false-positive filtering
 ```
 
-- **Shared Application API (`api.py`)**: Core programmatic interface exposing `prepare_audit()`, `list_evidence()`, `read_evidence()`, `verify_sites()`, `validate_report()`, `render_report()`, and `close_audit()`.
-- **Native MCP Server (`mcp_server.py` / `dde mcp`)**: Standard Model Context Protocol server exposing tools (`dde_prepare_audit`, `dde_list_evidence`, `dde_read_evidence`, `dde_verify_sites`, `dde_validate_report`, `dde_render_report`, `dde_close_audit`) and resources (`dde://schemas/consulting/v1`, `dde://evidence/...`, `dde://report/...`).
+- **Shared Application API (`api.py`)**: Core programmatic interface exposing `prepare_audit()`, `list_evidence()`, `read_evidence()`, `verify_sites()`, `validate_report()`, `render_report()`, `close_audit()`, `batch_audit()`, `compute_historical_delta()`, `generate_sbom()`, and `generate_sarif()`.
+- **Native MCP Server (`mcp_server.py` / `dde mcp`)**: Standard Model Context Protocol server exposing 9 tools (`dde_prepare_audit`, `dde_list_evidence`, `dde_read_evidence`, `dde_verify_sites`, `dde_validate_report`, `dde_render_report`, `dde_close_audit`, `dde_batch_audit`, `dde_generate_sbom`) and resources (`dde://schemas/consulting/v1`, `dde://evidence/...`, `dde://report/...`).
 - **CLI (`cli.py`)**: Direct terminal interface for human operators and script automation.
 - **Maintenance (`maintenance.py`)**: Unified maintenance runner (`python -m due_diligence_engine.maintenance check --profile quick` or `--profile release`).
 

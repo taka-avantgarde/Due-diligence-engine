@@ -458,7 +458,7 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 
 ## 🗺️ ロードマップ
 
-**最近リリース (v0.6.x)**
+**最近リリース (v1.0.0 GA & v0.x)**
 - ✅ **世界最高峰の決定論的監査エンジン・業界別ドメイン評価パック・CycloneDX 1.6 SBOM・履歴差分トラッキング** (2026-11, v1.0.0): 6大業界別ドメイン評価パック（`messaging_cyber` / `fintech` / `medical` / `ai_agent` / `gaming` / `enterprise_saas`、`--industry` 対応）、米国大統領令 EO 14028 準拠 CycloneDX 1.6 SBOM 生成（`dde sbom`）、前回監査とのスコア・Red Flag 差分トラッキング（`--baseline` / `compute_historical_delta`）、24ページ Consulting PDF / Scorecard への M&A PMI（`Day-1 / Day-30 / Day-100`）定量工数ロードマップ統合、Read-Only Unified Diff 修正パッチ提案、および全20言語フルスタック完全同期を実装。
 - ✅ **Atlas DDE ブランド統一・LVMH Quiet Luxury 超視認性レポート全面刷新 ＆ `dde batch` ポートフォリオ一括比較**（2026-11、v0.6.5）: 正式ブランド表記を **`Atlas DDE`** に統一し、複数リポジトリ一括比較モード（`dde batch <targets>... --pdf`）を追加。さらに PDF・Markdown・HTMLスコアカード・HTMLスライド・CLI表示をトップ投資銀行／戦略ファーム水準の超視認性レイアウトへ全面刷新 — ①冒頭1ページ完結のエグゼクティブ・サマリー比較表（総合グレード・標準5次元表・Atlas 4軸表・GO/CONDITIONAL/NO-GO結論＆最重要リスク3点）、②Quiet Luxury カラー階層（`#0284c7` ブルー、`#059669` エメラルド、`#d97706` アンバー、`#e11d48` ピンクレッド）と極細タイポグラフィ、③「企業の主張 vs 実コードの証拠（`file:line` ＆ `○/△/×`）」2列対比表、④優先度順 Red Flags 4列テーブル、⑤高コントラスト競合マトリックスを実装。あわせてネイティブMCPサーバー（`dde mcp`、7ツール）、共有アプリケーションAPI（`api.py`）、2026年最新依存ライブラリ（ReportLab 5.1、cryptography 50、Rust python-bidi、google-genai 3.3、pydantic 2.14.3）、計305件超の自動ユニット・E2E回帰テストを完備。
 - ✅ **Claude 5.5 世代へモデル更新 + Python 3.13 対応**（2026-10、v0.6.2）: BYOK の 3 ティアをすべて現行ラインナップへ移行 — スキャン **Haiku 4.5 → Haiku 5.5**（`claude-haiku-5-5`、$0.10/$0.50 per MTok、10 分の 1 のコスト）、分析 **Sonnet 4.6 → Sonnet 5.5**（`claude-sonnet-5-5`、$2/$10、従来 $3/$15 から値下げ）、判定 **Fable 5 → Fable 5.1**（`claude-fable-5-1`、$10/$50 は据え置き）。サイト検証スコアラーの日付付き Haiku スナップショットのハードコードを廃止し、BYOK の Claude デフォルト/コスト表も `config.MODELS` から導出するよう統一（新テスト `tests/test_model_ids.py` で保護）。Gemini BYOK を旧 SDK から現行 `google-genai>=2.30.1`（Interactions API）+ `gemini-4-argon` へ移行、OpenAI BYOK デフォルトを `gpt-5` へ更新。`dde doctor` / AI ターミナル自動検出に Codex CLI・Gemini CLI・Antigravity を追加。CI GitHub Actions（`setup-python@v7`、`codeql-action@v4.37.4`、`osv-scanner-action@v2.5.0`）を最新化。PDF `red_flags` の誤検知ノイズ 0% 化を実施（`git rebase` 日時差や専門用語カウント等のヒューリスティック誤検知を参考値へ降格し、プロンプト＋パーサー安全弁 `_filter_red_flags` により `file:line` と修正方針を伴う本物のコード欠陥のみを出力、PDF ファイル名も正規名に一元化）。非推奨の `datetime.utcnow()` を置換（Python 3.12+ の警告解消）。CI マトリクスと classifiers に Python 3.13 を追加。
@@ -500,10 +500,8 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 - ✅ タイポグラフィシステム刷新（leading・階層）
 - ✅ セキュリティ CI 強化（CodeQL, Dependabot, gitleaks）
 
-**今後の予定 (v0.7.0+)**
-- 🚧 履歴トラッキング — 再分析でスコア推移可視化
+**今後の予定 (v1.1.0+)**
 - 🚧 Slack/Discord 通知アダプター
-- 🚧 業界別評価パック（医療・フィンテック・ゲーミングプリセット）
 - 🚧 PyPI / Homebrew 配布
 
 機能要望・バグ報告は [Issue](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues) でお知らせください。

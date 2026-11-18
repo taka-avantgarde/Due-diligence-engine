@@ -461,7 +461,7 @@ R : DDE évalue le code source, pas le badge. Un service de stockage en clair ce
 
 ## 🗺️ Feuille de route
 
-**Livré récemment (v0.6.x)**
+**Livré récemment (v1.0.0 GA & v0.x)**
 - ✅ **Unification de la Marque `Atlas DDE`, Refonte LVMH Quiet Luxury des Rapports & Mode Portefeuille `dde batch`** (2026-11, v0.6.5) : marque officielle unifiée sous **Atlas DDE**, comparaison par lots multi-dépôts (`dde batch <targets>... --pdf`), et refonte complète des sorties PDF, Markdown, HTML Scorecard, diapositives HTML et CLI au standard banque d'affaires / cabinet de stratégie — Page 1 Fiche Exécutive Tout-en-Un (Note Globale + Tableau 5 Dimensions + Tableau 4 Axes Atlas + Verdict GO/CONDITIONAL/NO-GO & Top 3 Risques Prioritaires), palette sémantique Quiet Luxury (`#0284c7`, `#059669`, `#d97706`, `#e11d48`) avec typographie fine, tableau comparatif à 2 colonnes « Affirmation vs. Preuve dans le Code (`fichier:ligne` + `○/△/×`) », tableau des Signaux d'Alerte à 4 colonnes trié par priorité et Matrice Concurrentielle à haut contraste. Inclut également tout le durcissement de sécurité Zero-Defect v0.6.4, serveur MCP natif (`dde mcp`, 7 outils), API partagée (`api.py`), compétences `.agents/skills/` & gouvernance SSOT (`ATLAS.md`), dépendances 2026 (ReportLab 5.1, cryptography 50, python-bidi en Rust, google-genai 3.3, pydantic 2.14.3) et 305+ tests automatisés.
 - ✅ **Mise à niveau des modèles vers la génération Claude 5.5 + Python 3.13** (2026-10, v0.6.2) : les trois paliers BYOK passent à la gamme actuelle — scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, 0,10 $/0,50 $ par MTok, 10× moins cher), analyse **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, 2 $/10 $, contre 3 $/15 $), juge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, toujours 10 $/50 $). Le scoreur de vérification de site n'embarque plus de snapshot Haiku daté et le modèle/tableau de coûts Claude par défaut en BYOK dérivent désormais de `config.MODELS`, protégés par le nouveau `tests/test_model_ids.py`. Gemini BYOK migré de l'ancien SDK vers `google-genai>=2.30.1` (Interactions API) + `gemini-4-argon` ; OpenAI BYOK par défaut mis à jour vers `gpt-5`. Détection de terminal IA dans `dde doctor` étendue à Codex CLI, Gemini CLI et Antigravity. GitHub Actions de CI mis à jour (`setup-python@v7`, `codeql-action@v4.37.4`, `osv-scanner-action@v2.5.0`). Élimination du bruit des faux positifs heuristiques dans les `red_flags` PDF (écarts de dates `git rebase` et comptage de buzzwords rétrogradés en métriques informatives ; prompt + filtre de sécurité `_filter_red_flags` limités aux vrais défauts de code avec `fichier:ligne` et correctif ; nom de fichier PDF unifié). `datetime.utcnow()` obsolète remplacé (plus d'avertissements sur Python 3.12+) ; Python 3.13 ajouté à la matrice de CI et aux classifiers.
 - ✅ **Paquet renommé `src` → `due_diligence_engine`** (2026-07, v0.6.1) : le paquet importable n'utilise plus le nom générique de premier niveau `src`, évitant les collisions sur `sys.path` une fois installé via pip. La commande `dde` est inchangée ; seuls les chemins d'`import` changent (`from due_diligence_engine...`).
@@ -502,10 +502,8 @@ R : DDE évalue le code source, pas le badge. Un service de stockage en clair ce
 - ✅ Refonte du système typographique (interlignage, hiérarchie)
 - ✅ Renforcement de la CI de sécurité (CodeQL, Dependabot, gitleaks)
 
-**Prévu (v0.7.0+)**
-- 🚧 Suivi historique — réanalyser et afficher les écarts de score dans le temps
+**Prévu (v1.1.0+)**
 - 🚧 Adaptateur de notification Slack/Discord
-- 🚧 Packs d'évaluation sectoriels (préréglages médical, fintech, jeu vidéo)
 - 🚧 Distribution PyPI / Homebrew
 
 Ouvrez une [issue](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues) pour suggérer des fonctionnalités ou signaler des bugs.

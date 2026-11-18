@@ -60,7 +60,7 @@ Use `scripts/agent_handoff.sh` for all task management:
 
 ## 3. Available Skills (`.agents/skills/`)
 - [`dde-audit`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/.agents/skills/dde-audit/SKILL.md): Repository auditing via native `dde mcp` tools.
-- [`dde-consulting-report`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/.agents/skills/dde-consulting-report/SKILL.md): Full 24-page enterprise M&A consulting PDF report generation (14 languages).
+- [`dde-consulting-report`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/.agents/skills/dde-consulting-report/SKILL.md): Full 24-page enterprise M&A consulting PDF report generation (20 languages).
 - [`dde-dev-change`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/.agents/skills/dde-dev-change/SKILL.md): Internal developer workflow for version, model, pricing, or README updates.
 - [`dde-dev-pdf-qa`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/.agents/skills/dde-dev-pdf-qa/SKILL.md): ReportLab PDF rendering, RTL Arabic shaping, and font QA.
 - [`dde-dev-release`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/.agents/skills/dde-dev-release/SKILL.md): Release preparation, packaging validation, and security audit.
@@ -68,6 +68,6 @@ Use `scripts/agent_handoff.sh` for all task management:
 ---
 
 ## 4. Governance & Engineering Rules (`.agents/rules/`)
-- [`00_ssot_invariants.md`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/.agents/rules/00_ssot_invariants.md): Version, model/pricing SSOT, 6-language README, and 14-language PDF dictionaries.
+- [`00_ssot_invariants.md`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/.agents/rules/00_ssot_invariants.md): Version, model/pricing SSOT, 20-language README, and 20-language PDF dictionaries.
 - [`10_security_boundaries.md`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/.agents/rules/10_security_boundaries.md): Untrusted target isolation, RFC 6598 SSRF blocking, DoD 5220.22-M 3-pass wiping, fail-closed `store=False`.
 - [`20_pdf_typography.md`](file:///Users/takayukimiyano/StudioProjects/due-diligence-engine/.agents/rules/20_pdf_typography.md): ReportLab 5.1 layout safety, KeepInFrame scale factors, Rust python-bidi RTL shaping, Latin/digit font wrapping.

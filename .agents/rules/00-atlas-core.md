@@ -5,4 +5,4 @@ trigger: always_on
 
 @[ATLAS.md](../../ATLAS.md)
 
-PDF language SSOT: `en`, `ja`, `es`, `fr`, `de`, `pt`, `nl`, `it`, `id`, `zh`, `ko`, `vi`, `th`, `ar`.
+PDF language SSOT (20 languages): `en`, `ja`, `es`, `fr`, `de`, `pt`, `nl`, `it`, `id`, `zh`, `zh-tw`, `ko`, `vi`, `th`, `ar`, `hi`, `tr`, `pl`, `ru`, `sv`.
