@@ -210,6 +210,15 @@ _ALL_20_LANGS = [
               help="Prompt output style (default/blueprint include 5-dim scores & remediation patches automatically)")
 @click.option("--emit-patch/--no-emit-patch", default=True,
               help="Include concrete remediation patch proposals (enabled by default)")
+@click.option(
+    "--industry",
+    default="auto",
+    type=click.Choice(
+        ["auto", "messaging_cyber", "fintech", "medical", "ai_agent", "gaming", "enterprise_saas"],
+        case_sensitive=False,
+    ),
+    help="Industry-specific domain evaluation pack (auto-detected if 'auto')",
+)
 def prompt(
     target: str,
     name: str | None,
@@ -222,6 +231,7 @@ def prompt(
     urls: tuple[str, ...],
     prompt_format: str = "default",
     emit_patch: bool = True,
+    industry: str = "auto",
 ) -> None:
     """Generate an AI evaluation prompt for IDE terminals.
 
@@ -348,6 +358,12 @@ def prompt(
                 skip_git=skip_git,
                 skip_ai=True,
             )
+            if industry and industry.lower() != "auto":
+                from due_diligence_engine.score.scorer import Scorer
+                result.code_analysis.complexity_metrics["industry_override"] = industry.lower()
+                result.code_analysis.complexity_metrics["industry_pack"] = Scorer.detect_industry_pack(
+                    result, override_industry=industry.lower()
+                )
             progress.update(task, description="Generating prompt...")
     finally:
         # Cleanup
@@ -934,6 +950,24 @@ def batch_cmd(
         console.print(f"  [cyan]PDF : {summary['pdf_path']}[/cyan]")
     console.print(f"  [cyan]MD  : {summary['markdown_path']}[/cyan]")
     console.print(f"  [cyan]HTML: {summary['html_path']}[/cyan]")
+
+
+@cli.command("sbom")
+@click.argument("target", default=".", required=False)
+@click.option("--output", "-o", type=click.Path(), default=None, help="Output CycloneDX 1.6 SBOM JSON file path")
+def sbom_cmd(target: str, output: str | None) -> None:
+    """Generate a U.S. EO 14028 CycloneDX 1.6 Software Bill of Materials (SBOM) JSON."""
+    import json as _json
+    from due_diligence_engine.api import generate_sbom
+
+    bom = generate_sbom(target, output_path=output)
+    if output:
+        console.print(
+            f"[bold #059669]✓ CycloneDX 1.6 SBOM generated:[/bold #059669] [cyan]{Path(output).resolve()}[/cyan] "
+            f"([bold]{len(bom.get('components', []))}[/bold] components)"
+        )
+    else:
+        click.echo(_json.dumps(bom, indent=2, ensure_ascii=False))
 
 
 def _display_score_summary(result, score) -> None:

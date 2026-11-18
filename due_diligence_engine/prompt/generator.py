@@ -20,6 +20,7 @@ import re
 from typing import Any
 
 from due_diligence_engine.models import AnalysisResult, RedFlag
+from due_diligence_engine.score.scorer import Scorer
 
 
 # ---------------------------------------------------------------------------
@@ -441,11 +442,15 @@ def _format_heuristic_en(result: AnalysisResult) -> str:
     git = result.git_forensics
     consistency = result.consistency
     doc = result.doc_analysis
+    pack = code.complexity_metrics.get("industry_pack") or Scorer.detect_industry_pack(result)
+    controls_str = "; ".join(pack.get("mandatory_controls", []))
 
     lines = [
         "### Code Analysis\n",
         f"| Metric | Value | What this means |",
         f"|--------|-------|-----------------|",
+        f"| Industry Domain Pack | {pack.get('label_en', 'Enterprise B2B SaaS')} (`{pack.get('id', 'enterprise_saas')}`) | Domain-specific M&A evaluation rubric & compliance baseline |",
+        f"| Mandatory Domain Controls | {controls_str} | Required technical controls for this vertical |",
         f"| Total files | {code.total_files:,} | Number of source code files in the project |",
         f"| Total lines | {code.total_lines:,} | Lines of code (larger = more substantial product) |",
         f"| Languages | {_format_langs(code.languages)} | Programming languages used |",
@@ -489,11 +494,15 @@ def _format_heuristic_ja(result: AnalysisResult) -> str:
     git = result.git_forensics
     consistency = result.consistency
     doc = result.doc_analysis
+    pack = code.complexity_metrics.get("industry_pack") or Scorer.detect_industry_pack(result)
+    controls_str = " / ".join(pack.get("mandatory_controls", []))
 
     lines = [
         "### コード分析\n",
         f"| 指標 | 値 | 意味 |",
         f"|------|-----|------|",
+        f"| 業界別ドメイン評価パック | {pack.get('label_ja', 'エンタープライズB2B SaaS')} (`{pack.get('id', 'enterprise_saas')}`) | 業界特化のM&A技術監査ルーブリック・規制準拠基準 |",
+        f"| ドメイン必須統制項目 | {controls_str} | 当該業界で必須となる技術・セキュリティ統制 |",
         f"| 総ファイル数 | {code.total_files:,} | プロジェクト内のソースコードファイル数 |",
         f"| 総行数 | {code.total_lines:,} | 書かれたコードの行数（多いほど実質的な製品） |",
         f"| 使用言語 | {_format_langs(code.languages)} | 使用されているプログラミング言語 |",

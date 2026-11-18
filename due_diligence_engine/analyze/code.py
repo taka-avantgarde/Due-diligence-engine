@@ -306,7 +306,7 @@ class CodeAnalyzer:
         result.has_documentation = self._check_documentation()
 
         # Dependency analysis
-        result.dependency_count = self._count_dependencies()
+        result.dependency_count = self._count_dependencies(result=result)
 
         # Generate red flags
         self._generate_red_flags(result, api_call_files, real_impl_files)
@@ -561,9 +561,10 @@ class CodeAnalyzer:
         has_docs_dir = any("docs/" in f["path"].lower() for f in doc_files)
         return has_readme or has_docs_dir
 
-    def _count_dependencies(self) -> int:
-        """Count project dependencies from manifest files."""
+    def _count_dependencies(self, result: CodeAnalysisResult | None = None) -> int:
+        """Count project dependencies and extract CycloneDX SBOM components from manifest files."""
         dep_count = 0
+        sbom_components: list[dict[str, str]] = []
         dep_files = [
             "requirements.txt",
             "pyproject.toml",
@@ -587,6 +588,15 @@ class CodeAnalyzer:
                                 dependencies = package.get(section, {})
                                 if isinstance(dependencies, dict):
                                     dep_count += len(dependencies)
+                                    for pkg_name, ver_spec in dependencies.items():
+                                        ver_str = str(ver_spec).lstrip("^~>=< ") or "latest"
+                                        sbom_components.append({
+                                            "type": "library",
+                                            "name": str(pkg_name),
+                                            "version": ver_str,
+                                            "purl": f"pkg:npm/{pkg_name}@{ver_str}",
+                                            "manifest": entry["path"],
+                                        })
                         continue
                     if name == "pyproject.toml":
                         project_config = tomllib.loads(content)
@@ -595,6 +605,19 @@ class CodeAnalyzer:
                             dependencies = project.get("dependencies", [])
                             if isinstance(dependencies, list):
                                 dep_count += sum(isinstance(dep, str) for dep in dependencies)
+                                for dep in dependencies:
+                                    if isinstance(dep, str):
+                                        m = re.match(r"^([A-Za-z0-9_.\-]+)(?:\[[^\]]+\])?\s*([><=~!]+.+)?", dep.strip())
+                                        if m:
+                                            pkg_n = m.group(1)
+                                            pkg_v = (m.group(2) or "unspecified").lstrip("><=~! ")
+                                            sbom_components.append({
+                                                "type": "library",
+                                                "name": pkg_n,
+                                                "version": pkg_v,
+                                                "purl": f"pkg:pypi/{pkg_n.lower()}@{pkg_v}",
+                                                "manifest": entry["path"],
+                                            })
                             optional = project.get("optional-dependencies", {})
                             if isinstance(optional, dict):
                                 dep_count += sum(
@@ -606,17 +629,39 @@ class CodeAnalyzer:
                         dependencies = poetry.get("dependencies", {}) if isinstance(poetry, dict) else {}
                         if isinstance(dependencies, dict):
                             # Poetry's Python version constraint is not a package dependency.
-                            dep_count += sum(name != "python" for name in dependencies)
+                            dep_count += sum(pkg_k != "python" for pkg_k in dependencies)
+                            for pkg_k, ver_v in dependencies.items():
+                                if pkg_k != "python":
+                                    ver_s = str(ver_v).lstrip("^~>=< ")
+                                    sbom_components.append({
+                                        "type": "library",
+                                        "name": str(pkg_k),
+                                        "version": ver_s,
+                                        "purl": f"pkg:pypi/{str(pkg_k).lower()}@{ver_s}",
+                                        "manifest": entry["path"],
+                                    })
                         continue
                 except (json.JSONDecodeError, tomllib.TOMLDecodeError):
                     # Malformed manifests retain the legacy best-effort estimate.
                     pass
-                dep_count += sum(
-                    1
-                    for line in content.splitlines()
-                    if line.strip()
-                    and not line.strip().startswith(("#", "//"))
-                )
+                for line in content.splitlines():
+                    stripped = line.strip()
+                    if stripped and not stripped.startswith(("#", "//")):
+                        dep_count += 1
+                        if name == "requirements.txt":
+                            m = re.match(r"^([A-Za-z0-9_.\-]+)(?:\[[^\]]+\])?\s*([><=~!]+.+)?", stripped)
+                            if m:
+                                pkg_n = m.group(1)
+                                pkg_v = (m.group(2) or "unspecified").lstrip("><=~! ")
+                                sbom_components.append({
+                                    "type": "library",
+                                    "name": pkg_n,
+                                    "version": pkg_v,
+                                    "purl": f"pkg:pypi/{pkg_n.lower()}@{pkg_v}",
+                                    "manifest": entry["path"],
+                                })
+        if result is not None:
+            result.complexity_metrics["sbom_components"] = sbom_components
         return dep_count
 
     def _generate_red_flags(

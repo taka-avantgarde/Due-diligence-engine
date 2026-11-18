@@ -797,3 +797,70 @@ def compute_historical_delta(
     }
     current.code_analysis.complexity_metrics["historical_delta"] = delta_summary
     return delta_summary
+
+
+def generate_sbom(
+    target_or_result: str | Path | AnalysisResult,
+    output_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Task 3 (v0.9.0): Generate a U.S. EO 14028 CycloneDX 1.6 Software Bill of Materials (SBOM) JSON."""
+    from datetime import datetime, timezone
+
+    from due_diligence_engine import __version__
+    from due_diligence_engine.analyze.code import CodeAnalyzer
+
+    if isinstance(target_or_result, AnalysisResult):
+        res = target_or_result
+        project_name = res.project_name
+        cm = res.code_analysis.complexity_metrics
+    else:
+        target_path = Path(target_or_result).resolve()
+        if not target_path.exists():
+            raise ValueError(f"Target path does not exist: {target_path}")
+        cfg = Config()
+        loader = SecureLoader(cfg)
+        try:
+            loader.load_directory(target_path)
+            code_res = CodeAnalyzer(loader).analyze()
+        finally:
+            loader.destroy()
+        project_name = target_path.name
+        cm = code_res.complexity_metrics
+
+    components = list(cm.get("sbom_components", []))
+    copyleft = list(cm.get("copyleft_licenses", []))
+    has_lockfile = bool(cm.get("has_lockfile", False))
+
+    bom: dict[str, Any] = {
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.6",
+        "serialNumber": f"urn:uuid:{uuid.uuid4()}",
+        "version": 1,
+        "metadata": {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "tools": [
+                {
+                    "vendor": "Atlas Associates Inc.",
+                    "name": "Atlas DDE (Due Diligence Engine)",
+                    "version": __version__,
+                }
+            ],
+            "component": {
+                "type": "application",
+                "name": project_name,
+            },
+            "properties": [
+                {"name": "atlas:dde:has_lockfile", "value": str(has_lockfile).lower()},
+                {"name": "atlas:dde:copyleft_licenses", "value": ", ".join(copyleft) or "none"},
+                {"name": "atlas:dde:eo_14028_compliant", "value": str(has_lockfile and not copyleft).lower()},
+            ],
+        },
+        "components": components,
+    }
+
+    if output_path is not None:
+        out_p = Path(output_path).resolve()
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+        out_p.write_text(json.dumps(bom, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    return bom

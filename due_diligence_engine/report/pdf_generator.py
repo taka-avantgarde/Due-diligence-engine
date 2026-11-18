@@ -1284,7 +1284,7 @@ class PDFReportGenerator:
             #  to avoid sparse half-empty pages)
             story.append(PageBreak())
             story.extend(self._build_future_outlook_page(cr))
-            story.extend(self._build_strategic_advice_page(cr))
+            story.extend(self._build_strategic_advice_page(cr, result=result))
             story.extend(self._build_investment_thesis_page(cr))
 
             # Red flags — allowed to flow with investment thesis if space permits
@@ -3451,8 +3451,10 @@ class PDFReportGenerator:
 
         return elements
 
-    def _build_strategic_advice_page(self, cr) -> list:
-        """Strategic advice with prioritized actions."""
+    def _build_strategic_advice_page(self, cr, result: AnalysisResult | None = None) -> list:
+        """Strategic advice with prioritized actions and M&A PMI Day-1/30/100 roadmap."""
+        from due_diligence_engine.score.scorer import Scorer
+
         t = self._t
         s = self._styles
         elements: list = []
@@ -3509,6 +3511,69 @@ class PDFReportGenerator:
             elements.append(Paragraph(t["long_term_vision"], s["heading2"]))
             elements.append(Spacer(1, 3 * mm))
             elements.append(Paragraph(self._esc_text(sa.long_term_vision), s["body"]))
+            elements.append(Spacer(1, 4 * mm))
+
+        # v0.9.0: M&A Post-Merger Integration (PMI: Day-1 / Day-30 / Day-100) & Industry Domain Matrix
+        if result is not None:
+            cm = result.code_analysis.complexity_metrics
+            pmi = cm.get("pmi_estimate") or Scorer.compute_pmi_estimate(result, result.score)
+            pack = cm.get("industry_pack") or Scorer.detect_industry_pack(result)
+        else:
+            crit_n = sum(1 for rf in (cr.red_flags or []) if str(getattr(rf, "severity", "")).lower() == "critical")
+            high_n = sum(1 for rf in (cr.red_flags or []) if str(getattr(rf, "severity", "")).lower() == "high")
+            pmi = {
+                "estimated_person_days": round(max(2.0, crit_n * 5.0 + high_n * 3.0 + len(sa.immediate_actions or []) * 1.5), 1),
+                "bus_factor_risk": "low",
+                "day_1_actions": [a.action for a in (sa.immediate_actions or [])[:2]] or ["Verify production secret rotation & zero-trust boundaries"],
+                "day_30_actions": [a.action for a in (sa.medium_term or [])[:2]] or ["Establish automated CI/CD + SAST release gates"],
+                "day_100_actions": [sa.long_term_vision] if sa.long_term_vision else ["Complete multi-region scale hardening & COGS optimization"],
+            }
+            pack = {"label_en": "Enterprise B2B SaaS & Cloud-Native Platform", "id": "enterprise_saas"}
+
+        pmi_cell = ParagraphStyle(
+            "PMICell", fontName=s["body"].fontName, fontSize=8,
+            textColor=COLOR_TEXT, leading=11,
+        )
+        pmi_hdr = ParagraphStyle(
+            "PMIHdr", fontName=s["heading1"].fontName, fontSize=8,
+            textColor=COLOR_WHITE, leading=11,
+        )
+        pmi_rows = [
+            [
+                Paragraph(self._esc_text("M&A PMI Horizon / Metric"), pmi_hdr),
+                Paragraph(self._esc_text("Target Actions & Quantitative Telemetry"), pmi_hdr),
+            ],
+            [
+                Paragraph(self._esc_text("Industry Domain Pack"), pmi_cell),
+                Paragraph(self._esc_text(f"{pack.get('label_en', 'Enterprise SaaS')} ({pack.get('id', 'enterprise_saas')})"), pmi_cell),
+            ],
+            [
+                Paragraph(self._esc_text("Estimated PMI Effort"), pmi_cell),
+                Paragraph(self._esc_text(f"{pmi.get('estimated_person_days', 'N/A')} person-days (Bus-factor risk: {pmi.get('bus_factor_risk', 'low')})"), pmi_cell),
+            ],
+            [
+                Paragraph(self._esc_text("Day-1 (Pre-Close / Immediate)"), pmi_cell),
+                Paragraph(self._esc_text("; ".join(pmi.get("day_1_actions", []))), pmi_cell),
+            ],
+            [
+                Paragraph(self._esc_text("Day-30 (Stabilization & CI/CD)"), pmi_cell),
+                Paragraph(self._esc_text("; ".join(pmi.get("day_30_actions", []))), pmi_cell),
+            ],
+            [
+                Paragraph(self._esc_text("Day-100 (Scale & Unit Economics)"), pmi_cell),
+                Paragraph(self._esc_text("; ".join(pmi.get("day_100_actions", []))), pmi_cell),
+            ],
+        ]
+        pmi_table = Table(pmi_rows, colWidths=[145, 305])
+        pmi_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_SURFACE),
+            ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [COLOR_LIGHT_BG, COLOR_WHITE]),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ]))
+        elements.append(pmi_table)
 
         return elements
 

@@ -1800,3 +1800,98 @@ def test_v080_pmi_rendering_patch_blueprint_and_historical_delta(tmp_path):
     pdf_gen = _make_generator("en")
     metrics_flowables = pdf_gen._build_codebase_metrics(current_res)
     assert len(metrics_flowables) >= 2
+
+
+def test_v090_industry_packs_cyclonedx_sbom_and_consulting_pmi_pdf(tmp_path):
+    """Verify v0.9.0 Tasks 1-3: Industry Domain Packs, Consulting PDF PMI table, and CycloneDX 1.6 SBOM."""
+    from click.testing import CliRunner
+
+    from due_diligence_engine.api import generate_sbom
+    from due_diligence_engine.cli import cli
+    from due_diligence_engine.models import (
+        AnalysisResult,
+        CodeAnalysisResult,
+        ConsultingReport,
+        StrategicAction,
+        StrategicAdvice,
+    )
+    from due_diligence_engine.prompt.generator import generate_prompt
+    from due_diligence_engine.score.scorer import INDUSTRY_DOMAIN_PACKS, Scorer
+
+    # 1. Verify all 6 Industry Domain Evaluation Packs & auto/explicit detection
+    assert {
+        "messaging_cyber",
+        "fintech",
+        "medical",
+        "ai_agent",
+        "gaming",
+        "enterprise_saas",
+    }.issubset(INDUSTRY_DOMAIN_PACKS.keys())
+
+    fintech_res = AnalysisResult(
+        project_name="StripeLedgerPay",
+        code_analysis=CodeAnalysisResult(
+            total_files=12,
+            total_lines=2400,
+            findings=["Implemented double-entry ledger settlement and PCI-DSS wallet custody"],
+        ),
+    )
+    detected = Scorer.detect_industry_pack(fintech_res)
+    assert detected["id"] == "fintech"
+    assert detected["detection_mode"] == "auto"
+
+    explicit_med = Scorer.detect_industry_pack(fintech_res, override_industry="medical")
+    assert explicit_med["id"] == "medical"
+    assert explicit_med["detection_mode"] == "explicit"
+
+    prompt_en = generate_prompt(fintech_res, lang="en")
+    assert "Industry Domain Pack" in prompt_en
+    assert "FinTech, Payments & Institutional Ledger" in prompt_en
+
+    # 2. Verify 24-page Consulting PDF Strategic Advice Page renders M&A PMI Day-1/30/100 table
+    cr = ConsultingReport(
+        executive_summary="Institutional FinTech ledger audit.",
+        strategic_advice=StrategicAdvice(
+            immediate_actions=[
+                StrategicAction(
+                    action="Enforce idempotent settlement keys",
+                    rationale="Prevent duplicate ledger postings",
+                    expected_impact="Zero double-spend risk",
+                )
+            ],
+            medium_term=[
+                StrategicAction(
+                    action="Add automated reconciliation CI gates",
+                    rationale="Continuous ledger invariant verification",
+                    expected_impact="SOC1 / PCI-DSS readiness",
+                )
+            ],
+            long_term_vision="Multi-region active-active ledger settlement.",
+        ),
+    )
+    pdf_gen = _make_generator("en")
+    sa_flowables = pdf_gen._build_strategic_advice_page(cr, result=fintech_res)
+    assert len(sa_flowables) >= 6
+
+    # 3. Verify CycloneDX 1.6 SBOM generation via API and CLI (`dde sbom`)
+    repo_dir = tmp_path / "sbom_repo"
+    repo_dir.mkdir()
+    (repo_dir / "pyproject.toml").write_text(
+        '[project]\nname = "sbom-demo"\nversion = "1.0.0"\ndependencies = ["click>=8.1.7", "cryptography>=50.0.0"]\n',
+        encoding="utf-8",
+    )
+    (repo_dir / "uv.lock").write_text("version = 1\n", encoding="utf-8")
+    (repo_dir / "app.py").write_text("print('ok')\n", encoding="utf-8")
+
+    sbom_file = tmp_path / "sbom.cdx.json"
+    bom = generate_sbom(repo_dir, output_path=sbom_file)
+    assert bom["bomFormat"] == "CycloneDX"
+    assert bom["specVersion"] == "1.6"
+    comp_names = {c["name"] for c in bom["components"]}
+    assert {"click", "cryptography"}.issubset(comp_names)
+    assert sbom_file.is_file()
+
+    runner = CliRunner()
+    cli_out = runner.invoke(cli, ["sbom", str(repo_dir)])
+    assert cli_out.exit_code == 0
+    assert '"bomFormat": "CycloneDX"' in cli_out.output

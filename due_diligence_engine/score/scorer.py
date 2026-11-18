@@ -137,6 +137,102 @@ DIMENSIONS = {
 }
 
 
+# Industry-Specific Domain Evaluation Packs (v0.9.0)
+INDUSTRY_DOMAIN_PACKS: dict[str, dict[str, Any]] = {
+    "messaging_cyber": {
+        "id": "messaging_cyber",
+        "label_en": "Secure Messaging & Cybersecurity (E2EE / Zero-Knowledge / Defense)",
+        "label_ja": "秘匿通信・サイバーセキュリティ（E2EE / ゼロ知識 / 防衛）",
+        "keywords": [
+            "signal", "ratchet", "pqxdh", "x3dh", "kyber", "ml-kem", "noise",
+            "mls", "nostr", "fernet", "aes-gcm", "chacha20", "ed25519", "ecdsa",
+            "e2ee", "zero-retention", "dod 5220",
+        ],
+        "mandatory_controls": [
+            "Cryptographic Primitive & Post-Quantum Agility (X3DH/PQXDH, Double Ratchet, MLS, or AEAD)",
+            "Zero-Retention Ephemeral Key & Memory Hygiene (DoD 5220.22-M / explicit key zeroization)",
+            "Strict Metadata & SSRF/Relay Isolation (Zero plaintext leakage to relay or log sinks)",
+        ],
+        "regulatory_frameworks": ["NIST FIPS 140-3 / PQC", "DoD 5220.22-M", "SOC2 Type II"],
+    },
+    "fintech": {
+        "id": "fintech",
+        "label_en": "FinTech, Payments & Institutional Ledger (PCI-DSS / Double-Entry / Custody)",
+        "label_ja": "金融・決済・デジタル資産基盤（PCI-DSS / 複式簿記 / カストディ）",
+        "keywords": [
+            "stripe", "plaid", "ledger", "payment", "wallet", "settlement",
+            "kyc", "aml", "pci", "iban", "swift", "custody", "invoice", "billing",
+        ],
+        "mandatory_controls": [
+            "Idempotent Transaction & Double-Entry Ledger Integrity (Zero float rounding on currency)",
+            "PCI-DSS / Tokenized Secret Boundary & Audit Trail Immutability",
+            "Strong Consistency, Replay Protection & Rate-Limited Settlement Endpoints",
+        ],
+        "regulatory_frameworks": ["PCI-DSS v4.0", "SOX / SOC1 Type II", "FATF AML/KYC"],
+    },
+    "medical": {
+        "id": "medical",
+        "label_en": "MedTech, Clinical AI & Digital Health (HIPAA / SaMD / HL7 FHIR)",
+        "label_ja": "医療・ヘルスケア・臨床AI（HIPAA / SaMD医療機器 / HL7 FHIR）",
+        "keywords": [
+            "hipaa", "fhir", "hl7", "dicom", "patient", "clinical",
+            "ehr", "emr", "medical", "fda", "samd", "phi",
+        ],
+        "mandatory_controls": [
+            "PHI Encryption at Rest/In-Transit & HIPAA Tamper-Evident Audit Logging",
+            "Deterministic Clinical Safety Guardrails & Hallucination Prevention",
+            "Strict Consent, Role-Based Access Control (RBAC) & Data Anonymization",
+        ],
+        "regulatory_frameworks": ["HIPAA Security Rule", "FDA SaMD / IEC 62304", "ISO 13485"],
+    },
+    "ai_agent": {
+        "id": "ai_agent",
+        "label_en": "Frontier AI, LLM Agents & RAG Orchestration (Zero-Retention / Eval / Sandbox)",
+        "label_ja": "先端AI・自律エージェント・RAG基盤（Zero-Retention / 評価ハーネス / サンドボックス）",
+        "keywords": [
+            "openai", "anthropic", "genai", "gemini", "langchain", "llamaindex",
+            "mcp", "vector", "embedding", "rag", "prompt", "agent", "llm",
+        ],
+        "mandatory_controls": [
+            "Zero-Retention AI Inference Policy (store=False / ZDR enforcement)",
+            "Prompt Injection & Untrusted Tool-Call Sandbox Isolation",
+            "Deterministic Schema Validation & Multi-Model Cost/Token FinOps Guardrails",
+        ],
+        "regulatory_frameworks": ["EU AI Act", "NIST AI RMF 1.0", "OWASP LLM Top 10"],
+    },
+    "gaming": {
+        "id": "gaming",
+        "label_en": "Real-Time Gaming, 3D Spatial Engine & Interactive Simulation",
+        "label_ja": "リアルタイムゲーム・3D空間エンジン・インタラクティブシミュレーション",
+        "keywords": [
+            "unity", "unreal", "godot", "webgl", "three", "vulkan",
+            "metal", "shader", "physics", "ecs", "netcode", "tick", "matchmaking",
+        ],
+        "mandatory_controls": [
+            "Frame-Budget Determinism & Zero-GC Hot-Loop Allocation Discipline",
+            "Server-Authoritative Netcode & Anti-Cheat State Validation",
+            "Asset Streaming Pipeline & Cross-Platform GPU Shader Fallbacks",
+        ],
+        "regulatory_frameworks": ["COPPA / GDPR-K", "Platform TRC/Lotcheck", "OWASP API Security"],
+    },
+    "enterprise_saas": {
+        "id": "enterprise_saas",
+        "label_en": "Enterprise B2B SaaS & Cloud-Native Platform (SOC2 / Multi-Tenant)",
+        "label_ja": "エンタープライズB2B SaaS・クラウドネイティブ基盤（SOC2 / マルチテナント）",
+        "keywords": [
+            "tenant", "rbac", "sso", "saml", "oidc", "webhook",
+            "graphql", "rest", "microservice", "kubernetes", "terraform",
+        ],
+        "mandatory_controls": [
+            "Tenant Isolation Boundary & Row-Level Security (RLS) Enforcement",
+            "Automated CI/CD, Deterministic Lockfile & SBOM Supply-Chain Provenance",
+            "Horizontal Scalability (Zero Async-Blocking / Zero N+1 Query Hotspots)",
+        ],
+        "regulatory_frameworks": ["SOC2 Type II", "ISO/IEC 27001", "GDPR / CCPA"],
+    },
+}
+
+
 class Scorer:
     """Computes a technology-focused due diligence score.
 
@@ -183,10 +279,55 @@ class Scorer:
         )
         score.compute()
         score.tech_ratings = self._compute_tech_ratings(result, score.dimensions)
+        result.code_analysis.complexity_metrics["industry_pack"] = self.detect_industry_pack(
+            result
+        )
         result.code_analysis.complexity_metrics["pmi_estimate"] = self.compute_pmi_estimate(
             result, score
         )
         return score
+
+    @staticmethod
+    def detect_industry_pack(
+        result: AnalysisResult, override_industry: str | None = None
+    ) -> dict[str, Any]:
+        """Auto-detect or apply explicit Industry-Specific Domain Evaluation Pack."""
+        code = result.code_analysis
+        override = (
+            override_industry
+            or str(code.complexity_metrics.get("industry_override") or "").strip().lower()
+        )
+        if override and override in INDUSTRY_DOMAIN_PACKS:
+            pack = dict(INDUSTRY_DOMAIN_PACKS[override])
+            pack["detection_mode"] = "explicit"
+            pack["matched_keywords"] = [override]
+            return pack
+
+        corpus_parts: list[str] = [
+            result.project_name.lower(),
+            " ".join(code.findings).lower(),
+            " ".join(getattr(code, "architecture_patterns", [])).lower(),
+            " ".join(code.complexity_metrics.get("crypto_signals", [])).lower(),
+            " ".join(result.doc_analysis.claims).lower(),
+        ]
+        corpus = " ".join(corpus_parts)
+
+        best_key = "enterprise_saas"
+        best_hits: list[str] = []
+        for key, spec in INDUSTRY_DOMAIN_PACKS.items():
+            hits = [kw for kw in spec["keywords"] if kw in corpus]
+            if len(hits) > len(best_hits):
+                best_key = key
+                best_hits = hits
+
+        if not best_hits and code.complexity_metrics.get("crypto_signals"):
+            best_key = "messaging_cyber"
+            best_hits = list(code.complexity_metrics.get("crypto_signals", []))[:3]
+
+        pack = dict(INDUSTRY_DOMAIN_PACKS[best_key])
+        pack["detection_mode"] = "auto"
+        pack["matched_keywords"] = best_hits
+        return pack
 
     @staticmethod
     def compute_pmi_estimate(
