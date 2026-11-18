@@ -1480,6 +1480,8 @@ def test_handoff_model_policy_date_boundary(day, tool, allowed):
             for token in (
                 "2026-11-08",
                 "2026-11-09",
+                "gemini-pro-orchestrator-argon",
+                "gemini-pro-orchestrator",
                 "gemini-4-argon-high",
                 "gemini-3.8-flash-low",
                 "gemini-3.8-flash-medium",

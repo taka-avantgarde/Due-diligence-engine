@@ -16,10 +16,10 @@ https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 > All assigned agents must read `ATLAS.md` before performing any tasks.
 
 Development model policy (ATLAS.md §2 — Portfolio Category: **OSS**, Website Update Thread: `afab5825-2982-4ba2-b3ab-c08f099e00a4`):
-- **Planning / Analysis / Investigation / Bug Resolution / Audit**: Antigravity Gemini 4 Argon (`gemini-4-argon-high`, `high`) & Hydrogen (`gemini-4-hydrogen-xhigh` / `gemini-4-hydrogen-medium` / `gemini-4-hydrogen-low`).
-- **Implementation**: Carbon (`gemini-4-carbon-high` / `gemini-4-carbon-medium`) & Gemini 3.8 Flash (`gemini-3.8-flash-low` / `gemini-3.8-flash-medium` / `gemini-3.8-flash-high`), with optimal reasoning tier selected per task by Argon High.
+- **Stage 1 — Planning / Analysis / Investigation / Bug Resolution / Audit**: **Orchestrator (Argon)** (`gemini-pro-orchestrator-argon`) **[Primary]**, Antigravity Gemini 4 Argon (`gemini-4-argon-high`, `high`) & Hydrogen (`gemini-4-hydrogen-xhigh` / `gemini-4-hydrogen-medium` / `gemini-4-hydrogen-low`).
+- **Stage 2 — Implementation**: **Orchestrator (Carbon)** (`gemini-pro-orchestrator`) **[Primary]**, Carbon (`gemini-4-carbon-high` / `gemini-4-carbon-medium`) & Gemini 3.8 Flash (`gemini-3.8-flash-low` / `gemini-3.8-flash-medium` / `gemini-3.8-flash-high`), with optimal reasoning tier selected per task by Orchestrator (Argon) / Argon High.
 - **Through 2026-11-08**: Astra Ultra (`gpt-6-astra`, `xhigh`) is also permitted alongside Argon High + Gemini 3.8 Flash.
-- **From 2026-11-09 onward**: Gemini 4 (`Argon` / `Carbon` / `Hydrogen`) + Gemini 3.8 Flash (`low` / `medium` / `high`) only.
+- **From 2026-11-09 onward**: Orchestrator (`Argon` / `Carbon`) + Gemini 4 (`Argon` / `Carbon` / `Hydrogen`) + Gemini 3.8 Flash (`low` / `medium` / `high`) only.
 - Claude development agents are not used. This policy does not change the product's AI providers.
 
 ---

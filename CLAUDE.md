@@ -19,7 +19,7 @@ https://github.com/Atlas-Associates-Inc/Due-diligence-engine
 
 - **Native MCP Server (`dde mcp`)**:
   - `python3 -m due_diligence_engine.cli mcp` または `dde mcp` で起動する標準 Model Context Protocol サーバー。
-  - 監査ライフサイクルツール (`dde_prepare_audit`, `dde_list_evidence`, `dde_read_evidence`, `dde_verify_sites`, `dde_validate_report`, `dde_render_report`, `dde_close_audit`, `dde_batch_audit`) およびスキーマリソース (`dde://schemas/consulting/v1`) を提供。
+  - 監査ライフサイクルツール (`dde_prepare_audit`, `dde_list_evidence`, `dde_read_evidence`, `dde_verify_sites`, `dde_validate_report`, `dde_render_report`, `dde_close_audit`, `dde_batch_audit`, `dde_generate_sbom`) およびスキーマリソース (`dde://schemas/consulting/v1`) を提供。
 - **エージェントスキル (`.agents/skills/`)**:
   - `dde-audit`: MCP ツール経由でのコードベース監査フロー。
   - `dde-consulting-report`: 24ページ企業買収・M&Aデューデリジェンス PDF レポート生成（20言語対応）。
