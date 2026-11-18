@@ -1895,3 +1895,82 @@ def test_v090_industry_packs_cyclonedx_sbom_and_consulting_pmi_pdf(tmp_path):
     cli_out = runner.invoke(cli, ["sbom", str(repo_dir)])
     assert cli_out.exit_code == 0
     assert '"bomFormat": "CycloneDX"' in cli_out.output
+
+
+def test_v100_ga_mcp_sbom_sarif_and_release_readiness(tmp_path):
+    """Verify v1.0.0 GA: MCP dde_generate_sbom tool, SARIF 2.1.0 generator, and version 1.0.0 SSOT."""
+    import due_diligence_engine
+    from due_diligence_engine.api import generate_sarif
+    from due_diligence_engine.mcp_server import handle_mcp_message
+    from due_diligence_engine.models import (
+        AnalysisResult,
+        CodeAnalysisResult,
+        RedFlag,
+        Score,
+        ScoreDimension,
+        Severity,
+    )
+    from due_diligence_engine.report.generator import ReportGenerator
+
+    assert due_diligence_engine.__version__ == "1.0.0"
+
+    # 1. Verify MCP dde_generate_sbom tool via JSON-RPC 2.0
+    repo_dir = tmp_path / "mcp_sbom_target"
+    repo_dir.mkdir()
+    (repo_dir / "pyproject.toml").write_text(
+        '[project]\nname = "mcp-sbom-target"\nversion = "1.0.0"\ndependencies = ["httpx>=0.28.1"]\n',
+        encoding="utf-8",
+    )
+    (repo_dir / "uv.lock").write_text("version = 1\n", encoding="utf-8")
+    (repo_dir / "main.py").write_text("print('ready')\n", encoding="utf-8")
+
+    mcp_resp = handle_mcp_message(
+        {
+            "jsonrpc": "2.0",
+            "id": 99,
+            "method": "tools/call",
+            "params": {
+                "name": "dde_generate_sbom",
+                "arguments": {"target": str(repo_dir)},
+            },
+        }
+    )
+    assert mcp_resp is not None and not mcp_resp["result"]["isError"]
+    sbom_data = mcp_resp["result"]["structuredContent"]
+    assert sbom_data["bomFormat"] == "CycloneDX"
+    assert sbom_data["specVersion"] == "1.6"
+    assert any(c["name"] == "httpx" for c in sbom_data["components"])
+
+    # 2. Verify OASIS SARIF 2.1.0 report generation & ReportGenerator(formats=["sarif"])
+    ar = AnalysisResult(
+        project_name="SarifTarget",
+        code_analysis=CodeAnalysisResult(total_files=4, total_lines=300),
+        score=Score(
+            overall_score=72.0,
+            grade="B",
+            recommendation="Viable",
+            dimensions=[ScoreDimension(name="Technical Originality", score=72.0, weight=0.2, rationale="Good")],
+            red_flags=[
+                RedFlag(
+                    category="security_sqli",
+                    title="SQL string interpolation in query.py:42",
+                    description="Dynamic SQL sink. Remediation: Use parameterized SQL.",
+                    severity=Severity.CRITICAL,
+                    file_path="query.py",
+                    line_number=42,
+                )
+            ],
+        ),
+    )
+    sarif_file = tmp_path / "out.sarif.json"
+    sarif_doc = generate_sarif(ar, output_path=sarif_file)
+    assert sarif_doc["version"] == "2.1.0"
+    assert sarif_file.is_file()
+    results = sarif_doc["runs"][0]["results"]
+    assert len(results) == 1
+    assert results[0]["ruleId"] == "DDE-SECURITY_SQLI"
+    assert results[0]["level"] == "error"
+    assert results[0]["locations"][0]["physicalLocation"]["region"]["startLine"] == 42
+
+    saved_files = ReportGenerator().save_report(ar, tmp_path / "reports", formats=["md", "sarif"])
+    assert any(p.name.endswith(".sarif.json") for p in saved_files)

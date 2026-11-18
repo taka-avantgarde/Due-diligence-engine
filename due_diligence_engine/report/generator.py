@@ -463,6 +463,13 @@ class ReportGenerator:
             html_path.write_text(self.generate_html(result), encoding="utf-8")
             saved.append(html_path)
 
+        if "sarif" in formats:
+            from due_diligence_engine.api import generate_sarif
+
+            sarif_path = output_dir / f"{base_name}.sarif.json"
+            generate_sarif(result, output_path=sarif_path)
+            saved.append(sarif_path)
+
         return saved
 
     def generate_batch_markdown(self, results: list[AnalysisResult], lang: str = "en") -> str:

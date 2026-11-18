@@ -34,6 +34,7 @@ TOOL_DISPATCH_MAP: dict[str, str] = {
     "dde_render_report": "render_report",
     "dde_close_audit": "close_audit",
     "dde_batch_audit": "batch_audit",
+    "dde_generate_sbom": "generate_sbom",
 }
 
 # 7 Native DDE MCP Tools
@@ -288,6 +289,31 @@ MCP_TOOLS: list[dict[str, Any]] = [
             "readOnlyHint": False,
             "destructiveHint": False,
             "idempotentHint": False,
+            "openWorldHint": False,
+        },
+    },
+    {
+        "name": "dde_generate_sbom",
+        "description": "Generate a U.S. EO 14028 CycloneDX 1.6 Software Bill of Materials (SBOM) JSON with purl dependency components, lockfile verification, and copyleft license audit.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "target": {
+                    "type": "string",
+                    "description": "Target local repository directory path (default: '.').",
+                    "default": ".",
+                },
+                "output_path": {
+                    "type": ["string", "null"],
+                    "description": "Optional file path to save the CycloneDX 1.6 SBOM JSON.",
+                },
+            },
+            "required": ["target"],
+        },
+        "annotations": {
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
             "openWorldHint": False,
         },
     },

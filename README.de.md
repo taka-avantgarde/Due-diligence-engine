@@ -76,7 +76,7 @@ python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.9.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -132,6 +132,7 @@ dde mcp
 | `dde_render_report` | Validierten Bericht als PDF erstellen |
 | `dde_close_audit` | Temporäre Daten löschen und signiertes Zertifikat ausgeben |
 | `dde_batch_audit` | Mehrere Repositorys im Batch auditieren und ein 1-seitiges Executive-Portfolio-PDF erstellen |
+| `dde_generate_sbom` | Generate a U.S. EO 14028 CycloneDX 1.6 SBOM JSON with purl components and copyleft audit |
 
 Die Abläufe stehen in `.agents/skills/dde-audit/` und `.agents/skills/dde-consulting-report/`. Bewahre `audit_id`, `snapshot_sha256` und `validation_id` auf. Externe KI-Bewertung erfordert ausdrücklich `use_ai=true`; schließe das Audit immer ab.
 
@@ -540,6 +541,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.9.0` — 🌍 READMEs in 20 Sprachen · 🔌 Natives MCP (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 Live-Websuche · 5-Dimensionen-Bewertung
+`v1.0.0` — 🌍 READMEs in 20 Sprachen · 🔌 Natives MCP (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 Live-Websuche · 5-Dimensionen-Bewertung
 
 </div>

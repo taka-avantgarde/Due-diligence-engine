@@ -76,7 +76,7 @@ python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.9.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -132,6 +132,7 @@ dde mcp
 | `dde_render_report` | 検証済みレポートを PDF に出力 |
 | `dde_close_audit` | 一時データを消去して署名証明書を返却 |
 | `dde_batch_audit` | 複数リポジトリを一括監査し、1枚完結ポートフォリオ比較PDFを出力 |
+| `dde_generate_sbom` | 米国大統領令 EO 14028 準拠 CycloneDX 1.6 SBOM（依存ツリー・コピーレフト監査）を生成 |
 
 手順は `.agents/skills/dde-audit/` と `.agents/skills/dde-consulting-report/` にあります。応答の `audit_id`、`snapshot_sha256`、`validation_id` を保持してください。外部 AI 採点は明示的な `use_ai=true` が必要です。最後に必ず監査を終了してください。
 
@@ -458,7 +459,7 @@ A: DDE はバッジではなくソースコードを評価します。SOC2 取�
 ## 🗺️ ロードマップ
 
 **最近リリース (v0.6.x)**
-- ✅ **世界最高峰の決定論的監査エンジン・業界別ドメイン評価パック・CycloneDX 1.6 SBOM・履歴差分トラッキング** (2026-11, v0.9.0): 6大業界別ドメイン評価パック（`messaging_cyber` / `fintech` / `medical` / `ai_agent` / `gaming` / `enterprise_saas`、`--industry` 対応）、米国大統領令 EO 14028 準拠 CycloneDX 1.6 SBOM 生成（`dde sbom`）、前回監査とのスコア・Red Flag 差分トラッキング（`--baseline` / `compute_historical_delta`）、24ページ Consulting PDF / Scorecard への M&A PMI（`Day-1 / Day-30 / Day-100`）定量工数ロードマップ統合、Read-Only Unified Diff 修正パッチ提案、および全20言語フルスタック完全同期を実装。
+- ✅ **世界最高峰の決定論的監査エンジン・業界別ドメイン評価パック・CycloneDX 1.6 SBOM・履歴差分トラッキング** (2026-11, v1.0.0): 6大業界別ドメイン評価パック（`messaging_cyber` / `fintech` / `medical` / `ai_agent` / `gaming` / `enterprise_saas`、`--industry` 対応）、米国大統領令 EO 14028 準拠 CycloneDX 1.6 SBOM 生成（`dde sbom`）、前回監査とのスコア・Red Flag 差分トラッキング（`--baseline` / `compute_historical_delta`）、24ページ Consulting PDF / Scorecard への M&A PMI（`Day-1 / Day-30 / Day-100`）定量工数ロードマップ統合、Read-Only Unified Diff 修正パッチ提案、および全20言語フルスタック完全同期を実装。
 - ✅ **Atlas DDE ブランド統一・LVMH Quiet Luxury 超視認性レポート全面刷新 ＆ `dde batch` ポートフォリオ一括比較**（2026-11、v0.6.5）: 正式ブランド表記を **`Atlas DDE`** に統一し、複数リポジトリ一括比較モード（`dde batch <targets>... --pdf`）を追加。さらに PDF・Markdown・HTMLスコアカード・HTMLスライド・CLI表示をトップ投資銀行／戦略ファーム水準の超視認性レイアウトへ全面刷新 — ①冒頭1ページ完結のエグゼクティブ・サマリー比較表（総合グレード・標準5次元表・Atlas 4軸表・GO/CONDITIONAL/NO-GO結論＆最重要リスク3点）、②Quiet Luxury カラー階層（`#0284c7` ブルー、`#059669` エメラルド、`#d97706` アンバー、`#e11d48` ピンクレッド）と極細タイポグラフィ、③「企業の主張 vs 実コードの証拠（`file:line` ＆ `○/△/×`）」2列対比表、④優先度順 Red Flags 4列テーブル、⑤高コントラスト競合マトリックスを実装。あわせてネイティブMCPサーバー（`dde mcp`、7ツール）、共有アプリケーションAPI（`api.py`）、2026年最新依存ライブラリ（ReportLab 5.1、cryptography 50、Rust python-bidi、google-genai 3.3、pydantic 2.14.3）、計305件超の自動ユニット・E2E回帰テストを完備。
 - ✅ **Claude 5.5 世代へモデル更新 + Python 3.13 対応**（2026-10、v0.6.2）: BYOK の 3 ティアをすべて現行ラインナップへ移行 — スキャン **Haiku 4.5 → Haiku 5.5**（`claude-haiku-5-5`、$0.10/$0.50 per MTok、10 分の 1 のコスト）、分析 **Sonnet 4.6 → Sonnet 5.5**（`claude-sonnet-5-5`、$2/$10、従来 $3/$15 から値下げ）、判定 **Fable 5 → Fable 5.1**（`claude-fable-5-1`、$10/$50 は据え置き）。サイト検証スコアラーの日付付き Haiku スナップショットのハードコードを廃止し、BYOK の Claude デフォルト/コスト表も `config.MODELS` から導出するよう統一（新テスト `tests/test_model_ids.py` で保護）。Gemini BYOK を旧 SDK から現行 `google-genai>=2.30.1`（Interactions API）+ `gemini-4-argon` へ移行、OpenAI BYOK デフォルトを `gpt-5` へ更新。`dde doctor` / AI ターミナル自動検出に Codex CLI・Gemini CLI・Antigravity を追加。CI GitHub Actions（`setup-python@v7`、`codeql-action@v4.37.4`、`osv-scanner-action@v2.5.0`）を最新化。PDF `red_flags` の誤検知ノイズ 0% 化を実施（`git rebase` 日時差や専門用語カウント等のヒューリスティック誤検知を参考値へ降格し、プロンプト＋パーサー安全弁 `_filter_red_flags` により `file:line` と修正方針を伴う本物のコード欠陥のみを出力、PDF ファイル名も正規名に一元化）。非推奨の `datetime.utcnow()` を置換（Python 3.12+ の警告解消）。CI マトリクスと classifiers に Python 3.13 を追加。
 - ✅ **パッケージ名を `src` → `due_diligence_engine` に改名**（2026-07、v0.6.1）: import されるパッケージが汎用トップレベル名 `src` を使わなくなり、pip インストール時の `sys.path` 衝突を回避。`dde` コマンドは不変で、変わるのは `import` パスのみ（`from due_diligence_engine...`）。
@@ -538,6 +539,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.9.0` — 🌍 20 言語 README · 🔌 ネイティブMCP (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 ライブ Web 調査 · 5 次元スコアリング
+`v1.0.0` — 🌍 20 言語 README · 🔌 ネイティブMCP (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 ライブ Web 調査 · 5 次元スコアリング
 
 </div>

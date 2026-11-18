@@ -800,21 +800,25 @@ def compute_historical_delta(
 
 
 def generate_sbom(
-    target_or_result: str | Path | AnalysisResult,
+    target_or_result: str | Path | AnalysisResult = ".",
     output_path: str | Path | None = None,
+    *,
+    target: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Task 3 (v0.9.0): Generate a U.S. EO 14028 CycloneDX 1.6 Software Bill of Materials (SBOM) JSON."""
+    """Task 3 (v0.9.0 / v1.0.0): Generate a U.S. EO 14028 CycloneDX 1.6 Software Bill of Materials (SBOM) JSON."""
     from datetime import datetime, timezone
 
     from due_diligence_engine import __version__
     from due_diligence_engine.analyze.code import CodeAnalyzer
 
-    if isinstance(target_or_result, AnalysisResult):
-        res = target_or_result
+    resolved_target = target if target is not None else target_or_result
+
+    if isinstance(resolved_target, AnalysisResult):
+        res = resolved_target
         project_name = res.project_name
         cm = res.code_analysis.complexity_metrics
     else:
-        target_path = Path(target_or_result).resolve()
+        target_path = Path(resolved_target).resolve()
         if not target_path.exists():
             raise ValueError(f"Target path does not exist: {target_path}")
         cfg = Config()
@@ -864,3 +868,104 @@ def generate_sbom(
         out_p.write_text(json.dumps(bom, indent=2, ensure_ascii=False), encoding="utf-8")
 
     return bom
+
+
+def generate_sarif(
+    target_or_result: str | Path | AnalysisResult = ".",
+    output_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Generate an OASIS SARIF 2.1.0 JSON report for GitHub Security / Code Scanning & SIEM integration."""
+    from due_diligence_engine import __version__
+    from due_diligence_engine.report.generator import (
+        _build_patch_snippet,
+        _extract_file_line,
+        _extract_one_line_fix,
+    )
+
+    if isinstance(target_or_result, AnalysisResult):
+        res = target_or_result
+    else:
+        target_path = Path(target_or_result).resolve()
+        if not target_path.exists():
+            raise ValueError(f"Target path does not exist: {target_path}")
+        cfg = Config()
+        loader = SecureLoader(cfg)
+        try:
+            loader.load_directory(target_path)
+            engine = AnalysisEngine(cfg, loader)
+            res = engine.run(project_name=target_path.name, repo_path=target_path, skip_git=True, skip_ai=True)
+        finally:
+            loader.destroy()
+
+    all_flags = list(res.score.red_flags) if res.score else list(res.code_analysis.red_flags)
+    level_map = {
+        "critical": "error",
+        "high": "error",
+        "medium": "warning",
+        "low": "note",
+        "info": "note",
+    }
+
+    rules_dict: dict[str, dict[str, Any]] = {}
+    results_list: list[dict[str, Any]] = []
+
+    for flag in all_flags:
+        rule_id = f"DDE-{str(flag.category or 'general').upper().replace(' ', '_')}"
+        sev_str = getattr(flag.severity, "value", str(flag.severity)).lower()
+        sarif_level = level_map.get(sev_str, "warning")
+        loc_str = _extract_file_line(flag)
+        if ":" in loc_str:
+            uri_part, line_part = loc_str.rsplit(":", 1)
+            start_line = int(line_part) if line_part.isdigit() else (flag.line_number or 1)
+        else:
+            uri_part = flag.file_path or loc_str
+            start_line = flag.line_number or 1
+
+        if rule_id not in rules_dict:
+            rules_dict[rule_id] = {
+                "id": rule_id,
+                "name": str(flag.category or "due_diligence_finding"),
+                "shortDescription": {"text": flag.title},
+                "help": {"text": _extract_one_line_fix(flag)},
+            }
+
+        results_list.append({
+            "ruleId": rule_id,
+            "level": sarif_level,
+            "message": {
+                "text": f"{flag.title}: {flag.description}\n\nRemediation Patch Blueprint:\n{_build_patch_snippet(flag)}"
+            },
+            "locations": [
+                {
+                    "physicalLocation": {
+                        "artifactLocation": {"uri": uri_part},
+                        "region": {"startLine": max(1, int(start_line))},
+                    }
+                }
+            ],
+        })
+
+    sarif_doc: dict[str, Any] = {
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "Atlas DDE (Due Diligence Engine)",
+                        "version": __version__,
+                        "informationUri": "https://github.com/Atlas-Associates-Inc/Due-diligence-engine",
+                        "rules": list(rules_dict.values()),
+                    }
+                },
+                "results": results_list,
+            }
+        ],
+    }
+
+    if output_path is not None:
+        out_p = Path(output_path).resolve()
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+        out_p.write_text(json.dumps(sarif_doc, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    return sarif_doc

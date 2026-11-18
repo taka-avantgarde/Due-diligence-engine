@@ -44,7 +44,7 @@ def cli() -> None:
 @click.option("--skip-git", is_flag=True, help="Skip git forensics analysis")
 @click.option("--skip-ai", is_flag=True, help="Skip AI-enhanced analysis (local only)")
 @click.option("--format", "-f", "formats", multiple=True, default=["md", "html"],
-              type=click.Choice(["md", "html"]), help="Output formats")
+              type=click.Choice(["md", "html", "sarif"]), help="Output formats (default: md, html; optional: sarif)")
 def analyze(
     target: str,
     name: str | None,

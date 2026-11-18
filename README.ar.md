@@ -76,7 +76,7 @@ python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v0.9.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -134,6 +134,7 @@ dde mcp
 | `dde_render_report` | إنشاء ملف PDF بعد التحقق |
 | `dde_close_audit` | محو البيانات المؤقتة وإرجاع شهادة موقّعة |
 | `dde_batch_audit` | تدقيق عدة مستودعات دفعة واحدة وإخراج مصفوفة المقارنة التنفيذية في صفحة PDF واحدة |
+| `dde_generate_sbom` | Generate a U.S. EO 14028 CycloneDX 1.6 SBOM JSON with purl components and copyleft audit |
 
 توجد الإجراءات في `.agents/skills/dde-audit/` و`.agents/skills/dde-consulting-report/`. احتفظ بقيم `audit_id` و`snapshot_sha256` و`validation_id`. يتطلب التقييم بالذكاء الاصطناعي الخارجي تفعيل `use_ai=true` صراحةً؛ أغلق التدقيق دائمًا.
 
@@ -544,6 +545,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v0.9.0` — 🌍 ملفات README بـ 20 لغة · 🔌 MCP مدمج (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
+`v1.0.0` — 🌍 ملفات README بـ 20 لغة · 🔌 MCP مدمج (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
 
 </div>
