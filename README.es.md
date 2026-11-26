@@ -76,7 +76,7 @@ python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v1.0.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.1-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -132,7 +132,7 @@ dde mcp
 | `dde_render_report` | Generar el PDF validado |
 | `dde_close_audit` | Borrar datos temporales y emitir un certificado firmado |
 | `dde_batch_audit` | Auditar múltiples repositorios en lote y generar el PDF Ejecutivo de Portafolio de 1 página |
-| `dde_generate_sbom` | Generate a U.S. EO 14028 CycloneDX 1.6 SBOM JSON with purl components and copyleft audit |
+| `dde_generate_sbom` | Genera un SBOM JSON CycloneDX 1.6 (EO 14028 EE. UU.) con componentes `purl` y auditoría copyleft |
 
 Los flujos están en `.agents/skills/dde-audit/` y `.agents/skills/dde-consulting-report/`. Conserva `audit_id`, `snapshot_sha256` y `validation_id`. La evaluación con IA externa requiere `use_ai=true` explícito; cierra siempre la auditoría.
 
@@ -461,7 +461,9 @@ R: DDE evalúa el código fuente, no la insignia. Un servicio de almacenamiento 
 
 ## 🗺️ Hoja de Ruta
 
-**Lanzado recientemente (v1.0.0 GA & v0.x)**
+**Lanzado recientemente (v1.0.x GA & v0.x)**
+- ✅ **Endurecimiento de cadena de suministro (LONGINUS Critical 0 / High 0) y PDF Quiet Luxury en 20 idiomas** (2026-11, v1.0.1): Actions de GitHub fijadas con SHA de 40 caracteres y eliminación de falsos positivos estáticos logrando **LONGINUS v0.7.0 Critical 0 / High 0**; localización total de portada, tabla PMI (`Day-1/30/100`), verificación de sitio y leyenda en 20 idiomas; corrección del puntaje de seguridad Atlas 4-Axis y mejora de gráficos competitivos (eje Y rotado, evasión de colisiones en 8 direcciones).
+- ✅ **Atlas DDE v1.0.0 GA — Paquetes Sectoriales, SBOM CycloneDX 1.6, OASIS SARIF 2.1.0 y Seguimiento Histórico** (2026-11, v1.0.0 GA): 6 paquetes de evaluación por industria (`messaging_cyber`, `fintech`, `medical`, `ai_agent`, `gaming`, `enterprise_saas` vía `--industry`), generador SBOM CycloneDX 1.6 (`dde sbom` / MCP `dde_generate_sbom`), salida **OASIS SARIF 2.1.0 (`--format sarif`)** para GitHub Code Scanning/SIEM, deltas históricos (`--baseline`), estimador cuantitativo M&A PMI (`Day-1 / Day-30 / Day-100`), parches Unified Diff de solo lectura y 9 herramientas MCP nativas en 20 idiomas.
 - ✅ **Unificación de Marca `Atlas DDE`, Renovación de Informes LVMH Quiet Luxury y Modo Portafolio `dde batch`** (2026-11, v0.6.5): marca oficial unificada a **Atlas DDE**, modo de comparación por lotes multi-repositorio (`dde batch <targets>... --pdf`) y actualización de salidas PDF, Markdown, HTML Scorecard, diapositivas HTML y CLI a un diseño ejecutivo de banca de inversión / consultoría estratégica — Página 1 como Hoja Resumen Ejecutiva Todo en Uno (Calificación General + Tabla de 5 Dimensiones + Tabla de 4 Ejes Atlas + Veredicto GO/CONDITIONAL/NO-GO y Top 3 Riesgos Prioritarios), paleta semántica Quiet Luxury (`#0284c7`, `#059669`, `#d97706`, `#e11d48`) con tipografía fina, tabla comparativa de 2 columnas "Afirmación vs. Evidencia en Código (`archivo:línea` + `○/△/×`)", tabla de 4 columnas de Señales de Alerta ordenada por prioridad y Matriz Competitiva de alto contraste. Incluye también el endurecimiento de seguridad Zero-Defect v0.6.4, servidor MCP nativo (`dde mcp`, 7 herramientas), API compartida (`api.py`), habilidades `.agents/skills/` y gobernanza SSOT (`ATLAS.md`), dependencias 2026 (ReportLab 5.1, cryptography 50, python-bidi en Rust, google-genai 3.3, pydantic 2.14.3) y 305+ pruebas automatizadas.
 - ✅ **Actualización de modelos a la generación Claude 5.5 + Python 3.13** (2026-10, v0.6.2): los tres niveles BYOK pasan a la línea actual — escaneo **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, $0.10/$0.50 por MTok, 10× más barato), análisis **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, $2/$10, antes $3/$15), juez **Fable 5 → Fable 5.1** (`claude-fable-5-1`, mismo $10/$50). El evaluador de verificación de sitios ya no incrusta un snapshot fechado de Haiku y el modelo/tabla de costes por defecto de Claude en BYOK se derivan ahora de `config.MODELS`, protegidos por el nuevo `tests/test_model_ids.py`. Gemini BYOK migrado desde el SDK heredado al actual `google-genai>=2.30.1` (Interactions API) + `gemini-4-argon`; valor predeterminado de OpenAI BYOK actualizado a `gpt-5`. Detección de terminales de IA en `dde doctor` ampliada a Codex CLI, Gemini CLI y Antigravity. GitHub Actions de CI actualizados (`setup-python@v7`, `codeql-action@v4.37.4`, `osv-scanner-action@v2.5.0`). Eliminado el ruido de falsos positivos heurísticos en `red_flags` del PDF (diferencias de fechas por `git rebase` y conteo de términos pasan a métricas informativas; prompt + filtro `_filter_red_flags` exigen defectos reales en código con `archivo:línea` y remediación; nombre de PDF unificado). Se reemplazó el obsoleto `datetime.utcnow()` (elimina avisos en Python 3.12+); Python 3.13 añadido a la matriz de CI y a los classifiers.
 - ✅ **Paquete renombrado `src` → `due_diligence_engine`** (2026-07, v0.6.1): el paquete importable ya no usa el nombre genérico de nivel superior `src`, evitando colisiones en `sys.path` al instalarse con pip. El comando `dde` no cambia; solo cambian las rutas de `import` (`from due_diligence_engine...`).
@@ -539,6 +541,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v1.0.0` — 🌍 READMEs en 20 idiomas · 🔌 MCP nativo (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 Investigación web en vivo · puntuación de 5 dimensiones
+`v1.0.1` — 🌍 READMEs en 20 idiomas · 🔌 MCP nativo (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 Investigación web en vivo · puntuación de 5 dimensiones
 
 </div>

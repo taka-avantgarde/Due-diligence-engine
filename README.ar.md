@@ -76,7 +76,7 @@ python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v1.0.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.1-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -134,7 +134,7 @@ dde mcp
 | `dde_render_report` | إنشاء ملف PDF بعد التحقق |
 | `dde_close_audit` | محو البيانات المؤقتة وإرجاع شهادة موقّعة |
 | `dde_batch_audit` | تدقيق عدة مستودعات دفعة واحدة وإخراج مصفوفة المقارنة التنفيذية في صفحة PDF واحدة |
-| `dde_generate_sbom` | Generate a U.S. EO 14028 CycloneDX 1.6 SBOM JSON with purl components and copyleft audit |
+| `dde_generate_sbom` | إنشاء بيان مواد برمجية CycloneDX 1.6 SBOM متوافق مع EO 14028 بمكوّنات `purl` وفحص التراخيص |
 
 توجد الإجراءات في `.agents/skills/dde-audit/` و`.agents/skills/dde-consulting-report/`. احتفظ بقيم `audit_id` و`snapshot_sha256` و`validation_id`. يتطلب التقييم بالذكاء الاصطناعي الخارجي تفعيل `use_ai=true` صراحةً؛ أغلق التدقيق دائمًا.
 
@@ -463,7 +463,9 @@ dde analyze owner/repo
 
 ## 🗺️ خريطة الطريق
 
-**أُطلق مؤخرًا (v1.0.0 GA & v0.x)**
+**أُطلق مؤخرًا (v1.0.x GA & v0.x)**
+- ✅ **تعزيز سلسلة التوريد (LONGINUS Critical 0 / High 0) وصقل تقارير PDF الفاخرة بـ 20 لغة** (2026-11, v1.0.1): تثبيت GitHub Actions بتوقيع SHA الكامل من 40 محرفًا واجتياز تدقيق **LONGINUS v0.7.0** بنتيجة **Critical 0 / High 0**؛ تعريب كامل لعناوين الغلاف وجداول PMI (`Day-1/30/100`) والتحقق من الموقع عبر 20 لغة، وتصحيح حساب أمان Atlas 4-Axis وتطوير الرسوم التنافسية بتفادي تداخل التسميات ودعم كامل للخطوط العربية.
+- ✅ **الإطلاق الرسمي Atlas DDE v1.0.0 GA — حزم التقييم القطاعية وCycloneDX 1.6 SBOM وOASIS SARIF 2.1.0** (2026-11, v1.0.0 GA): إضافة 6 حزم تقييم قطاعية (`messaging_cyber`, `fintech`, `medical`, `ai_agent`, `gaming`, `enterprise_saas` عبر `--industry`)، ومولّد CycloneDX 1.6 SBOM (`dde sbom` / MCP `dde_generate_sbom`)، ومخرجات **OASIS SARIF 2.1.0 (`--format sarif`)** لـ GitHub Code Scanning وSIEM، والتتبع التاريخي للفروقات (`--baseline`)، ومقدّر خطة الاندماج PMI (`Day-1 / Day-30 / Day-100`)، ومقترحات التصحيح Unified Diff للعرض فقط، و9 أدوات MCP بـ 20 لغة.
 - ✅ **توحيد العلامة التجارية `Atlas DDE`، وتحديث تقارير LVMH Quiet Luxury، ووضع مقارنة المحافظ `dde batch`** (2026-11، v0.6.5): توحيد العلامة التجارية الرسمية إلى **Atlas DDE**، وإضافة وضع المقارنة المجمّعة للمستودعات (`dde batch <targets>... --pdf`)، وترقية مخرجات PDF وMarkdown وبطاقات HTML وشرائح العرض وCLI إلى تخطيط تنفيذي بمستوى بنوك الاستثمار وشركات الاستشارات الاستراتيجية — الصفحة 1 كجدول ملخص تنفيذي شامل (الدرجة الكلية + جدول الأبعاد الخمسة + جدول محاور Atlas الأربعة + القرار GO/CONDITIONAL/NO-GO وأهم 3 مخاطر)، نظام ألوان Quiet Luxury (`#0284c7`، `#059669`، `#d97706`، `#e11d48`) بخطوط رفيعة، جدول مقارنة من عمودين «ادعاء الشركة مقابل دليل الكود (`ملف:سطر` + `○/△/×`)»، جدول الإشارات الحمراء من 4 أعمدة مرتب حسب الأولوية، ومصفوفة تنافسية عالية التباين. يشمل أيضًا كافة تعزيزات الأمان Zero-Defect للإصدار v0.6.4، وخادم MCP المدمج (`dde mcp`، 7 أدوات)، وواجهة التطبيق المشتركة (`api.py`)، ومهارات `.agents/skills/` وحوكمة SSOT (`ATLAS.md`)، واعتماديات 2026 (ReportLab 5.1، cryptography 50، python-bidi المبني على Rust، google-genai 3.3، pydantic 2.14.3)، وأكثر من 305 اختبارات مؤتمتة.
 - ✅ **تحديث النماذج إلى جيل Claude 5.5 + دعم Python 3.13** (2026-10، v0.6.2): انتقلت طبقات BYOK الثلاث إلى التشكيلة الحالية — الفحص **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`، $0.10/$0.50 لكل مليون توكن، أرخص بعشر مرات)، التحليل **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`، $2/$10 بدلًا من $3/$15)، الحَكَم **Fable 5 → Fable 5.1** (`claude-fable-5-1`، بنفس السعر $10/$50). لم يعد مُقيِّم التحقق من المواقع يُضمّن لقطة Haiku مؤرَّخة، وأصبح النموذج الافتراضي وجدول التكلفة لـ Claude في BYOK مشتقَّين من `config.MODELS`، مع حماية بالاختبار الجديد `tests/test_model_ids.py`. وجرى ترحيل Gemini BYOK من حزمة SDK السابقة إلى `google-genai>=2.30.1` الحالية (Interactions API) مع `gemini-4-argon`، وتحديث نموذج OpenAI BYOK الافتراضي إلى `gpt-5`. وتوسيع كشف طرفيات الذكاء الاصطناعي في `dde doctor` ليشمل Codex CLI وGemini CLI وAntigravity. وتحديث إجراءات GitHub Actions للتكامل المستمر (`setup-python@v7`، `codeql-action@v4.37.4`، `osv-scanner-action@v2.5.0`). إزالة ضوضاء الإنذارات الكاذبة الاستدلالية من `red_flags` في تقارير PDF (تحويل فروق تواريخ `git rebase` وتكرار المصطلحات إلى مؤشرات إرشادية فقط، مع صمام أمان `_filter_red_flags` لقصر المخرجات على عيوب الكود الحقيقية مع المسار ورقم السطر وخطة الإصلاح، وتوحيد اسم ملف PDF). استُبدل `datetime.utcnow()` المهمَل (إزالة تحذيرات Python 3.12+)؛ وأُضيف Python 3.13 إلى مصفوفة CI والـ classifiers.
 - ✅ **إعادة تسمية الحزمة `src` ← `due_diligence_engine`** (2026-07، v0.6.1): لم تعد الحزمة القابلة للاستيراد تستخدم الاسم العام `src` على المستوى الأعلى، ما يتجنّب التعارضات على `sys.path` عند التثبيت عبر pip. أمر `dde` لم يتغيّر؛ تتغيّر فقط مسارات `import` (`from due_diligence_engine...`).
@@ -543,6 +545,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v1.0.0` — 🌍 ملفات README بـ 20 لغة · 🔌 MCP مدمج (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
+`v1.0.1` — 🌍 ملفات README بـ 20 لغة · 🔌 MCP مدمج (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 بحث ويب مباشر · نظام نقاط بخمسة أبعاد
 
 </div>

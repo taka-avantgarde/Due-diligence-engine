@@ -76,7 +76,7 @@ python3 -m pip install -U --no-cache-dir git+https://github.com/Atlas-Associates
 [![GitHub stars](https://img.shields.io/github/stars/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=000000)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Atlas-Associates-Inc/Due-diligence-engine?style=flat-square&color=5271FF)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/commits/main)
-[![Version](https://img.shields.io/badge/version-v1.0.0-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.1-000000?style=flat-square)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine/releases)
 
 [![Repo Views](https://komarev.com/ghpvc/?username=taka-avantgarde&repo=Due-diligence-engine&color=5271FF&style=flat-square&label=Repo+Views)](https://github.com/Atlas-Associates-Inc/Due-diligence-engine)
 
@@ -132,7 +132,7 @@ dde mcp
 | `dde_render_report` | Render a validated PDF |
 | `dde_close_audit` | Purge temporary data and return a signed certificate |
 | `dde_batch_audit` | Batch-audit multiple repositories into a 1-Page Executive Portfolio Matrix PDF |
-| `dde_generate_sbom` | Generate a U.S. EO 14028 CycloneDX 1.6 SBOM JSON with purl components and copyleft audit |
+| `dde_generate_sbom` | Genereert een U.S. EO 14028 CycloneDX 1.6 SBOM JSON met `purl`-componenten en copyleft-audit |
 
 Agent workflows are in `.agents/skills/dde-audit/` and `.agents/skills/dde-consulting-report/`. Keep `audit_id`, `snapshot_sha256` and `validation_id` from tool responses. Site AI scoring requires explicit `use_ai=true`; always close the audit.
 
@@ -461,8 +461,9 @@ A: DDE evaluates the source code, not the badge. A SOC2-certified plaintext-stor
 
 ## 🗺️ Roadmap
 
-**Recently shipped (v1.0.0 GA & v0.x)**
-- ✅ **Global Apex Deterministic Engine, Industry Domain Packs, CycloneDX 1.6 SBOM & Historical Delta Tracking** (2026-11, v1.0.0): added 6 Industry-Specific Domain Evaluation Packs (`messaging_cyber`, `fintech`, `medical`, `ai_agent`, `gaming`, `enterprise_saas` via `--industry`), U.S. EO 14028 CycloneDX 1.6 SBOM generator (`dde sbom`), Historical Score & Red Flag Delta Tracking (`--baseline` / `compute_historical_delta`), Quantitative M&A PMI (`Day-1 / Day-30 / Day-100`) remediation estimator across 24-page Consulting PDFs / Scorecards, Read-Only Unified Diff patch blueprints, and 20-language full-stack parity.
+**Recently shipped (v1.0.x GA & v0.x)**
+- ✅ **Supply-Chain Hardening (LONGINUS Critical 0 / High 0) & 20-Talige Quiet Luxury PDF-Verfijning** (2026-11, v1.0.1): GitHub Actions vastgezet op 40-tekens commit-SHA's en statische fout-positieven verwijderd (**LONGINUS v0.7.0: Critical 0 / High 0**); volledige 20-talige lokalisatie van voorblad, PMI (`Day-1/30/100`), siteverificatie en legenda, herstelde Atlas 4-Axis beveiligingsscore en verbeterde concurrentiegrafieken (gedraaide Y-as, 8-richtingen labelbotsingpreventie).
+- ✅ **Atlas DDE v1.0.0 GA — Sectorpakketten, CycloneDX 1.6 SBOM, OASIS SARIF 2.1.0 & Historische Delta's** (2026-11, v1.0.0 GA): 6 sectorspecifieke evaluatiepakketten (`messaging_cyber`, `fintech`, `medical`, `ai_agent`, `gaming`, `enterprise_saas` via `--industry`), CycloneDX 1.6 SBOM-generator (`dde sbom` / MCP `dde_generate_sbom`), **OASIS SARIF 2.1.0 (`--format sarif`)** voor GitHub Code Scanning/SIEM, historische score-delta's (`--baseline`), kwantitatieve M&A PMI-schatter (`Day-1 / Day-30 / Day-100`), Read-Only Unified Diff-patches en 9 MCP-tools in 20 talen.
 - ✅ **Atlas DDE Brand Unification, LVMH Quiet Luxury Report Overhaul & `dde batch` Portfolio Mode** (2026-11, v0.6.5): unified official brand to **Atlas DDE**, added multi-repository portfolio comparison (`dde batch <targets>... --pdf`), and upgraded PDF, Markdown, HTML Scorecard, HTML Slides, and CLI outputs to an investment-bank / strategy-firm executive layout — Page 1 All-in-One Executive Summary Sheet (Overall Grade + 5-Dimension Table + Atlas 4-Axis Table + GO/CONDITIONAL/NO-GO Verdict & Top 3 Priority Risks), Quiet Luxury semantic color hierarchy (`#0284c7` sky blue, `#059669` emerald, `#d97706` amber, `#e11d48` pink-red) with thin typography and generous spacing, 2-Column "Company Claim vs. Code Evidence (`file:line` + `○/△/×`)" comparison table, priority-sorted 4-Column Red Flags table, and high-contrast Competitive Matrix. Also includes all v0.6.4 zero-defect security hardening, Native MCP Server (`dde mcp`, 7 tools), Shared Application API (`api.py`), `.agents/skills/` & `ATLAS.md` SSOT governance, 2026 dependency stack (ReportLab 5.1, cryptography 50, Rust python-bidi, google-genai 3.3, pydantic 2.14.3), and 305+ automated unit & E2E regression tests.
 - ✅ **Claude 5.5-generation model refresh + Python 3.13** (2026-10, v0.6.2): all three BYOK tiers moved to the current lineup — scan **Haiku 4.5 → Haiku 5.5** (`claude-haiku-5-5`, $0.10/$0.50 per MTok, 10× cheaper), analyze **Sonnet 4.6 → Sonnet 5.5** (`claude-sonnet-5-5`, $2/$10, down from $3/$15), judge **Fable 5 → Fable 5.1** (`claude-fable-5-1`, same $10/$50). The site-verification scorer no longer hardcodes a dated Haiku snapshot and the BYOK Claude default/cost table now derive from `config.MODELS`, guarded by a new `tests/test_model_ids.py`. Gemini BYOK migrated from legacy SDK to `google-genai>=2.30.1` (Interactions API) + `gemini-4-argon`; OpenAI BYOK default updated to `gpt-5`. AI terminal detection in `dde doctor` expanded to Codex CLI, Gemini CLI, and Antigravity. CI GitHub Actions refreshed (`setup-python@v7`, `codeql-action@v4.37.4`, `osv-scanner-action@v2.5.0`). Eliminated heuristic false-positive noise from PDF `red_flags` (git rebase date diffs and doc buzzword counts demoted to informational metrics; prompt + parser safety valve `_filter_red_flags` strictly output only genuine code-verified defects with `file:line` and remediation; canonical PDF filename unified to prevent duplicate outputs). Deprecated `datetime.utcnow()` replaced (silences Python 3.12+ warnings); Python 3.13 added to the CI matrix and classifiers.
 - ✅ **Package renamed `src` → `due_diligence_engine`** (2026-07, v0.6.1): the importable package no longer uses the generic top-level name `src`, avoiding `sys.path` collisions once pip-installed. The `dde` command is unchanged; only `import` paths change (`from due_diligence_engine...`).
@@ -540,6 +541,6 @@ pytest
 
 Created by [Takayuki Miyano](https://github.com/taka-avantgarde) — [Atlas Associates Inc](https://github.com/Atlas-Associates-Inc)
 
-`v1.0.0` — 🌍 README's in 20 talen · 🔌 Native MCP (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 Live webonderzoek · 5-dimensiescore
+`v1.0.1` — 🌍 README's in 20 talen · 🔌 Native MCP (`dde mcp`) · 🆕 Claude 5.5 & Fable 5.1 · Gemini 4 Argon · Astra (GPT-6.1-Sol) · 🌐 Live webonderzoek · 5-dimensiescore
 
 </div>

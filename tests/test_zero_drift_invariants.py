@@ -1914,7 +1914,7 @@ def test_v100_ga_mcp_sbom_sarif_and_release_readiness(tmp_path):
     )
     from due_diligence_engine.report.generator import ReportGenerator
 
-    assert due_diligence_engine.__version__ == "1.0.0"
+    assert tuple(int(p) for p in due_diligence_engine.__version__.split(".")) >= (1, 0, 0)
 
     # 1. Verify MCP dde_generate_sbom tool via JSON-RPC 2.0
     repo_dir = tmp_path / "mcp_sbom_target"
@@ -2052,3 +2052,179 @@ def test_longinus_v070_patch_parity_and_workflow_pinning():
     security_wf = (_ROOT / ".github" / "workflows" / "security-audit.yml").read_text(encoding="utf-8")
     assert "google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0" in security_wf
     assert not re.search(r"uses:\s*google/osv-scanner-action/osv-scanner-action@v2\.7\.0\s*$", security_wf, re.MULTILINE)
+
+
+# ==============================================================================
+# 10. v1.0.1 20-Language README Parity & Quiet Luxury PDF Polish Invariant
+# ==============================================================================
+
+
+def test_v101_readme_20lang_full_parity_and_pdf_quiet_luxury_polish() -> None:
+    """Guarantee v1.0.1 20-language README parity, 17 new PDF i18n keys, standard Atlas 4-axis security score, truncation, and chart polish."""
+    from reportlab.graphics.shapes import Group, String
+    from reportlab.platypus import Paragraph, Table
+
+    from due_diligence_engine.models import (
+        AnalysisResult,
+        CodeAnalysisResult,
+        CompetitorDataPoint,
+        ConsistencyResult,
+        MarketChart,
+        RedFlag,
+        Score,
+        ScoreDimension,
+        Severity,
+    )
+    from due_diligence_engine.report.pdf_generator import _truncate_ellipsis
+
+    readme_files = [
+        "README.md", "README.ja.md", "README.es.md", "README.ar.md",
+        "README.fr.md", "README.de.md", "README.zh.md", "README.zh-tw.md",
+        "README.ko.md", "README.pt.md", "README.it.md", "README.nl.md",
+        "README.id.md", "README.vi.md", "README.th.md", "README.hi.md",
+        "README.tr.md", "README.pl.md", "README.ru.md", "README.sv.md",
+    ]
+    for fname in readme_files:
+        text = (_ROOT / fname).read_text(encoding="utf-8")
+        for token in ("version-v1.0.1", "v1.0.1", "v1.0.0", "SARIF", "dde_generate_sbom"):
+            assert token in text, f"{fname} missing {token}"
+
+    expected_v101_keys = (
+        "cover_5dim_hdr",
+        "cover_wt_hdr",
+        "cover_score_status_hdr",
+        "cover_atlas_4axis_hdr",
+        "cover_verdict_hdr",
+        "cover_top_risks_hdr",
+        "cover_zero_blockers",
+        "pmi_col_horizon",
+        "pmi_col_actions",
+        "pmi_industry_pack",
+        "pmi_effort_label",
+        "pmi_day1_label",
+        "pmi_day30_label",
+        "pmi_day100_label",
+        "sv_col_claim",
+        "sv_col_evidence",
+        "comp_legend_provenance",
+    )
+    en_keys = set(_PDF_I18N["en"].keys())
+    for lang in ALL_REPORT_LANGS:
+        assert set(_PDF_I18N[lang].keys()) == en_keys, f"_PDF_I18N key drift in {lang}"
+        for k in expected_v101_keys:
+            val = _PDF_I18N[lang][k]
+            assert isinstance(val, str) and val.strip(), f"{lang} has empty {k}"
+
+    def _collect_texts(flowables: list) -> list[str]:
+        texts: list[str] = []
+        for item in flowables:
+            if isinstance(item, Paragraph):
+                texts.append(item.text)
+            elif isinstance(item, Table):
+                for row in item._cellvalues:
+                    for cell in row:
+                        if isinstance(cell, list):
+                            texts.extend(_collect_texts(cell))
+                        else:
+                            texts.extend(_collect_texts([cell]))
+            elif hasattr(item, "_content") and isinstance(item._content, list):
+                texts.extend(_collect_texts(item._content))
+        return texts
+
+    res_flags = AnalysisResult(
+        project_name="AtlasSecVerify",
+        consulting_report=None,
+        consistency=ConsistencyResult(consistency_score=99.0),
+        code_analysis=CodeAnalysisResult(has_tests=False, has_ci_cd=False, dependency_count=12),
+        score=Score(
+            dimensions=[
+                ScoreDimension(
+                    name="Architecture & Security",
+                    score=72.0,
+                    weight=0.2,
+                    rationale="ok",
+                    sub_scores={},
+                )
+            ],
+            red_flags=[
+                RedFlag(
+                    category="security",
+                    title="Critical auth bypass",
+                    description="desc",
+                    severity=Severity.CRITICAL,
+                ),
+                RedFlag(
+                    category="security",
+                    title="High SSRF",
+                    description="desc",
+                    severity=Severity.HIGH,
+                ),
+            ],
+            overall_score=72.0,
+            grade="C",
+        ),
+    )
+    cover_blob = "\n".join(_collect_texts(_make_generator("en")._build_cover_page(res_flags, cr=None)))
+    assert "50/100" in cover_blob
+    assert "99/100" not in cover_blob
+
+    res_sub = AnalysisResult(
+        project_name="AtlasSubVerify",
+        consulting_report=None,
+        consistency=ConsistencyResult(consistency_score=99.0),
+        code_analysis=CodeAnalysisResult(has_tests=True, has_ci_cd=True, dependency_count=5),
+        score=Score(
+            dimensions=[
+                ScoreDimension(
+                    name="Architecture & Security",
+                    score=75.0,
+                    weight=0.2,
+                    rationale="ok",
+                    sub_scores={"security_level": 64.0, "architecture_level": 80.0},
+                )
+            ],
+            overall_score=75.0,
+            grade="B",
+        ),
+    )
+    cover_sub_blob = "\n".join(_collect_texts(_make_generator("en")._build_cover_page(res_sub, cr=None)))
+    assert "64/100" in cover_sub_blob
+    assert "99/100" not in cover_sub_blob
+
+    assert _truncate_ellipsis("Short headline", 120) == "Short headline"
+    trunc = _truncate_ellipsis("Enterprise architecture modernization roadmap for cloud", 30)
+    assert trunc.endswith("…")
+    assert len(trunc) <= 31
+    assert not trunc.endswith("modern…")
+
+    point_names = {"TargetCo", "AlphaCloud", "BetaCore", "GammaSec", "DeltaOps"}
+    chart = MarketChart(
+        chart_type="magic_quadrant",
+        title="Security Market",
+        title_ja="セキュリティ市場",
+        x_axis_label="Execution Velocity & Scale",
+        x_axis_label_ja="実行速度と拡張性",
+        y_axis_label="Cryptographic Security Depth",
+        y_axis_label_ja="暗号セキュリティ深度",
+        data_points=[
+            CompetitorDataPoint(name="TargetCo", x=75.0, y=75.0, is_target=True),
+            CompetitorDataPoint(name="AlphaCloud", x=75.0, y=75.0, is_target=False),
+            CompetitorDataPoint(name="BetaCore", x=75.0, y=75.0, is_target=False),
+            CompetitorDataPoint(name="GammaSec", x=75.0, y=75.0, is_target=False),
+            CompetitorDataPoint(name="DeltaOps", x=75.0, y=75.0, is_target=False),
+        ],
+    )
+    for lang in ("en", "ja", "ar", "th", "hi"):
+        drawing = _make_generator(lang)._mini_chart(chart, "magic_quadrant")
+        assert any(
+            isinstance(node, Group) and tuple(node.transform[:4]) == (0, 1, -1, 0)
+            for node in drawing.contents
+        ), f"Missing rotated Y-axis Group for {lang}"
+        pt_strings = [
+            node for node in drawing.contents
+            if isinstance(node, String) and node.text in point_names
+        ]
+        assert len(pt_strings) == 5
+        coords = {(round(s.x, 1), round(s.y, 1)) for s in pt_strings}
+        assert len(coords) == 5, f"Overlapping point labels in {lang}: {coords}"
+

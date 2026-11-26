@@ -34,7 +34,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.graphics import renderPDF
-from reportlab.graphics.shapes import Drawing, Rect, String, Line, Circle, Polygon
+from reportlab.graphics.shapes import Circle, Drawing, Group, Line, Polygon, Rect, String
 from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
@@ -142,6 +142,21 @@ def _deep_reshape_inplace(obj):
 def _esc(text: Any) -> str:
     """Escape dynamic text for safe inclusion in ReportLab Paragraph markup."""
     return xml.sax.saxutils.escape(str(text if text is not None else ""))
+
+
+def _truncate_ellipsis(text: Any, limit: int = 120) -> str:
+    """Truncate text cleanly near a word boundary with an ellipsis."""
+    raw = str(text or "").strip()
+    if len(raw) <= limit:
+        return raw
+    if limit <= 1:
+        return "…"
+    cut_idx = raw.rfind(" ", 0, limit)
+    prefix = raw[:cut_idx] if cut_idx >= int(limit * 0.6) else raw[: limit - 1]
+    cleaned = prefix.rstrip(" ,;:-—/")
+    if not cleaned:
+        cleaned = raw[: limit - 1]
+    return f"{cleaned}…"
 
 
 def _wrap_latin_in_ar(text: str) -> str:
@@ -432,6 +447,23 @@ _PDF_I18N = {
         "provider_score_comparison": "Provider Score Comparison",
         "avg_short": "Avg",
         "evidence": "Evidence",
+        "cover_5dim_hdr": "2. 5-Dimension Evaluation",
+        "cover_wt_hdr": "Wt",
+        "cover_score_status_hdr": "Score / Status",
+        "cover_atlas_4axis_hdr": "3. Atlas 4-Axis (20/20/5/55)",
+        "cover_verdict_hdr": "4. Executive Verdict",
+        "cover_top_risks_hdr": "Top 3 Priority Risks & Conditions",
+        "cover_zero_blockers": "Zero critical/high code blockers identified.",
+        "pmi_col_horizon": "M&A PMI Horizon / Metric",
+        "pmi_col_actions": "Target Actions & Quantitative Telemetry",
+        "pmi_industry_pack": "Industry Domain Pack",
+        "pmi_effort_label": "Estimated PMI Effort",
+        "pmi_day1_label": "Day-1 (Pre-Close / Immediate)",
+        "pmi_day30_label": "Day-30 (Stabilization & CI/CD)",
+        "pmi_day100_label": "Day-100 (Scale & Unit Economics)",
+        "sv_col_claim": "Web / Pitch Claim & Verification Axis",
+        "sv_col_evidence": "Codebase Evidence (file:line) & Verdict Badge",
+        "comp_legend_provenance": "Target (Code-Verified)  |  Competitors (Public-Data Estimate)",
     },
     "ja": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -655,6 +687,23 @@ _PDF_I18N = {
         "provider_score_comparison": "プロバイダースコア比較",
         "avg_short": "平均",
         "evidence": "証拠",
+        "cover_5dim_hdr": "2. 標準5次元評価",
+        "cover_wt_hdr": "配点",
+        "cover_score_status_hdr": "スコア / 状態",
+        "cover_atlas_4axis_hdr": "3. Atlas 4軸評価 (20/20/5/55)",
+        "cover_verdict_hdr": "4. 総合投資判定",
+        "cover_top_risks_hdr": "最優先リスク・改善条件（上位3件）",
+        "cover_zero_blockers": "重大・高リスクのコード阻害要因は検出されませんでした。",
+        "pmi_col_horizon": "M&A PMI フェーズ / 指標",
+        "pmi_col_actions": "推奨アクション・定量テレメトリ",
+        "pmi_industry_pack": "業界別ドメイン評価パック",
+        "pmi_effort_label": "推定PMI改修工数",
+        "pmi_day1_label": "Day-1（クロージング前・即時対応）",
+        "pmi_day30_label": "Day-30（安定化・CI/CD基盤）",
+        "pmi_day100_label": "Day-100（スケール最適化・採算改善）",
+        "sv_col_claim": "Web・ピッチの主張 / 検証項目",
+        "sv_col_evidence": "実コードの検証結果 (file:line) と判定バッジ",
+        "comp_legend_provenance": "対象企業（実コード検証済）  |  競合他社（公開情報に基づく推定）",
     },
     "es": {
         "title_prefix": "DUE DILIGENCE ENGINE",
@@ -865,6 +914,23 @@ _PDF_I18N = {
         "provider_score_comparison": "Comparación de Puntuaciones de Proveedores",
         "avg_short": "Prom.",
         "evidence": "Evidencia",
+        "cover_5dim_hdr": "2. Evaluación de 5 Dimensiones",
+        "cover_wt_hdr": "Peso",
+        "cover_score_status_hdr": "Puntuación / Estado",
+        "cover_atlas_4axis_hdr": "3. Atlas 4 Ejes (20/20/5/55)",
+        "cover_verdict_hdr": "4. Dictamen Ejecutivo",
+        "cover_top_risks_hdr": "Top 3 Riesgos Prioritarios y Condiciones",
+        "cover_zero_blockers": "No se identificaron bloqueos críticos/altos en el código.",
+        "pmi_col_horizon": "Horizonte M&A PMI / Métrica",
+        "pmi_col_actions": "Acciones Clave y Telemetría Cuantitativa",
+        "pmi_industry_pack": "Paquete Sectorial",
+        "pmi_effort_label": "Esfuerzo Estimado de PMI",
+        "pmi_day1_label": "Día 1 (Pre-Cierre / Inmediato)",
+        "pmi_day30_label": "Día 30 (Estabilización y CI/CD)",
+        "pmi_day100_label": "Día 100 (Escala y Economía Unitaria)",
+        "sv_col_claim": "Afirmación Web / Pitch y Eje de Verificación",
+        "sv_col_evidence": "Evidencia en Código (file:line) y Veredicto",
+        "comp_legend_provenance": "Objetivo (Verificado en Código)  |  Competidores (Estimación Pública)",
     },
 }
 
@@ -1584,7 +1650,7 @@ class PDFReportGenerator:
 
         # Arabic & Thai mode: split raw string by Latin/ASCII runs BEFORE XML escaping
         # so entities like &amp; are never sliced across <font> tags.
-        pattern = re.compile(r"[A-Za-z0-9][A-Za-z0-9_./:+%&=@#?~,\-]*")
+        pattern = re.compile(r"[A-Za-z0-9][A-Za-z0-9_./:+%&=@#?~,\-]*|[|—·…]")
         result_parts = []
         last_end = 0
         for m in pattern.finditer(raw):
@@ -1612,6 +1678,12 @@ class PDFReportGenerator:
     def _font_bold(self) -> str:
         """Bold-weight font for the current language (CJK-aware)."""
         return _FONTS_FOR_LANG.get(self._lang, _DEFAULT_FONTS)[1]
+
+    def _drawing_font(self, text: str, bold: bool = False) -> str:
+        """Select font family for ReportLab Drawing.String (ASCII fallback for ar/th/hi)."""
+        if self._lang in ("ar", "th", "hi") and text.isascii():
+            return "Helvetica-Bold" if bold else "Helvetica"
+        return self._font_bold() if bold else self._font_normal()
 
     def _build_cover_page(self, result: AnalysisResult, cr: ConsultingReport | None = None) -> list:
         """Build Page 1: All-in-One Executive Summary Comparison Sheet (LVMH Quiet Luxury)."""
@@ -1743,11 +1815,11 @@ class PDFReportGenerator:
             elements.append(Paragraph(score_text, score_style))
             elements.append(Spacer(1, 3 * mm))
 
-            # ② Standard 5-Dimension Score Table & ③ Atlas 4-Axis (20/20/5/55) Score Table
+            # 2. Standard 5-Dimension Score Table & 3. Atlas 4-Axis (20/20/5/55) Score Table
             dim_rows = [[
-                Paragraph("<b>② 5-Dimension Evaluation</b>", tbl_header_style),
-                Paragraph("<b>Wt</b>", tbl_header_style),
-                Paragraph("<b>Score</b>", tbl_header_style),
+                Paragraph(f"<b>{self._esc_text(t['cover_5dim_hdr'])}</b>", tbl_header_style),
+                Paragraph(f"<b>{self._esc_text(t['cover_wt_hdr'])}</b>", tbl_header_style),
+                Paragraph(f"<b>{self._esc_text(t['score'])}</b>", tbl_header_style),
             ]]
             if cr is not None and cr.dimension_scores:
                 for key, en_name in _DIM_NAME_MAP.items():
@@ -1772,9 +1844,9 @@ class PDFReportGenerator:
                     ])
 
             atlas_rows = [[
-                Paragraph("<b>③ Atlas 4-Axis (20/20/5/55)</b>", tbl_header_style),
-                Paragraph("<b>Wt</b>", tbl_header_style),
-                Paragraph("<b>Score / Status</b>", tbl_header_style),
+                Paragraph(f"<b>{self._esc_text(t['cover_atlas_4axis_hdr'])}</b>", tbl_header_style),
+                Paragraph(f"<b>{self._esc_text(t['cover_wt_hdr'])}</b>", tbl_header_style),
+                Paragraph(f"<b>{self._esc_text(t['cover_score_status_hdr'])}</b>", tbl_header_style),
             ]]
             if cr is not None and cr.atlas_four_axis and cr.atlas_four_axis.axes:
                 for ax in cr.atlas_four_axis.axes[:4]:
@@ -1788,12 +1860,61 @@ class PDFReportGenerator:
                     ])
             else:
                 code_res = result.code_analysis
-                cons_res = result.consistency
+                complexity_metrics = code_res.complexity_metrics or {}
+                flags_src = (
+                    result.score.red_flags
+                    if result.score and result.score.red_flags
+                    else (cr.red_flags if cr is not None and cr.red_flags else code_res.red_flags)
+                )
+                arch_dim = None
+                if result.score and result.score.dimensions:
+                    arch_dim = next(
+                        (d for d in result.score.dimensions if "architecture" in d.name.lower()),
+                        None,
+                    )
+
+                def _flag_sev(rf: Any) -> str:
+                    if isinstance(rf, dict):
+                        return str(rf.get("severity", "")).lower()
+                    sev_obj = getattr(rf, "severity", "")
+                    return str(getattr(sev_obj, "value", sev_obj)).lower()
+
+                sec_score: float | None = None
+                if arch_dim and isinstance(arch_dim.sub_scores, dict) and "security_level" in arch_dim.sub_scores:
+                    sec_score = float(arch_dim.sub_scores["security_level"])
+                if sec_score is None:
+                    crit_cnt = sum(1 for f in flags_src if _flag_sev(f) == "critical")
+                    high_cnt = sum(1 for f in flags_src if _flag_sev(f) == "high")
+                    med_cnt = sum(1 for f in flags_src if _flag_sev(f) == "medium")
+                    sec_score = max(0.0, min(100.0, 100.0 - (crit_cnt * 35.0 + high_cnt * 15.0 + med_cnt * 5.0)))
+
+                base_arch = (
+                    float(arch_dim.sub_scores["architecture_level"])
+                    if arch_dim and isinstance(arch_dim.sub_scores, dict) and "architecture_level" in arch_dim.sub_scores
+                    else overall_val
+                )
+                async_cnt = len(complexity_metrics.get("async_blocking", []))
+                n1_cnt = len(complexity_metrics.get("n_plus_one_hotspots", []))
+                loop_cnt = len(complexity_metrics.get("nested_loop_hotspots", []))
+                perf_score = max(0.0, min(100.0, base_arch - (async_cnt * 5.0 + n1_cnt * 5.0 + loop_cnt * 3.0)))
+
+                perf_hex = "#059669" if perf_score >= 75 else ("#0284c7" if perf_score >= 60 else ("#d97706" if perf_score >= 40 else "#e11d48"))
+                sec_hex = "#059669" if sec_score >= 75 else ("#0284c7" if sec_score >= 60 else ("#d97706" if sec_score >= 40 else "#e11d48"))
+
+                symbol_font = "HeiseiKakuGo-W5"
+                if code_res.has_tests and code_res.has_ci_cd:
+                    stab_html = f'<font name="{symbol_font}" color="#059669">○</font> <font color="#059669"><b>{self._esc_text("Tests+CI")}</b></font>'
+                elif code_res.has_tests:
+                    stab_html = f'<font name="{symbol_font}" color="#d97706">△</font> <font color="#d97706"><b>{self._esc_text("Tests")}</b></font>'
+                else:
+                    no_tests_lbl = f"{t['no']} Tests"
+                    stab_html = f'<font name="{symbol_font}" color="#e11d48">×</font> <font color="#e11d48"><b>{self._esc_text(no_tests_lbl)}</b></font>'
+
                 atlas_rows.extend([
-                    [Paragraph("Performance", tbl_cell_style), Paragraph("20%", tbl_cell_style), Paragraph(f'<font color="#0284c7"><b>{overall_val:.0f}/100</b></font>', tbl_cell_style)],
-                    [Paragraph("Stability", tbl_cell_style), Paragraph("20%", tbl_cell_style), Paragraph('<font color="#059669"><b>○ Tests+CI</b></font>' if code_res.has_tests else '<font color="#d97706"><b>⚠️ Check Tests</b></font>', tbl_cell_style)],
-                    [Paragraph("Lightweight", tbl_cell_style), Paragraph("5%", tbl_cell_style), Paragraph(f"{code_res.dependency_count} deps", tbl_cell_style)],
-                    [Paragraph("<b>Security Strength</b>", tbl_cell_style), Paragraph("<b>55%</b>", tbl_cell_style), Paragraph(f'<font color="#059669"><b>{cons_res.consistency_score:.0f}%</b></font>', tbl_cell_style)],
+                    [Paragraph(self._esc_text(t["matcat_performance"]), tbl_cell_style), Paragraph("20%", tbl_cell_style), Paragraph(f'<font color="{perf_hex}"><b>{perf_score:.0f}/100</b></font>', tbl_cell_style)],
+                    [Paragraph(self._esc_text(t["matcat_stability"]), tbl_cell_style), Paragraph("20%", tbl_cell_style), Paragraph(stab_html, tbl_cell_style)],
+                    [Paragraph(self._esc_text(t["matcat_lightweight"]), tbl_cell_style), Paragraph("5%", tbl_cell_style), Paragraph(self._esc_text(f"{code_res.dependency_count} deps"), tbl_cell_style)],
+                    [Paragraph(f"<b>{self._esc_text(self._dim_name('Security Posture'))}</b>", tbl_cell_style), Paragraph("<b>55%</b>", tbl_cell_style), Paragraph(f'<font color="{sec_hex}"><b>{sec_score:.0f}/100</b></font>', tbl_cell_style)],
                 ])
 
             sub_style = TableStyle([
@@ -1822,7 +1943,7 @@ class PDFReportGenerator:
             elements.append(grid_tbl)
             elements.append(Spacer(1, 3.5 * mm))
 
-            # ④ Investment / M&A Verdict & Top 3 Priority Risks Table
+            # 4. Investment / M&A Verdict & Top 3 Priority Risks Table
             risk_items: list[str] = []
             if cr is not None and cr.investment_thesis and cr.investment_thesis.key_risks:
                 risk_items = [str(r) for r in cr.investment_thesis.key_risks[:3]]
@@ -1834,15 +1955,16 @@ class PDFReportGenerator:
                 for rf in result.score.red_flags[:3]:
                     risk_items.append(f"[{rf.severity.value.upper()}] {rf.title} ({_extract_file_line(rf)})")
             if not risk_items:
-                risk_items = ["Zero critical/high code blockers identified."]
+                risk_items = [t["cover_zero_blockers"]]
 
             risk_html = "<br/>".join(
-                f'<font color="#e11d48">•</font> {self._esc_text(r[:110])}' for r in risk_items[:3]
+                f'<font name="Helvetica" color="#e11d48">•</font> {self._esc_text(_truncate_ellipsis(r, 120))}'
+                for r in risk_items[:3]
             )
             verdict_rows = [
                 [
-                    Paragraph("<b>④ Executive Verdict</b>", tbl_header_style),
-                    Paragraph("<b>Top 3 Priority Risks &amp; Conditions</b>", tbl_header_style),
+                    Paragraph(f"<b>{self._esc_text(t['cover_verdict_hdr'])}</b>", tbl_header_style),
+                    Paragraph(f"<b>{self._esc_text(t['cover_top_risks_hdr'])}</b>", tbl_header_style),
                 ],
                 [
                     Paragraph(
@@ -3538,29 +3660,41 @@ class PDFReportGenerator:
             "PMIHdr", fontName=s["heading1"].fontName, fontSize=8,
             textColor=COLOR_WHITE, leading=11,
         )
+        pack_label = (
+            pack.get("label_ja")
+            if self._lang == "ja" and pack.get("label_ja")
+            else pack.get("label_en", "Enterprise B2B SaaS & Cloud-Native Platform")
+        )
+        days_val = pmi.get("estimated_person_days", "N/A")
+        bus_val = pmi.get("bus_factor_risk", "low")
+        effort_text = (
+            f"{days_val} 人日 (バス係数リスク: {bus_val})"
+            if self._lang == "ja"
+            else f"{days_val} person-days (Bus-factor risk: {bus_val})"
+        )
         pmi_rows = [
             [
-                Paragraph(self._esc_text("M&A PMI Horizon / Metric"), pmi_hdr),
-                Paragraph(self._esc_text("Target Actions & Quantitative Telemetry"), pmi_hdr),
+                Paragraph(self._esc_text(t["pmi_col_horizon"]), pmi_hdr),
+                Paragraph(self._esc_text(t["pmi_col_actions"]), pmi_hdr),
             ],
             [
-                Paragraph(self._esc_text("Industry Domain Pack"), pmi_cell),
-                Paragraph(self._esc_text(f"{pack.get('label_en', 'Enterprise SaaS')} ({pack.get('id', 'enterprise_saas')})"), pmi_cell),
+                Paragraph(self._esc_text(t["pmi_industry_pack"]), pmi_cell),
+                Paragraph(self._esc_text(f"{pack_label} ({pack.get('id', 'enterprise_saas')})"), pmi_cell),
             ],
             [
-                Paragraph(self._esc_text("Estimated PMI Effort"), pmi_cell),
-                Paragraph(self._esc_text(f"{pmi.get('estimated_person_days', 'N/A')} person-days (Bus-factor risk: {pmi.get('bus_factor_risk', 'low')})"), pmi_cell),
+                Paragraph(self._esc_text(t["pmi_effort_label"]), pmi_cell),
+                Paragraph(self._esc_text(effort_text), pmi_cell),
             ],
             [
-                Paragraph(self._esc_text("Day-1 (Pre-Close / Immediate)"), pmi_cell),
+                Paragraph(self._esc_text(t["pmi_day1_label"]), pmi_cell),
                 Paragraph(self._esc_text("; ".join(pmi.get("day_1_actions", []))), pmi_cell),
             ],
             [
-                Paragraph(self._esc_text("Day-30 (Stabilization & CI/CD)"), pmi_cell),
+                Paragraph(self._esc_text(t["pmi_day30_label"]), pmi_cell),
                 Paragraph(self._esc_text("; ".join(pmi.get("day_30_actions", []))), pmi_cell),
             ],
             [
-                Paragraph(self._esc_text("Day-100 (Scale & Unit Economics)"), pmi_cell),
+                Paragraph(self._esc_text(t["pmi_day100_label"]), pmi_cell),
                 Paragraph(self._esc_text("; ".join(pmi.get("day_100_actions", []))), pmi_cell),
             ],
         ]
@@ -3888,10 +4022,7 @@ class PDFReportGenerator:
         sv_cell_style = ParagraphStyle(
             "SVCell", fontName=self._font_normal(), fontSize=8.5, leading=13, textColor=COLOR_TEXT,
         )
-        if self._lang == "ja":
-            sv_headers = ["Web・ピッチの主張 / 検証項目", "実コードの検証結果 (file:line) と判定バッジ"]
-        else:
-            sv_headers = ["Web / Pitch Claim & Verification Axis", "Codebase Evidence (file:line) & Verdict Badge"]
+        sv_headers = [t["sv_col_claim"], t["sv_col_evidence"]]
 
         sv_rows = [[
             Paragraph(f"<b>{self._esc_text(sv_headers[0])}</b>", sv_hdr_style),
@@ -3912,13 +4043,16 @@ class PDFReportGenerator:
             item_title = item.item_name_ja if self._lang == "ja" and item.item_name_ja else item.item_name
             sc_v = float(item.score)
             if sc_v >= 75:
-                verdict_badge = f'<font name="{symbol_font}" color="#059669">○</font> <font color="#059669"><b>{"実装済" if self._lang == "ja" else "Verified"} ({sc_v:.0f}/100)</b></font>'
+                badge_lbl = self._esc_text(f"{t['impl_legend_verified']} ({sc_v:.0f}/100)")
+                verdict_badge = f'<font name="{symbol_font}" color="#059669">○</font> <font color="#059669"><b>{badge_lbl}</b></font>'
                 sv_table_styles.append(("BACKGROUND", (1, idx), (1, idx), COLOR_EMERALD_BG))
             elif sc_v >= 45:
-                verdict_badge = f'<font name="{symbol_font}" color="#d97706">△</font> <font color="#d97706"><b>{"一部のみ" if self._lang == "ja" else "Partial"} ({sc_v:.0f}/100)</b></font>'
+                badge_lbl = self._esc_text(f"{t['impl_legend_claimed']} ({sc_v:.0f}/100)")
+                verdict_badge = f'<font name="{symbol_font}" color="#d97706">△</font> <font color="#d97706"><b>{badge_lbl}</b></font>'
                 sv_table_styles.append(("BACKGROUND", (1, idx), (1, idx), COLOR_AMBER_BG))
             else:
-                verdict_badge = f'<font name="{symbol_font}" color="#e11d48">×</font> <font color="#e11d48"><b>{"未実装" if self._lang == "ja" else "Unimplemented"} ({sc_v:.0f}/100)</b></font>'
+                badge_lbl = self._esc_text(f"{t['impl_legend_not_impl']} ({sc_v:.0f}/100)")
+                verdict_badge = f'<font name="{symbol_font}" color="#e11d48">×</font> <font color="#e11d48"><b>{badge_lbl}</b></font>'
                 sv_table_styles.append(("BACKGROUND", (1, idx), (1, idx), COLOR_ROSE_BG))
 
             rationale_txt = self._esc_text(item.rationale or "")
@@ -4018,8 +4152,8 @@ class PDFReportGenerator:
         w, h = self._CELL_W, self._CELL_H
         d = Drawing(w, h)
 
-        # Paddings: left for Y-axis label, bottom for X-axis label, top/right margins
-        pl, pb, pr, pt = 32, 22, 8, 8
+        # Paddings: left for rotated Y-axis label + ticks, bottom for X-axis label
+        pl, pb, pr, pt = 34, 24, 10, 10
         pw = w - pl - pr  # plot width
         ph = h - pb - pt  # plot height
 
@@ -4043,44 +4177,47 @@ class PDFReportGenerator:
         d.add(Line(pl, pb, pl, pb + ph,
                    strokeColor=COLOR_TEXT_DIM, strokeWidth=0.6))
 
-        # --- Axis scale ticks: 0, 25, 50, 75, 100 ---
-        af = self._font_normal()
+        # --- Axis scale ticks: 0, 50, 100 (always Helvetica for ar/th/hi digits) ---
         for val in (0, 50, 100):
             # X ticks
             tx = pl + pw * (val / 100)
             d.add(Line(tx, pb, tx, pb - 3,
                        strokeColor=COLOR_TEXT_DIM, strokeWidth=0.3))
-            d.add(String(tx - 4, pb - 11, str(val),
-                         fontName=af, fontSize=5, fillColor=COLOR_TEXT_DIM))
+            d.add(String(tx, pb - 11, str(val),
+                         fontName="Helvetica", fontSize=6, fillColor=COLOR_TEXT_DIM,
+                         textAnchor="middle"))
             # Y ticks
             ty = pb + ph * (val / 100)
             d.add(Line(pl, ty, pl - 3, ty,
                        strokeColor=COLOR_TEXT_DIM, strokeWidth=0.3))
-            d.add(String(pl - 14, ty - 2, str(val),
-                         fontName=af, fontSize=5, fillColor=COLOR_TEXT_DIM))
+            d.add(String(pl - 5, ty - 2, str(val),
+                         fontName="Helvetica", fontSize=6, fillColor=COLOR_TEXT_DIM,
+                         textAnchor="end"))
 
         # --- Quadrant labels (for quadrant-type charts) ---
         if quadrant_labels and len(quadrant_labels) == 4:
-            lf = self._font_bold()
-            lc = colors.HexColor("#c0c4cc")
-            ls = 5.5
+            lc = colors.HexColor("#94a3b8")
+            ls = 6.2
             mx = pl + pw / 2
             my = pb + ph / 2
             # [top-left, top-right, bottom-left, bottom-right]
-            d.add(String(pl + 3, pb + ph - 10, quadrant_labels[0],
-                         fontName=lf, fontSize=ls, fillColor=lc))
-            d.add(String(mx + 3, pb + ph - 10, quadrant_labels[1],
-                         fontName=lf, fontSize=ls, fillColor=lc))
-            d.add(String(pl + 3, pb + 3, quadrant_labels[2],
-                         fontName=lf, fontSize=ls, fillColor=lc))
-            d.add(String(mx + 3, pb + 3, quadrant_labels[3],
-                         fontName=lf, fontSize=ls, fillColor=lc))
+            q_coords = [
+                (pl + 4, pb + ph - 10, quadrant_labels[0]),
+                (mx + 4, pb + ph - 10, quadrant_labels[1]),
+                (pl + 4, pb + 4, quadrant_labels[2]),
+                (mx + 4, pb + 4, quadrant_labels[3]),
+            ]
+            for qx, qy, qtext in q_coords:
+                q_str = str(qtext or "")
+                d.add(String(qx, qy, q_str,
+                             fontName=self._drawing_font(q_str, bold=True),
+                             fontSize=ls, fillColor=lc))
             # Center cross (dashed)
             d.add(Line(mx, pb, mx, pb + ph,
-                       strokeColor=colors.HexColor("#d1d5db"), strokeWidth=0.4,
+                       strokeColor=colors.HexColor("#cbd5e1"), strokeWidth=0.45,
                        strokeDashArray=[3, 3]))
             d.add(Line(pl, my, pl + pw, my,
-                       strokeColor=colors.HexColor("#d1d5db"), strokeWidth=0.4,
+                       strokeColor=colors.HexColor("#cbd5e1"), strokeWidth=0.45,
                        strokeDashArray=[3, 3]))
 
         # --- Risk-return special: sweet spot zone + efficient frontier ---
@@ -4091,75 +4228,122 @@ class PDFReportGenerator:
             d.add(Rect(sx, sy, sw, sh,
                        fillColor=colors.HexColor("#e8f4f8"),
                        strokeColor=colors.HexColor("#b8d8e8"), strokeWidth=0.3))
-            lf = self._font_bold()
-            d.add(String(sx + 2, sy + sh - 9,
-                         self._t.get("sweet_spot", "Sweet Spot"),
-                         fontName=lf, fontSize=5, fillColor=COLOR_ACCENT))
+            sweet_lbl = str(self._t.get("sweet_spot", "Sweet Spot"))
+            d.add(String(sx + 3, sy + sh - 10, sweet_lbl,
+                         fontName=self._drawing_font(sweet_lbl, bold=True),
+                         fontSize=6.0, fillColor=COLOR_ACCENT))
             # Efficient frontier diagonal
             d.add(Line(pl + pw * 0.05, pb + ph * 0.1,
                        pl + pw * 0.95, pb + ph * 0.9,
                        strokeColor=COLOR_ACCENT, strokeWidth=0.7,
                        strokeDashArray=[4, 2]))
 
-        # --- Axis labels ---
-        x_lab = chart.x_axis_label_ja if self._lang == "ja" and chart.x_axis_label_ja else chart.x_axis_label
-        y_lab = chart.y_axis_label_ja if self._lang == "ja" and chart.y_axis_label_ja else chart.y_axis_label
-        # Truncate
-        x_lab = (x_lab[:22] + "…") if len(x_lab) > 24 else x_lab
-        y_lab = (y_lab[:14] + "…") if len(y_lab) > 16 else y_lab
-        d.add(String(pl + pw / 2 - len(x_lab) * 1.5, 2, x_lab,
-                     fontName=af, fontSize=5.5, fillColor=COLOR_TEXT_DIM))
-        # Y-axis label (rotated text not supported in ReportLab String,
-        # so place vertically at left edge)
-        d.add(String(1, pb + ph / 2 - len(y_lab) * 1.2, y_lab,
-                     fontName=af, fontSize=5, fillColor=COLOR_TEXT_DIM))
+        # --- Axis labels (centered X-axis + 90-deg CCW rotated Y-axis) ---
+        x_lab_raw = chart.x_axis_label_ja if self._lang == "ja" and chart.x_axis_label_ja else chart.x_axis_label
+        y_lab_raw = chart.y_axis_label_ja if self._lang == "ja" and chart.y_axis_label_ja else chart.y_axis_label
+        x_lab = _truncate_ellipsis(x_lab_raw, 28)
+        y_lab = _truncate_ellipsis(y_lab_raw, 22)
+        d.add(String(pl + pw / 2, 4, x_lab,
+                     fontName=self._drawing_font(x_lab),
+                     fontSize=6.5, fillColor=COLOR_TEXT_DIM, textAnchor="middle"))
+        y_group = Group(
+            String(0, 0, y_lab,
+                   fontName=self._drawing_font(y_lab),
+                   fontSize=6.5, fillColor=COLOR_TEXT_DIM, textAnchor="middle"),
+            transform=(0, 1, -1, 0, 9, pb + ph / 2),
+        )
+        d.add(y_group)
 
-        # --- Data points ---
+        # --- Data points (draw non-target dots first, target dot on top) ---
         is_bubble = (ctype == "bubble_3d")
-        nf = self._font_normal()
-        # Sort: non-target first, target on top
-        sorted_pts = sorted(chart.data_points, key=lambda dp: dp.is_target)
-        label_positions: list[tuple[float, float]] = []
+        dots_draw_order = sorted(chart.data_points, key=lambda dp: dp.is_target)
+        point_meta: list[tuple[Any, float, float, float]] = []
 
-        for dp in sorted_pts:
+        for dp in dots_draw_order:
             cx = pl + (dp.x / 100) * pw
             cy = pb + (dp.y / 100) * ph
-
             if is_bubble:
-                r = max(4, min(18, dp.z * 0.18))
-                fill = COLOR_ACCENT if dp.is_target else colors.HexColor("#d1d5db")
-                alpha = 0.85
+                r = max(4.0, min(16.0, dp.z * 0.16))
+                fill = COLOR_ACCENT if dp.is_target else colors.HexColor("#cbd5e1")
             else:
-                r = 5.5 if dp.is_target else 4
-                fill = COLOR_ACCENT if dp.is_target else colors.HexColor("#9ca3af")
-                alpha = 1.0
-
-            stroke_c = colors.white if dp.is_target else colors.HexColor("#ffffff")
-            stroke_w = 1.0 if dp.is_target else 0.3
+                r = 5.5 if dp.is_target else 4.0
+                fill = COLOR_ACCENT if dp.is_target else colors.HexColor("#94a3b8")
+            stroke_w = 1.0 if dp.is_target else 0.4
             d.add(Circle(cx, cy, r, fillColor=fill,
-                         strokeColor=stroke_c, strokeWidth=stroke_w))
+                         strokeColor=colors.white, strokeWidth=stroke_w))
+            point_meta.append((dp, cx, cy, r))
 
-            # Smart label placement to avoid overlaps
-            name = dp.name[:12]
-            lx = cx + r + 2
-            ly = cy - 2
-            # If off right edge, place left
-            if lx + len(name) * 3 > w - 2:
-                lx = cx - r - len(name) * 3 - 1
-            # If off top, shift down
-            if ly + 6 > h - 2:
-                ly = cy - 8
-            # Check overlap with previous labels (simple)
-            for plx, ply in label_positions:
-                if abs(lx - plx) < 25 and abs(ly - ply) < 7:
-                    ly -= 7
+        # --- Smart 8-direction + stepped label collision avoidance (target priority) ---
+        def _est_w(txt: str, fsize: float) -> float:
+            factor = 0.56 if txt.isascii() else 0.92
+            return max(14.0, len(txt) * fsize * factor)
+
+        def _overlap_area(
+            b1: tuple[float, float, float, float],
+            b2: tuple[float, float, float, float],
+        ) -> float:
+            ix = max(0.0, min(b1[2], b2[2]) - max(b1[0], b2[0]))
+            iy = max(0.0, min(b1[3], b2[3]) - max(b1[1], b2[1]))
+            return ix * iy
+
+        placed_boxes: list[tuple[float, float, float, float]] = []
+        dot_boxes = [
+            (cx_d - r_d - 1.5, cy_d - r_d - 1.5, cx_d + r_d + 1.5, cy_d + r_d + 1.5)
+            for _, cx_d, cy_d, r_d in point_meta
+        ]
+
+        label_priority = sorted(point_meta, key=lambda item: not item[0].is_target)
+        for dp, cx, cy, r in label_priority:
+            name = _truncate_ellipsis(dp.name, 14)
+            fs = 6.5
+            est_w = _est_w(name, fs)
+            box_h = fs + 2.5
+
+            candidates: list[tuple[float, float]] = [
+                (r + 3.0, -fs * 0.35),
+                (-r - 3.0 - est_w, -fs * 0.35),
+                (-est_w / 2.0, r + 3.0),
+                (-est_w / 2.0, -r - fs - 2.0),
+                (r + 3.0, r + 2.0),
+                (r + 3.0, -r - fs),
+                (-r - 3.0 - est_w, r + 2.0),
+                (-r - 3.0 - est_w, -r - fs),
+            ]
+            for step_y in (9.0, -11.0, 17.0, -19.0):
+                candidates.append((r + 3.0, step_y))
+                candidates.append((-r - 3.0 - est_w, step_y))
+
+            best_pos: tuple[float, float] = (pl + 2.0, pb + 2.0)
+            best_score = float("inf")
+            max_lx = max(pl + 2.0, w - pr - est_w - 1.0)
+            max_ly = max(pb + 2.0, h - pt - box_h - 1.0)
+
+            for dx, dy in candidates:
+                cand_x = max(pl + 2.0, min(max_lx, cx + dx))
+                cand_y = max(pb + 2.0, min(max_ly, cy + dy))
+                box = (cand_x, cand_y, cand_x + est_w, cand_y + box_h)
+                label_overlap = sum(_overlap_area(box, pb_box) for pb_box in placed_boxes)
+                dot_overlap = sum(_overlap_area(box, db_box) for db_box in dot_boxes) * 0.5
+                total_cost = label_overlap * 10.0 + dot_overlap
+                if total_cost == 0.0:
+                    best_pos = (cand_x, cand_y)
+                    best_score = 0.0
                     break
-            label_positions.append((lx, ly))
+                if total_cost < best_score:
+                    best_score = total_cost
+                    best_pos = (cand_x, cand_y)
 
-            fs = 5.5 if dp.is_target else 5
-            fc = COLOR_TEXT if dp.is_target else COLOR_TEXT_DIM
-            d.add(String(lx, ly, name,
-                         fontName=nf, fontSize=fs, fillColor=fc))
+            lx, ly = best_pos
+            placed_boxes.append((lx, ly, lx + est_w, ly + box_h))
+            fc = COLOR_TEXT if dp.is_target else colors.HexColor("#475569")
+            d.add(String(
+                lx,
+                ly,
+                name,
+                fontName=self._drawing_font(name, bold=dp.is_target),
+                fontSize=fs,
+                fillColor=fc,
+            ))
 
         return d
 
@@ -4640,13 +4824,13 @@ class PDFReportGenerator:
         # Header row
         font_header = self._font_bold()
         header_para_style = ParagraphStyle(
-            "MatHeader", fontName=font_header, fontSize=6.8,
-            textColor=COLOR_WHITE, alignment=1, leading=8.5,
+            "MatHeader", fontName=font_header, fontSize=7.2,
+            textColor=COLOR_WHITE, alignment=1, leading=9.0,
         )
 
         header_row = [Paragraph("", header_para_style)]
         for c in all_companies:
-            short_name = c[:12] + "…" if len(c) > 12 else c
+            short_name = _truncate_ellipsis(c, 15)
             header_row.append(Paragraph(self._esc_text(short_name), header_para_style))
 
         # Group items by category
@@ -4866,12 +5050,12 @@ class PDFReportGenerator:
                     cap_parts = []
                     if x_label and x_rat:
                         cap_parts.append(
-                            f'<font name="{cap_bold}" size="7" color="#5271FF">X: {self._esc_text(x_label)}</font>'
+                            f'<font name="{cap_bold}" size="7" color="#0284c7">X: {self._esc_text(x_label)}</font>'
                             f'<font name="{cap_font}" size="7" color="#6b7280"> — {self._esc_text(x_rat)}</font>'
                         )
                     if y_label and y_rat:
                         cap_parts.append(
-                            f'<font name="{cap_bold}" size="7" color="#5271FF">Y: {self._esc_text(y_label)}</font>'
+                            f'<font name="{cap_bold}" size="7" color="#0284c7">Y: {self._esc_text(y_label)}</font>'
                             f'<font name="{cap_font}" size="7" color="#6b7280"> — {self._esc_text(y_rat)}</font>'
                         )
                     for cap in cap_parts:
@@ -4880,6 +5064,24 @@ class PDFReportGenerator:
                     elements.append(Paragraph(t["competitive_subtitle"], s["body_dim"]))
             else:
                 elements.append(Paragraph(t["competitive_subtitle"], s["body_dim"]))
+            elements.append(Spacer(1, 1 * mm))
+
+            # Quiet Luxury provenance legend above 2x3 chart grid
+            prov_parts = [p.strip() for p in t["comp_legend_provenance"].split("|", 1)]
+            if len(prov_parts) == 2:
+                legend_html = (
+                    f'<font name="HeiseiKakuGo-W5" color="#0284c7" size="8">●</font> '
+                    f'<font color="#0284c7" size="7.5"><b>{self._esc_text(prov_parts[0])}</b></font>'
+                    f'   <font name="Helvetica" color="#94a3b8" size="7.5">|</font>   '
+                    f'<font name="HeiseiKakuGo-W5" color="#64748b" size="8">●</font> '
+                    f'<font color="#64748b" size="7.5">{self._esc_text(prov_parts[1])}</font>'
+                )
+            else:
+                legend_html = (
+                    f'<font name="HeiseiKakuGo-W5" color="#0284c7" size="8">●</font> '
+                    f'<font color="#0284c7" size="7.5"><b>{self._esc_text(t["comp_legend_provenance"])}</b></font>'
+                )
+            elements.append(Paragraph(legend_html, s["center"]))
             elements.append(Spacer(1, 1.5 * mm))
 
             # Build Table data: 3 rows × 2 cols, each cell has [Paragraph(market_label), chart_drawing]
@@ -4891,7 +5093,7 @@ class PDFReportGenerator:
                 for mname in (m_left, m_right):
                     label = self._MARKET_ORDER_JA.get(mname, mname) if self._lang == "ja" else mname
                     label_para = Paragraph(
-                        f'<font name="{body_font}" size="8" color="#5271FF">{self._esc_text(label)}</font>',
+                        f'<font name="{body_font}" size="8" color="#0284c7">{self._esc_text(label)}</font>',
                         s["body"],
                     )
                     chart = market_charts.get(mname, {}).get(ctype)
@@ -4901,9 +5103,9 @@ class PDFReportGenerator:
                         placeholder.add(Rect(0, 0, cw, ch,
                                              fillColor=colors.HexColor("#f5f5f5"),
                                              strokeColor=COLOR_BORDER, strokeWidth=0.3))
-                        nf = self._font_normal()
-                        placeholder.add(String(cw / 2 - 12, ch / 2, "No data",
-                                               fontName=nf, fontSize=7, fillColor=COLOR_TEXT_DIM))
+                        placeholder.add(String(cw / 2, ch / 2, "No data",
+                                               fontName="Helvetica", fontSize=7,
+                                               fillColor=COLOR_TEXT_DIM, textAnchor="middle"))
                         chart_drawing = placeholder
                     else:
                         qlabels = None
