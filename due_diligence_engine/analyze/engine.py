@@ -132,12 +132,17 @@ class AnalysisEngine:
         else:
             effective_keys = self._get_effective_api_keys()
 
+        use_legacy_pipeline = bool(not skip_ai and self._config.anthropic_api_key)
         if effective_keys:
-            logger.info(f"Phase 2: Running AI analysis with {len(effective_keys)} provider(s): {list(effective_keys.keys())}")
+            logger.info(
+                "Phase 2: Running AI analysis with %d provider(s): %s",
+                len(effective_keys),
+                list(effective_keys.keys()),
+            )
             self._run_multi_provider_analysis(result, effective_keys)
-        elif not skip_ai and self._config.anthropic_api_key:
-            # 後方互換: 環境変数のAnthropicキーのみの場合は従来の3段階パイプライン
-            logger.info("Phase 2: Running legacy AI-enhanced analysis (Haiku→Sonnet→Fable)...")
+        elif use_legacy_pipeline:
+            # 後方互換: 個別プロバイダー経由で取得されなかった場合のみ従来の3段階パイプラインを実行
+            logger.info("Phase 2: Running legacy multi-tier AI analysis pipeline...")
             ai_findings = self._run_ai_analysis(result)
             self._merge_ai_findings(result, ai_findings)
         else:

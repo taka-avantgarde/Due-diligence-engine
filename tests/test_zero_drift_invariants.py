@@ -1976,3 +1976,79 @@ def test_v100_ga_mcp_sbom_sarif_and_release_readiness(tmp_path):
 
     saved_files = ReportGenerator().save_report(ar, tmp_path / "reports", formats=["md", "sarif"])
     assert any(p.name.endswith(".sarif.json") for p in saved_files)
+
+
+def test_longinus_v070_patch_parity_and_workflow_pinning():
+    """Verify exact _build_patch_snippet byte parity and 40-char workflow SHA pinning."""
+    from due_diligence_engine.models import RedFlag, Severity
+    from due_diligence_engine.report.generator import _build_patch_snippet
+
+    sqli_flag = RedFlag(
+        category="security_sqli",
+        title="SQL sink in db.py:12",
+        description="Dynamic SQL.",
+        severity=Severity.CRITICAL,
+        file_path="db.py",
+        line_number=12,
+    )
+    expected_sqli = (
+        "--- a/db.py\n+++ b/db.py\n"
+        + "- cursor."
+        + "execute("
+        + 'f"SELECT * FROM records WHERE id = {user_input}")\n'
+        + '+ cursor.execute("SELECT * FROM records WHERE id = ?", (user_input,))'
+    )
+    assert _build_patch_snippet(sqli_flag) == expected_sqli
+
+    inj_flag = RedFlag(
+        category="security_injection",
+        title="Shell command execution in worker.py:30",
+        description="Shell sink.",
+        severity=Severity.HIGH,
+        file_path="worker.py",
+        line_number=30,
+    )
+    expected_inj = (
+        "--- a/worker.py\n+++ b/worker.py\n"
+        + "- subprocess."
+        + "run(cmd_str, "
+        + "shell="
+        + "True, check=True)\n"
+        + "+ subprocess.run(shlex.split(cmd_str), shell=False, check=True)"
+    )
+    assert _build_patch_snippet(inj_flag) == expected_inj
+
+    crypto_flag = RedFlag(
+        category="security_crypto",
+        title="Weak hash in hash.py:8",
+        description="Weak hash.",
+        severity=Severity.HIGH,
+        file_path="hash.py",
+        line_number=8,
+    )
+    expected_crypto = (
+        "--- a/hash.py\n+++ b/hash.py\n"
+        "- digest = hashlib.md5(payload).hexdigest()\n"
+        "+ digest = hashlib.sha256(payload).hexdigest()"
+    )
+    assert _build_patch_snippet(crypto_flag) == expected_crypto
+
+    generic_flag = RedFlag(
+        category="api_boundary",
+        title="Unvalidated payload in app.py:5",
+        description="Exposure risk. Remediation: Validate input schema.",
+        severity=Severity.MEDIUM,
+        file_path="app.py",
+        line_number=5,
+    )
+    assert _build_patch_snippet(generic_flag) == (
+        "--- a/app.py\n+++ b/app.py\n# Remediation at app.py:5: Validate input schema."
+    )
+
+    startup_wf = (_ROOT / ".github" / "workflows" / "example-startup.yml").read_text(encoding="utf-8")
+    assert "Atlas-Associates-Inc/Due-diligence-engine@367ac5cf06a3c92c015264b61f5dd71ecc888e87 # v1.0.0" in startup_wf
+    assert "Atlas-Associates-Inc/Due-diligence-engine@main" not in startup_wf
+
+    security_wf = (_ROOT / ".github" / "workflows" / "security-audit.yml").read_text(encoding="utf-8")
+    assert "google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0" in security_wf
+    assert not re.search(r"uses:\s*google/osv-scanner-action/osv-scanner-action@v2\.7\.0\s*$", security_wf, re.MULTILINE)

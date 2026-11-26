@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0  # Full history for git forensics
 
       - name: Run Due Diligence Engine
-        uses: Atlas-Associates-Inc/Due-diligence-engine@main
+        uses: Atlas-Associates-Inc/Due-diligence-engine@367ac5cf06a3c92c015264b61f5dd71ecc888e87 # v1.0.0
         id: dde
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
